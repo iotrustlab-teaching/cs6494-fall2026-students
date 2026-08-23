@@ -1,0 +1,16 @@
+.DS_Store
+._*
+Thumbs.db
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+node_modules/
+.vscode/
+.idea/
+*.swp
+
+# Never commit anything student-identifying
+/submissions/
+/grades/
+*.roster.csv
