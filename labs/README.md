@@ -4,6 +4,7 @@ Instructions and starter material for the scaffolded labs.
 
 | Lab | Week | Status |
 |---|---|---|
+| [CPS Tank micro-lab](cps-tank/) | 3 | **available** |
 | Process-evidence lab | 4 | not yet published |
 | Agent-guardrail exercise | 6 | not yet published |
 | Reproducible SITL lab | 10 | not yet published |
