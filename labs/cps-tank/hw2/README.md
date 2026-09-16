@@ -262,12 +262,16 @@ fallback. Preflight validates but does not install, start, or modify anything.
 
 ![Static analysis artifact pipeline](figures/02-static-analysis.svg)
 
-`analyze.sh` forwards to `static_view.py`, which reads
-`representations/controller.c`, checks the expected symbols, and writes
-`controller_cfg.dot` and `dependency_map.json`. Try
-`./analyze.sh --out runs/my-analysis`. This teaching extractor exposes real
-control-flow and dependency questions, but it is not a general C analyzer and
-cannot establish execution or physical reachability.
+`analyze.sh` forwards to `static_view.py`, which parses the supported
+`controller_step` C statements and derives the branch edges and retained-state
+dependency from the source. It writes `controller_cfg.dot` and
+`dependency_map.json`. Try `./analyze.sh --out runs/my-analysis`. To test a
+source edit without changing the live PLC, analyze a *copy* with
+`./analyze.sh --source /path/to/controller-copy.c --out runs/edited-analysis`;
+compare its DOT and JSON with the original. Unsupported control constructs
+fail closed instead of producing a canned graph. This bounded teaching
+analyzer is not a general C compiler analysis, and a feasible path does not
+establish execution or physical reachability.
 
 ### 3. One OpenPLC/Modbus cycle
 
