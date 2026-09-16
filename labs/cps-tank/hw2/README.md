@@ -49,10 +49,14 @@ as the JSON/TCP regression path.
 
 **Student decision.** Identify the untrusted observation, the two comparisons,
 the state that survives between scans, and the final actuator decision. Trace
-one feasible path that keeps the inlet open.
+one feasible path that keeps the inlet open. Then list two or three assumptions
+that must hold for this software influence to produce the physical property
+violation, and name one reason the dependency could exist while the physical
+violation remains unreachable.
 
 **Student artifact.** An annotated dependency chain or a short CFG explanation
-that names the input, retained state, decision, and output.
+that names the input, retained state, decision, and output, followed by your
+physical-realizability assumptions and one reachability limitation.
 
 **Learning outcome.** Distinguish what static structure says *can* happen from
 what a later execution says *did* happen.
@@ -76,11 +80,15 @@ a parallel modeled record.
 
 **Student decision.** For each provided operation, decide who owns it, who can
 observe it, whether it is a read or write, and whether it belongs to the
-process/data plane or the engineering/program-management plane.
+process/data plane or the engineering/program-management plane. Explain why a
+syntactically valid or accepted write does not by itself establish that the
+writer was authorized, that the controller used the value, or that the result
+was safe.
 
 **Student artifact.** A completed concept/tag/address/owner/authority table and
 a two- or three-sentence explanation of why a Modbus data write is not a PLC
-program download.
+program download. Include one example separating protocol validity from
+authorized or safe outcome.
 
 **Learning outcome.** Connect source intent, PLC memory, and network-visible
 objects without treating representations as interchangeable proof.
@@ -106,7 +114,9 @@ automatically bounded and logged.
 
 **Student decision.** Identify where observed behavior first diverges from your
 prediction, or state that it agrees. Follow the full chain: network operation
-to controller input, branch, inlet command, and true process effect.
+to controller input, branch, inlet command, and true process effect. Before the
+run, name the evidence that would distinguish your nominal and manipulated
+predictions.
 
 **Student artifact.** Your before-run prediction, the observed divergence or
 confirmation, and a causal explanation citing specific timestamps/rows.
@@ -117,7 +127,7 @@ response and physical consequence; each requires separate evidence.
 **CTF1 transfer.** Act inside a bounded environment and determine what actually
 happened across layers.
 
-## Part D — Search and define failure (45–60 minutes)
+## Part D — Bounded search and oracle (45–60 minutes)
 
 **Scaffolded mechanics.** Choose one dimension—initial level, manipulation
 start, or sensor bias—and run a small disclosed search. Example:
@@ -126,15 +136,22 @@ start, or sensor bias—and run a small disclosed search. Example:
 ./search.sh --bias -20 -35 -50 --start 4 8 12
 ```
 
-You are not implementing a fuzzer.
+You are not implementing a fuzzer. You are designing a bounded search over an
+allowed input or perturbation surface.
 
-**Student decision.** Choose and justify a range and step size. Identify which
-oracle layer answers the physical question and explain why runner completion,
-controller responsiveness, or reported state alone can miss the failure.
+**Student decision.** Choose and justify a range and step size, including why
+the selected values could expose the property violation. Identify which oracle
+layer answers the physical question and explain why runner completion,
+controller responsiveness, or reported state alone can miss the failure. The
+primary property and checker are provided: explain why they consume process
+truth rather than reported state, then either critique one limitation of the
+checker or define one small secondary property.
 
 **Student artifact.** A compact search table or plot plus the explored space,
-oracle, any counterexample, and one sentence explaining why no observed
-counterexample would not prove safety.
+oracle, and your checker critique or secondary property. If you find a
+violation, describe it as a concrete counterexample under the tested model,
+starting state, input space, and horizon. If you do not, state the search bounds
+and explicitly explain why the negative result does not prove safety.
 
 **Learning outcome.** Use systematic finite testing to look beyond one
 execution while keeping the claim bounded.
@@ -150,17 +167,22 @@ strategy.
 them. The pcap establishes interface traversal and a Modbus operation, not the
 controller branch, actuator response, or physical consequence by itself.
 
-**Student decision.** Select the minimum evidence needed to support your
-physical-property claim.
+**Student decision.** Select the minimum evidence needed to support each layer
+of your conclusion. Keep program-level capability, runtime observation,
+network/authority evidence, physical/process evidence, and the property verdict
+separate rather than treating one layer as proof of another.
 
 **Student artifact.** A concise investigation memo containing:
 
-1. what happened;
-2. the relevant CPS property and verdict;
-3. a causal explanation;
-4. the minimum supporting evidence;
-5. the strongest bounded claim you can defend; and
-6. one stronger claim the experiment does not support.
+1. what the program structure shows is possible;
+2. what actually executed at runtime;
+3. what the network/authority evidence shows was read or written, and by whom;
+4. what the simulated physical process did;
+5. the relevant CPS property, its verdict, and why the chosen oracle supports it;
+6. the minimum evidence supporting each claim layer;
+7. the strongest bounded claim you can defend and one stronger unsupported claim;
+8. which parts of the experiment are real, emulated, or simulated, and one claim
+   that would require higher fidelity than this lab provides.
 
 **Learning outcome.** Match evidence to claims and disclose assumptions and
 limits.
