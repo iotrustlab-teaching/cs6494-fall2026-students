@@ -6,7 +6,7 @@ transport, fixed OpenPLC endpoint, and network tools. It reports the expiry
 value but does not enforce the course resource deadline. Students do not need
 to compile C or install dependencies.
 
-`analyze.sh` emits a small CFG and dependency map from the C teaching artifact. It exposes structure; you must interpret the observation-to-actuator path.
+`analyze.sh` parses the supported `controller_step` C subset and derives a CFG and retained-state dependency map from the source. It rejects unsupported control constructs; it is not a general C analyzer. You must still interpret the observation-to-actuator path.
 
 `verify_representations.sh` executes six stateful sequences through the reference, existing Python controller, compiled C, and supported ST model. Passing establishes bounded agreement on those sequences, not universal equivalence.
 
