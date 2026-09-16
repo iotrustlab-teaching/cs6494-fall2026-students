@@ -1,0 +1,46 @@
+{
+  "name": "hw2_tank_hysteresis_controller",
+  "scan_semantics": "read inputs, execute once, retain state, publish output",
+  "thresholds": {
+    "low_level_pct": 45.0,
+    "high_level_pct": 55.0
+  },
+  "state": {
+    "initial_inlet_valve_open": false,
+    "inside_band": "retain prior inlet-valve command",
+    "at_low_threshold": "retain prior inlet-valve command",
+    "at_high_threshold": "retain prior inlet-valve command"
+  },
+  "variables": [
+    {
+      "concept": "reported process observation",
+      "python": "reported_level",
+      "c": "reported_level_pct",
+      "structured_text": "reported_level_pct",
+      "openplc_address": "%MD0",
+      "modbus": "holding registers 2048-2049, IEEE-754 REAL",
+      "owner": "process/bridge",
+      "physical_meaning": "measurement delivered to the controller; not ground truth"
+    },
+    {
+      "concept": "retained actuator decision",
+      "python": "controller.valve",
+      "c": "state.inlet_valve_open",
+      "structured_text": "inlet_valve_open",
+      "openplc_address": "%QX0.0",
+      "modbus": "coil 0",
+      "owner": "controller",
+      "physical_meaning": "command to admit water into the simulated tank"
+    },
+    {
+      "concept": "simulated process truth",
+      "python": "tank.level",
+      "c": null,
+      "structured_text": null,
+      "openplc_address": null,
+      "modbus": null,
+      "owner": "process simulator",
+      "physical_meaning": "model state used by the physical-safety oracle"
+    }
+  ]
+}

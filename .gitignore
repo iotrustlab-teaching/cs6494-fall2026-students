@@ -14,3 +14,7 @@ node_modules/
 /submissions/
 /grades/
 *.roster.csv
+
+# Generated HW2 evidence and reset state
+/labs/cps-tank/hw2/runs/
+/labs/cps-tank/hw2/.runtime/

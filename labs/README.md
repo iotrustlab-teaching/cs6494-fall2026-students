@@ -5,7 +5,7 @@ Instructions and starter material for the scaffolded labs.
 | Lab | Week | Status |
 |---|---|---|
 | [CPS Tank micro-lab](cps-tank/) | 3 | **available** |
-| Process-evidence lab | 4 | not yet published |
+| [HW2 — From Controller Logic to CPS Evidence](cps-tank/hw2/) | 4 | **available** |
 | Agent-guardrail exercise | 6 | not yet published |
 | Reproducible SITL lab | 10 | not yet published |
 | Integrity analysis | 11 | not yet published |
