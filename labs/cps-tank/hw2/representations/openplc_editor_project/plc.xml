@@ -1,0 +1,56 @@
+<?xml version='1.0' encoding='utf-8'?>
+<project xmlns:xhtml="http://www.w3.org/1999/xhtml" xmlns="http://www.plcopen.org/xml/tc6_0201">
+  <fileHeader companyName="iotrustlab-teaching" productName="HW2TankController" productVersion="1.0" creationDateTime="2026-09-16T12:38:23" />
+  <contentHeader name="HW2TankController" modificationDateTime="2026-09-16T12:38:23">
+    <coordinateInfo>
+      <fbd><scaling x="10" y="10" /></fbd>
+      <ld><scaling x="10" y="10" /></ld>
+      <sfc><scaling x="10" y="10" /></sfc>
+    </coordinateInfo>
+  </contentHeader>
+  <types>
+    <dataTypes />
+    <pous>
+      <pou name="HW2TankController" pouType="program">
+        <interface>
+          <outputVars>
+            <variable name="inlet_valve_open">
+              <type><BOOL /></type>
+              <initialValue><simpleValue value="FALSE" /></initialValue>
+            </variable>
+          </outputVars>
+          <localVars>
+            <variable name="reported_level_pct"><type><REAL /></type></variable>
+            <variable name="LOW_LEVEL_PCT">
+              <type><REAL /></type>
+              <initialValue><simpleValue value="45.0" /></initialValue>
+            </variable>
+            <variable name="HIGH_LEVEL_PCT">
+              <type><REAL /></type>
+              <initialValue><simpleValue value="55.0" /></initialValue>
+            </variable>
+          </localVars>
+        </interface>
+        <body>
+          <ST>
+            <xhtml:p>IF reported_level_pct &lt; LOW_LEVEL_PCT THEN
+    inlet_valve_open := TRUE;
+ELSIF reported_level_pct &gt; HIGH_LEVEL_PCT THEN
+    inlet_valve_open := FALSE;
+END_IF;</xhtml:p>
+          </ST>
+        </body>
+      </pou>
+    </pous>
+  </types>
+  <instances>
+    <configurations>
+      <configuration name="Config0">
+        <resource name="Res0">
+          <task name="task_HW2TankController" priority="0" interval="T#100ms" />
+          <pouInstance name="HW2TankController_instance" typeName="HW2TankController" />
+        </resource>
+      </configuration>
+    </configurations>
+  </instances>
+</project>

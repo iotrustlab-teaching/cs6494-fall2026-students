@@ -28,6 +28,29 @@ P1: always(true_level_pct < 90)
 
 The checker uses process truth because the property concerns the simulated physical consequence. Checking only the reported sensor would answer a different question: whether the controller's *view* appeared below 90%.
 
+The primary property and checker are provided. Your task is to explain why this
+oracle is tied to process truth, interpret its finite-trace verdict, and either
+critique one limitation or define one small secondary property. You are not
+being asked to invent a complete specification from scratch.
+
+## Evidence and claim layers
+
+Keep these conclusions distinct in your memo:
+
+| Claim layer | Typical support | Boundary |
+|---|---|---|
+| Program-level capability | source, CFG, dependency map | A feasible influence path may still be physically unrealizable |
+| Runtime observation | controller/timeline events | Observed execution does not by itself identify network authority or physical truth |
+| Network/authority evidence | pcap and derived Modbus trace | A valid or accepted operation is not proof of authorization, controller use, or safety |
+| Physical/process evidence | simulator-owned process state | This establishes model behavior, not the state of a real tank |
+| Property verdict | checker output over the named trace fields | A finite verdict is scoped to the tested model, inputs, initial state, and horizon |
+
+The primary SPHERE path combines a real OpenPLC runtime and captured Modbus
+traffic with an emulated deployment and a simulated water-tank process. The
+local fallback uses modeled JSON/TCP semantics instead. State explicitly which
+path you used and which claim would require higher fidelity, such as a hardware
+actuator, physical tank, or a less constrained network/adversary model.
+
 ## Packet evidence
 
 In the primary SPHERE path, `network.pcap` is core evidence and
