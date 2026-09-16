@@ -3,6 +3,10 @@
 A software-only cyber-physical security demo. It needs **Python 3 and nothing else** — no packages
 to install, no accounts, no testbed access.
 
+After completing this micro-lab, continue to
+[HW2 — From Controller Logic to CPS Evidence](hw2/) for the OpenPLC,
+Modbus, bounded-search, and evidence workflow.
+
 The tank process owns the **true water level**. The controller never sees that. It receives only a
 **reported sensor level**, and applies a PLC-style hysteresis rule:
 
