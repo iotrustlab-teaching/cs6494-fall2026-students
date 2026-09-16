@@ -31,16 +31,24 @@ the course instructions.
 
 ## Start
 
+On your assigned SPHERE **process node** (not the XDC shell), follow the
+course-provided access instructions, then run `hw2-prepare`, enter the printed
+HW2 directory, and check the prepared environment:
+
 ```bash
-./preflight.sh
+hw2-prepare
+cd ~/cs6494-hw2/hw2
+./preflight.sh --require-sphere
 ```
 
-The prepared SPHERE path must identify your instance, team, and expiry. If it
-does not, stop and send the failed line to course staff. Do not install
-packages. The instructor may authorize the identical local fallback if SPHERE
-is unavailable. In SPHERE, the same short commands select the real
-OpenPLC/Modbus path automatically; the local fallback is explicitly labeled
-as the JSON/TCP regression path.
+Preflight must report your instance, team, and expiry value and verify the
+fixed OpenPLC endpoint and packet-capture tools. It does not itself enforce
+resource expiry; follow the course release instructions. If preflight fails,
+stop and send the failed line to course staff. Do not install packages. Staff
+may authorize the local fallback described in [QUICKSTART.md](QUICKSTART.md)
+if SPHERE is unavailable. The SPHERE process node sets
+`HW2_TRANSPORT=modbus_tcp` for real OpenPLC/Modbus traffic; the local fallback
+uses modeled JSON/TCP semantics and produces no pcap.
 
 ## Part A — Read the program (35–45 minutes)
 
@@ -75,8 +83,10 @@ captured Modbus operations with:
 ./show_network.sh RUN_DIRECTORY
 ```
 
-`modbus_trace.csv` is generated from the run's real `network.pcap`; it is not
-a parallel modeled record.
+In the SPHERE path, `modbus_trace.csv` is generated from the run's real
+`network.pcap`; it is not a parallel modeled record. If staff authorize the
+local fallback, inspect `network_trace.csv` as a labeled semantic
+reconstruction instead. `show_network.sh` is only for SPHERE pcap bundles.
 
 **Student decision.** For each provided operation, decide who owns it, who can
 observe it, whether it is a read or write, and whether it belongs to the
@@ -105,8 +115,10 @@ case and for the prepared reported-level manipulation. Then run:
 ./run_nominal.sh
 ./run_spoof.sh
 ./show_evidence.sh RUN_DIRECTORY
-./show_network.sh RUN_DIRECTORY
 ```
+
+For SPHERE pcap bundles, also run `./show_network.sh RUN_DIRECTORY`. Do not
+run that command on local-fallback bundles; they have no `network.pcap`.
 
 Use your own printed run directories. In the prepared SPHERE realization, the
 authorized manipulation is fixed to the allowlisted reported-level seam and is
@@ -116,7 +128,8 @@ automatically bounded and logged.
 prediction, or state that it agrees. Follow the full chain: network operation
 to controller input, branch, inlet command, and true process effect. Before the
 run, name the evidence that would distinguish your nominal and manipulated
-predictions.
+predictions. In the authorized local fallback, describe the network step as a
+modeled operation, not an observed packet crossing an interface.
 
 **Student artifact.** Your before-run prediction, the observed divergence or
 confirmation, and a causal explanation citing specific timestamps/rows.
@@ -161,11 +174,13 @@ strategy.
 
 ## Part E — Evidence-backed conclusion (30–45 minutes)
 
-**Scaffolded mechanics.** Use `network.pcap`, its derived
-`modbus_trace.csv`, `timeline.csv`, `oracle_ladder.json`, and
-`property_results.json`. Consult source-layer files only when your claim needs
-them. The pcap establishes interface traversal and a Modbus operation, not the
-controller branch, actuator response, or physical consequence by itself.
+**Scaffolded mechanics.** Use `timeline.csv`, `oracle_ladder.json`, and
+`property_results.json`. In the SPHERE path, also use `network.pcap` and its
+derived `modbus_trace.csv`. In an authorized local fallback, use
+`network_trace.csv` only as a semantic reconstruction, not packet evidence.
+Consult source-layer files only when your claim needs them. A real pcap
+establishes interface traversal and a Modbus operation, not the controller
+branch, actuator response, or physical consequence by itself.
 
 **Student decision.** Select the minimum evidence needed to support each layer
 of your conclusion. Keep program-level capability, runtime observation,
@@ -183,6 +198,9 @@ separate rather than treating one layer as proof of another.
 7. the strongest bounded claim you can defend and one stronger unsupported claim;
 8. which parts of the experiment are real, emulated, or simulated, and one claim
    that would require higher fidelity than this lab provides.
+
+For a fallback run, explicitly mark packet-traversal and real OpenPLC claims
+as **not tested**; do not infer them from modeled network rows.
 
 **Learning outcome.** Match evidence to claims and disclose assumptions and
 limits.

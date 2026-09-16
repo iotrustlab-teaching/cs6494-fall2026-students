@@ -1,6 +1,9 @@
 # HW2 evidence-field reference
 
-All CSVs use `elapsed_s`, a deterministic simulation clock shared across layers.
+The process, observation, controller, action, and joined timeline CSVs share
+`elapsed_s`, the runner's simulation clock. The pcap-derived
+`modbus_trace.csv` instead uses `time_s` relative to the packet capture; do
+not equate those timestamps without aligning the run events.
 
 | Artifact | Important fields | What it establishes | What it does not establish |
 |---|---|---|---|
