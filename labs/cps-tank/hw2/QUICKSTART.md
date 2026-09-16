@@ -4,30 +4,39 @@ This lab follows one question through program, PLC, network, controller, and pro
 
 ## Start
 
-In the prepared SPHERE XDC terminal:
+Use the **process-node shell** reached through your assigned SPHERE XDC (not
+the XDC shell itself). Follow the course-provided access instructions; do not
+guess a host or use another team's realization. On the process node, prepare
+your workspace, change into the printed HW2 directory, and run:
 
 ```bash
+hw2-prepare
+cd ~/cs6494-hw2/hw2
 ./preflight.sh --require-sphere
 ./analyze.sh
 ./run_nominal.sh
 ./run_spoof.sh
 ```
 
-For an instructor-authorized local fallback, run the same commands from this
-directory but omit `--require-sphere`:
+For an **instructor-authorized** local fallback, clone the public starter
+repository on your own machine, enter this directory, and omit
+`--require-sphere`:
 
 ```bash
+git clone https://github.com/iotrustlab-teaching/cs6494-fall2026-students.git
+cd cs6494-fall2026-students/labs/cps-tank/hw2
 ./preflight.sh
 ./analyze.sh
 ./run_nominal.sh
 ./run_spoof.sh
 ```
 
-Each run prints the path to a new evidence directory. Nothing is overwritten.
-The prepared SPHERE environment selects the OpenPLC/Modbus path automatically. For
-an instructor-authorized local fallback, omit `--require-sphere`; that path is
-the JSON/TCP regression system and must not be described as a packet capture.
-You do not need to install packages or discover infrastructure.
+Each run prints the path to a new evidence directory and refuses to overwrite
+an existing one. The prepared process node sets `HW2_TRANSPORT=modbus_tcp`, so
+the short run commands use real OpenPLC and captured Modbus TCP. The authorized
+local fallback uses modeled JSON/TCP semantics and produces no packet capture.
+SPHERE dependencies should already be installed; report a failed preflight
+line to staff rather than installing or discovering infrastructure yourself.
 
 ## Check the evidence
 
@@ -35,17 +44,24 @@ Replace `RUN_DIRECTORY` with the printed path:
 
 ```bash
 ./show_evidence.sh RUN_DIRECTORY
-./show_network.sh RUN_DIRECTORY
 ```
 
-Open these files first:
+In the prepared SPHERE path, also run `./show_network.sh RUN_DIRECTORY` to
+decode the real pcap. It requires `network.pcap` and `tshark` and is **not** a
+local-fallback command.
+
+Open these files first in either path:
 
 1. `timeline.csv` — the compact observation → decision → command → process view.
-2. `network.pcap` — packets captured on the process node's experiment-local interface.
-3. `modbus_trace.csv` — a readable tshark projection derived from that pcap.
-4. `oracle_ladder.json` — network, readback, reported-state, and physical-state verdicts.
-5. `property_results.json` — the finite physical-property verdict and first violation.
-6. `process.csv`, `observations.csv`, and `controller.csv` — authoritative source layers behind the joined timeline.
+2. `oracle_ladder.json` — layer-specific verdicts; its fields differ by transport.
+3. `property_results.json` — the finite physical-property verdict and first violation.
+4. `process.csv`, `observations.csv`, and `controller.csv` — source layers behind the joined timeline.
+
+For a SPHERE run, additionally use `network.pcap` (traffic captured on the
+process node's experiment-local interface) and `modbus_trace.csv` (a `tshark`
+projection derived from that pcap). For the authorized local fallback, use
+`network_trace.csv` and `messages.jsonl` only as **semantic reconstruction**;
+neither is packet evidence.
 
 Your work begins after the commands succeed: explain why the two cases differ, which evidence supports the property verdict, and what the run cannot establish.
 
@@ -72,8 +88,14 @@ process-data writes and program management are different planes.
 ./reset.sh
 ```
 
-The model starts from a new in-memory state on every run. Reset removes only scaffold-owned transient files and deliberately retains evidence.
+In SPHERE, every run initializes a new process model and first writes 56% to
+put the stateful OpenPLC inlet command in its CLOSED baseline. `./reset.sh`
+repeats that fixed initialization, waits for a scan, verifies coil 0 is CLOSED,
+and retains evidence. In the local fallback, every run starts fresh in memory;
+reset removes only allowlisted transient scaffold files and retains evidence.
 
 ## Optional live view
 
-The instructor may also provide viewer, operator, and attack URLs for the same tank model. Those pages help you see the loop, but screenshots are not a substitute for the submitted evidence bundle.
+The instructor may provide optional viewer URLs for a separate tank demo.
+Those pages are not automatically connected to your HW2 realization; do not
+use their screenshots as a substitute for your own evidence bundle.

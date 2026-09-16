@@ -1,6 +1,8 @@
 # HW2 troubleshooting
 
-Start with `./preflight.sh`. If a prepared SPHERE environment fails preflight,
+Start with `./preflight.sh --require-sphere` on your assigned SPHERE process
+node, or `./preflight.sh` in an instructor-authorized local fallback. If a
+prepared SPHERE environment fails preflight,
 copy the complete failed line to course staff; do not install packages or
 invent a replacement port.
 
@@ -9,12 +11,17 @@ invent a replacement port.
 Run it through Bash:
 
 ```bash
-bash setup.sh
+bash preflight.sh --require-sphere
 ```
+
+Use `bash preflight.sh` without the flag only for the authorized local
+fallback. The student release does not contain a `setup.sh` script.
 
 ## Python is missing or too old
 
-The scaffold needs Python 3.9 or newer and uses only the standard library. In the prepared SPHERE image it should already be installed. Locally, check with `python3 --version`.
+The scaffold needs Python 3.9 or newer. The local fallback uses Python's
+standard library; the prepared SPHERE process node also provides `pymodbus`,
+`tcpdump`, and `tshark`. Locally, check with `python3 --version`.
 
 ## A staff equivalence check cannot find `cc`
 
@@ -58,17 +65,23 @@ Part B of the assignment.
 
 Check that the realization is materialized, the XDC is attached, the service is running, and the HTTP ingress still exists. URLs and tokens are deployment-specific; do not copy an old class URL from another realization.
 
-If the XDC terminal itself works, run `./preflight.sh --require-sphere`. A
-missing instance/team/expiry identity means the course image was not prepared
-correctly and is a staff issue. Use the documented local fallback rather than
-debugging SPHERE internals.
+If the XDC terminal works, use the course-provided instructions to reach your
+assigned **process-node shell**, run `hw2-prepare`, enter the printed HW2
+directory, then run `./preflight.sh --require-sphere`. Do not run the lab on
+the XDC shell itself. A missing instance/team/expiry value means provisioning
+was not prepared correctly and is a staff issue. Use the documented local
+fallback only when staff authorize it; do not debug SPHERE internals.
 
 ## Reset refuses to continue
 
-Reset found a file it does not own in `.runtime` and stopped to protect it. Move the unexpected file yourself after inspecting it; the script will not delete student work.
+In the local fallback, reset may find a file it does not own in `.runtime` and
+stop to protect it. Inspect the unexpected file and ask staff before moving
+anything. In SPHERE, reset can instead fail if it cannot reach OpenPLC or
+verify that coil 0 is CLOSED; stop running cases and send the failed line to
+staff.
 
 ## Reset did not delete my evidence
 
-That is intentional. Every run begins with fresh in-memory controller and tank
-state. Reset removes only recognized transient state; it retains evidence so
-you can download or submit it.
+That is intentional. The local path removes only recognized transient state;
+the SPHERE path restores the stateful OpenPLC CLOSED baseline. Both retain
+evidence so you can download or submit it.
