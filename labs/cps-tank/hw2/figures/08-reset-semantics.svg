@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="410" viewBox="0 0 1200 410" role="img" aria-labelledby="title desc">
+  <title id="title">Reset semantics for local and live paths</title>
+  <desc id="desc">The reset wrapper routes to a local allowlisted cleanup or a live OpenPLC state initialization. The live path writes 56 percent, waits for a scan, and verifies coil zero is closed. Both paths retain evidence bundles.</desc>
+  <rect width="1200" height="410" fill="#f8fafc"/>
+  <style>text{font-family:Arial,sans-serif;fill:#0f172a}.h{font-size:28px;font-weight:700}.t{font-size:18px}.s{font-size:15px;fill:#334155}.box{fill:#fff;stroke:#64748b;stroke-width:2}.local{fill:#f5f3ff;stroke:#6d28d9;stroke-width:2}.live{fill:#e0f2fe;stroke:#0369a1;stroke-width:2}.keep{fill:#ecfdf5;stroke:#0f766e;stroke-width:2}.arrow{stroke:#475569;stroke-width:3;fill:none;marker-end:url(#a)}</style>
+  <defs><marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto"><path d="M0 0L10 5L0 10z" fill="#475569"/></marker></defs>
+  <text x="40" y="48" class="h">Figure 8. Reset establishes a known controller state</text>
+  <rect x="45" y="155" width="210" height="95" rx="12" class="box"/><text x="150" y="193" text-anchor="middle" class="t">./reset.sh</text><text x="150" y="222" text-anchor="middle" class="s">dispatch by transport</text>
+  <path d="M255 185H340V125H420" class="arrow"/><path d="M255 220H340V300H420" class="arrow"/>
+  <rect x="420" y="75" width="330" height="130" rx="12" class="local"/><text x="585" y="112" text-anchor="middle" class="t">Local reset</text><text x="585" y="145" text-anchor="middle" class="s">remove allowlisted transient files only</text><text x="585" y="175" text-anchor="middle" class="s">refuse unexpected runtime contents</text>
+  <rect x="420" y="245" width="330" height="135" rx="12" class="live"/><text x="585" y="282" text-anchor="middle" class="t">Live Modbus reset</text><text x="585" y="315" text-anchor="middle" class="s">write 56% → wait for ST scan</text><text x="585" y="345" text-anchor="middle" class="s">verify coil 0 = CLOSED</text>
+  <path d="M750 140H850" class="arrow"/><path d="M750 312H850" class="arrow"/>
+  <rect x="850" y="145" width="305" height="150" rx="12" class="keep"/><text x="1002" y="184" text-anchor="middle" class="t">Postcondition</text><text x="1002" y="218" text-anchor="middle" class="s">known hysteresis baseline</text><text x="1002" y="248" text-anchor="middle" class="s">fresh process on next run</text><text x="1002" y="278" text-anchor="middle" class="s">evidence bundles retained</text>
+</svg>

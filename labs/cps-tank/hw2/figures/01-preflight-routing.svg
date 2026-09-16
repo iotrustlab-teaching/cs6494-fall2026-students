@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="430" viewBox="0 0 1200 430" role="img" aria-labelledby="title desc">
+  <title id="title">Preflight checks and execution routing</title>
+  <desc id="desc">The preflight wrapper checks released files and writable evidence output, then checks SPHERE identity, industrial tools, capture privileges, and the fixed OpenPLC endpoint when SPHERE is required. The same top-level commands route either to the OpenPLC Modbus path or the labeled local fallback.</desc>
+  <rect width="1200" height="430" fill="#f8fafc"/>
+  <style>text{font-family:Arial,sans-serif;fill:#0f172a}.h{font-size:28px;font-weight:700}.t{font-size:19px}.s{font-size:16px;fill:#334155}.box{fill:#fff;stroke:#64748b;stroke-width:2}.check{fill:#ecfdf5;stroke:#0f766e;stroke-width:2}.live{fill:#e0f2fe;stroke:#0369a1;stroke-width:2}.local{fill:#f5f3ff;stroke:#6d28d9;stroke-width:2}.arrow{stroke:#475569;stroke-width:3;fill:none;marker-end:url(#a)}</style>
+  <defs><marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="#475569"/></marker></defs>
+  <text x="40" y="48" class="h">Figure 1. Preflight validates; wrappers route</text>
+  <rect x="45" y="95" width="220" height="105" rx="12" class="box"/><text x="155" y="132" text-anchor="middle" class="t">./preflight.sh</text><text x="155" y="165" text-anchor="middle" class="s">wrapper → preflight.py</text>
+  <path d="M265 148H335" class="arrow"/>
+  <rect x="335" y="80" width="355" height="135" rx="12" class="check"/><text x="512" y="116" text-anchor="middle" class="t">Always checked</text><text x="365" y="150" class="s">Python • released files • writable runs/</text><text x="365" y="180" class="s">No installs, services, or controller writes</text>
+  <path d="M690 148H760" class="arrow"/>
+  <rect x="760" y="65" width="395" height="165" rx="12" class="check"/><text x="957" y="102" text-anchor="middle" class="t">With --require-sphere</text><text x="790" y="136" class="s">instance/team/expiry • pymodbus</text><text x="790" y="166" class="s">tcpdump/tshark • capture privilege</text><text x="790" y="196" class="s">fixed OpenPLC endpoint 10.42.0.20:502</text>
+  <rect x="250" y="285" width="250" height="90" rx="12" class="box"/><text x="375" y="320" text-anchor="middle" class="t">run_*.sh</text><text x="375" y="350" text-anchor="middle" class="s">checks HW2_TRANSPORT</text>
+  <path d="M500 315H600V270H690" class="arrow"/><path d="M500 345H600V390H690" class="arrow"/>
+  <rect x="690" y="245" width="420" height="80" rx="12" class="live"/><text x="900" y="278" text-anchor="middle" class="t">modbus_tcp → live OpenPLC path</text><text x="900" y="306" text-anchor="middle" class="s">real ST runtime + Modbus + pcap</text>
+  <rect x="690" y="350" width="420" height="60" rx="12" class="local"/><text x="900" y="386" text-anchor="middle" class="t">otherwise → labeled local fallback</text>
+</svg>
