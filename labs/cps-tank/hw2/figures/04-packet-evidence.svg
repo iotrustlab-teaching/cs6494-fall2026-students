@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="420" viewBox="0 0 1200 420" role="img" aria-labelledby="title desc">
+  <title id="title">Packet capture and readable Modbus projection</title>
+  <desc id="desc">Tcpdump captures the isolated process-controller link into network.pcap. Tshark filters Modbus packets, correlates transaction identifiers, and decodes values into modbus_trace.csv, which show_network.py renders. The pcap proves interface traversal, not program branch or physical consequence.</desc>
+  <rect width="1200" height="420" fill="#f8fafc"/>
+  <style>text{font-family:Arial,sans-serif;fill:#0f172a}.h{font-size:28px;font-weight:700}.t{font-size:18px}.s{font-size:15px;fill:#334155}.box{fill:#fff;stroke:#64748b;stroke-width:2}.net{fill:#fff7ed;stroke:#b45309;stroke-width:2}.artifact{fill:#ecfdf5;stroke:#0f766e;stroke-width:2}.warn{fill:#fef2f2;stroke:#b91c1c;stroke-width:2}.arrow{stroke:#475569;stroke-width:3;fill:none;marker-end:url(#a)}</style>
+  <defs><marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto"><path d="M0 0L10 5L0 10z" fill="#475569"/></marker></defs>
+  <text x="40" y="48" class="h">Figure 4. Real packets become a readable trace</text>
+  <rect x="45" y="115" width="205" height="120" rx="12" class="net"/><text x="148" y="152" text-anchor="middle" class="t">tcpdump on eth1</text><text x="148" y="184" text-anchor="middle" class="s">fixed host + port filter</text><text x="148" y="212" text-anchor="middle" class="s">isolated experiment link</text>
+  <path d="M250 175H320" class="arrow"/>
+  <rect x="320" y="115" width="205" height="120" rx="12" class="artifact"/><text x="423" y="154" text-anchor="middle" class="t">network.pcap</text><text x="423" y="186" text-anchor="middle" class="s">core packet evidence</text><text x="423" y="214" text-anchor="middle" class="s">captured bytes</text>
+  <path d="M525 175H595" class="arrow"/>
+  <rect x="595" y="95" width="240" height="160" rx="12" class="box"/><text x="715" y="132" text-anchor="middle" class="t">tshark projection</text><text x="715" y="166" text-anchor="middle" class="s">-Y modbus</text><text x="715" y="196" text-anchor="middle" class="s">transaction IDs + FC1/3/16</text><text x="715" y="226" text-anchor="middle" class="s">two words → one REAL</text>
+  <path d="M835 175H905" class="arrow"/>
+  <rect x="905" y="115" width="245" height="120" rx="12" class="artifact"/><text x="1028" y="154" text-anchor="middle" class="t">modbus_trace.csv</text><text x="1028" y="186" text-anchor="middle" class="s">readable derived view</text><text x="1028" y="214" text-anchor="middle" class="s">shown by show_network.py</text>
+  <rect x="250" y="305" width="700" height="70" rx="12" class="warn"/><text x="600" y="335" text-anchor="middle" class="t">What the pcap does not prove</text><text x="600" y="362" text-anchor="middle" class="s">which ST branch ran • actuator obedience • process truth • PLC program download</text>
+</svg>

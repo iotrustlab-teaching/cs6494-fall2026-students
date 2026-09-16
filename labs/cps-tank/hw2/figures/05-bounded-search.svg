@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="450" viewBox="0 0 1200 450" role="img" aria-labelledby="title desc">
+  <title id="title">Bounded Cartesian search and property checking</title>
+  <desc id="desc">Search cases combine selected initial levels, attack start times, and sensor biases. Every combination starts with a fresh tank and controller state, runs for 36 seconds, and is checked against the true-level property. The result is a finite counterexample table, not universal proof.</desc>
+  <rect width="1200" height="450" fill="#f8fafc"/>
+  <style>text{font-family:Arial,sans-serif;fill:#0f172a}.h{font-size:28px;font-weight:700}.t{font-size:18px}.s{font-size:15px;fill:#334155}.param{fill:#f5f3ff;stroke:#6d28d9;stroke-width:2}.tool{fill:#fff;stroke:#64748b;stroke-width:2}.pass{fill:#ecfdf5;stroke:#0f766e;stroke-width:2}.fail{fill:#fef2f2;stroke:#b91c1c;stroke-width:2}.arrow{stroke:#475569;stroke-width:3;fill:none;marker-end:url(#a)}</style>
+  <defs><marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto"><path d="M0 0L10 5L0 10z" fill="#475569"/></marker></defs>
+  <text x="40" y="48" class="h">Figure 5. A disclosed grid, not random poking</text>
+  <rect x="45" y="100" width="220" height="75" rx="12" class="param"/><text x="155" y="132" text-anchor="middle" class="t">--initial</text><text x="155" y="157" text-anchor="middle" class="s">45, 55</text>
+  <rect x="45" y="195" width="220" height="75" rx="12" class="param"/><text x="155" y="227" text-anchor="middle" class="t">--start</text><text x="155" y="252" text-anchor="middle" class="s">6 s, 10 s</text>
+  <rect x="45" y="290" width="220" height="75" rx="12" class="param"/><text x="155" y="322" text-anchor="middle" class="t">--bias</text><text x="155" y="347" text-anchor="middle" class="s">−25%, −40%</text>
+  <path d="M265 138H355V220" class="arrow"/><path d="M265 232H355" class="arrow"/><path d="M265 328H355V245" class="arrow"/>
+  <rect x="355" y="145" width="280" height="175" rx="12" class="tool"/><text x="495" y="183" text-anchor="middle" class="t">Cartesian product</text><text x="495" y="216" text-anchor="middle" class="s">2 × 2 × 2 = 8 candidates</text><text x="495" y="248" text-anchor="middle" class="s">fresh tank + controller each time</text><text x="495" y="280" text-anchor="middle" class="s">36-second finite horizon</text>
+  <path d="M635 232H725" class="arrow"/>
+  <rect x="725" y="145" width="250" height="175" rx="12" class="tool"/><text x="850" y="183" text-anchor="middle" class="t">Process oracle</text><text x="850" y="216" text-anchor="middle" class="s">true_level_pct</text><text x="850" y="248" text-anchor="middle" class="s">always(level &lt; 90)</text><text x="850" y="280" text-anchor="middle" class="s">first violation + maximum</text>
+  <path d="M975 205H1040" class="arrow"/><path d="M975 260H1040" class="arrow"/>
+  <rect x="1040" y="125" width="125" height="90" rx="12" class="pass"/><text x="1102" y="165" text-anchor="middle" class="t">PASS</text><text x="1102" y="191" text-anchor="middle" class="s">this run</text>
+  <rect x="1040" y="245" width="125" height="90" rx="12" class="fail"/><text x="1102" y="285" text-anchor="middle" class="t">FAIL</text><text x="1102" y="311" text-anchor="middle" class="s">counterexample</text>
+  <text x="355" y="385" class="s">Safe knobs: initial level, spoof start, sensor bias, and output CSV path.</text>
+</svg>

@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="500" viewBox="0 0 1200 500" role="img" aria-labelledby="title desc">
+  <title id="title">One OpenPLC and Modbus scan loop</title>
+  <desc id="desc">The process simulator owns true level, creates a reported value, and writes it as two Modbus registers. OpenPLC executes the Structured Text thresholds and retained state, exposes the inlet command as coil zero, and the process reads that coil before advancing true level.</desc>
+  <rect width="1200" height="500" fill="#f8fafc"/>
+  <style>text{font-family:Arial,sans-serif;fill:#0f172a}.h{font-size:28px;font-weight:700}.t{font-size:18px}.s{font-size:15px;fill:#334155}.process{fill:#ecfdf5;stroke:#0f766e;stroke-width:2}.net{fill:#fff7ed;stroke:#b45309;stroke-width:2}.runtime{fill:#e0f2fe;stroke:#0369a1;stroke-width:2}.attack{fill:#fef2f2;stroke:#b91c1c;stroke-width:2}.arrow{stroke:#475569;stroke-width:3;fill:none;marker-end:url(#a)}.dash{stroke-dasharray:8 6}</style>
+  <defs><marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto"><path d="M0 0L10 5L0 10z" fill="#475569"/></marker></defs>
+  <text x="40" y="48" class="h">Figure 3. One cycle through process truth, Modbus, and OpenPLC</text>
+  <rect x="45" y="150" width="220" height="135" rx="12" class="process"/><text x="155" y="190" text-anchor="middle" class="t">Process simulator</text><text x="155" y="222" text-anchor="middle" class="s">owns true_level_pct</text><text x="155" y="252" text-anchor="middle" class="s">creates reported value</text>
+  <rect x="80" y="345" width="170" height="80" rx="12" class="attack"/><text x="165" y="377" text-anchor="middle" class="t">Bounded case</text><text x="165" y="405" text-anchor="middle" class="s">max(5, true − 50)</text><path d="M165 345V286" class="arrow dash"/>
+  <path d="M265 217H355" class="arrow"/>
+  <rect x="355" y="135" width="235" height="165" rx="12" class="net"/><text x="472" y="173" text-anchor="middle" class="t">Modbus TCP</text><text x="472" y="207" text-anchor="middle" class="s">FC16 write %MD0</text><text x="472" y="237" text-anchor="middle" class="s">registers 2048–2049</text><text x="472" y="267" text-anchor="middle" class="s">IEEE-754 REAL</text>
+  <path d="M590 217H680" class="arrow"/>
+  <rect x="680" y="105" width="290" height="225" rx="12" class="runtime"/><text x="825" y="145" text-anchor="middle" class="t">OpenPLC Runtime</text><text x="825" y="178" text-anchor="middle" class="s">execute located controller.st</text><text x="825" y="213" text-anchor="middle" class="s">reported &lt; 45 → OPEN</text><text x="825" y="243" text-anchor="middle" class="s">reported &gt; 55 → CLOSED</text><text x="825" y="273" text-anchor="middle" class="s">otherwise retain prior state</text><text x="825" y="305" text-anchor="middle" class="s">publish %QX0.0 / coil 0</text>
+  <path d="M970 217H1070V380H590" class="arrow"/>
+  <rect x="355" y="345" width="235" height="80" rx="12" class="net"/><text x="472" y="377" text-anchor="middle" class="t">FC1 read coil 0</text><text x="472" y="405" text-anchor="middle" class="s">actual inlet command</text>
+  <path d="M355 385H265V285" class="arrow"/>
+  <text x="690" y="420" class="s">Live CLI deliberately exposes no host, port, address, value, or attack-window option.</text>
+</svg>
