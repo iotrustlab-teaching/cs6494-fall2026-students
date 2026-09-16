@@ -42,6 +42,15 @@ is unavailable. In SPHERE, the same short commands select the real
 OpenPLC/Modbus path automatically; the local fallback is explicitly labeled
 as the JSON/TCP regression path.
 
+**Deeper dive (optional).** `preflight.sh` is a small wrapper around
+`preflight.py`. The base check verifies Python, the released files, and a
+writable evidence directory. In a prepared realization,
+`./preflight.sh --require-sphere` additionally checks the course identity and
+expiry variables, `pymodbus`, `tcpdump`, `tshark`, the fixed packet-capture
+privilege, and reachability of the fixed OpenPLC Modbus endpoint. It does not
+install software, start services, or change the controller. Run
+`./preflight.sh --help` to inspect its one optional flag.
+
 ## Part A — Read the program (35–45 minutes)
 
 **Scaffolded mechanics.** Run `./analyze.sh`. Inspect
@@ -63,6 +72,15 @@ what a later execution says *did* happen.
 
 **CTF1 transfer.** Read an unfamiliar controller and locate the leverage point
 without being handed the answer.
+
+**Deeper dive (optional).** `analyze.sh` forwards its arguments to
+`static_view.py`. That script reads `representations/controller.c`, checks for
+the expected controller symbols, and writes `controller_cfg.dot` plus
+`dependency_map.json`. Use `./analyze.sh --out runs/my-analysis` to choose a
+fresh output directory, then inspect the DOT edges and JSON fields. This is a
+transparent teaching extractor, not a general-purpose C analyzer, but the
+control-flow and data-dependency questions it exposes are the same questions
+asked by production static-analysis tools.
 
 ## Part B — Map PLC logic and network authority (45–60 minutes)
 
@@ -96,6 +114,16 @@ objects without treating representations as interchangeable proof.
 **CTF1 transfer.** Discover observation and action surfaces, then bound what
 each capability actually permits.
 
+**Deeper dive (optional).** `show_network.sh` calls `show_network.py`, which
+invokes the real `tshark` CLI on the saved `network.pcap`, selects Modbus
+packets, correlates requests and responses by transaction ID, and decodes the
+two 16-bit `%MD0` words as one IEEE-754 REAL. Inspect `FIELDS`, `OPERATIONS`,
+and `decode_real` in that script. On your own saved capture, you may try a
+read-only display filter such as
+`tshark -r RUN_DIRECTORY/network.pcap -Y 'modbus.func_code == 16'`. Change
+display fields or filters, not capture targets, hosts, addresses, or live
+traffic outside your assigned realization.
+
 ## Part C — Predict, then execute (45–60 minutes)
 
 **Scaffolded mechanics.** Before executing, write a prediction for the nominal
@@ -126,6 +154,18 @@ response and physical consequence; each requires separate evidence.
 
 **CTF1 transfer.** Act inside a bounded environment and determine what actually
 happened across layers.
+
+**Deeper dive (optional).** `run_nominal.sh` and `run_spoof.sh` are dispatch
+wrappers. When `HW2_TRANSPORT=modbus_tcp`, they call
+`modbus_tank_run.py`: each cycle writes the fixed reported-level register pair,
+waits for the real OpenPLC scan, reads coil 0, advances the process model, and
+records a pcap plus aligned evidence tables. Its endpoint, addresses, value
+floor, and manipulation window are deliberately not command-line parameters.
+The local fallback calls `hw2_lab.py`, where you can safely explore timing in a
+fresh bundle, for example
+`./run_case.sh sensor_spoof --duration 48 --tick 0.5 --out runs/spoof-48s`.
+Compare the two runners to identify which layers are real tooling, emulated,
+simulated, or reconstructed.
 
 ## Part D — Bounded search and oracle (45–60 minutes)
 
@@ -159,6 +199,15 @@ execution while keeping the claim bounded.
 **CTF1 transfer.** Replace random poking with a deliberate investigation
 strategy.
 
+**Deeper dive (optional).** `search.sh` forwards to `search_cases.py`. The
+script takes the Cartesian product of `--initial`, `--start`, and `--bias`,
+constructs a fresh tank and retained controller state for every candidate, and
+evaluates the process-truth property over a 36-second horizon. Try
+`./search.sh --initial 45 55 --start 6 10 --bias -25 -40 --out runs/my-grid.csv`.
+Read `evaluate()` to see the 5% reported-value floor, state update order, and
+exact point at which the oracle is sampled. These are experiment parameters,
+not arbitrary network targets.
+
 ## Part E — Evidence-backed conclusion (30–45 minutes)
 
 **Scaffolded mechanics.** Use `network.pcap`, its derived
@@ -190,6 +239,16 @@ limits.
 **CTF1 transfer.** Produce an evidence-backed postmortem rather than merely
 reporting success or failure.
 
+**Deeper dive (optional).** `show_evidence.sh` runs
+`evidence_summary.py`, which first validates the bundle and then selects the
+smallest fields needed for its printed claims. `collect.sh` independently
+checks required files, columns, schema version, pcap presence, cross-file
+verdict agreement, and the SHA-256 manifest. The inspectable oracle in
+`property_oracle.py` evaluates `always(true_level_pct < 90)` over
+`process.csv`. For a non-destructive sensitivity check, try
+`python3 property_oracle.py RUN_DIRECTORY --max-level 85 --no-write`; keep the
+required 90% verdict unchanged and label the alternate threshold separately.
+
 ## Optional bonus exploration — OpenPLC Editor
 
 This exploration is optional and carries no penalty if skipped. OpenPLC Editor
@@ -211,6 +270,14 @@ translation does not retain the ST `AT` locations. Therefore it cannot replace
 `controller.st` in the live Docker/OpenPLC path and is not evidence that the
 program was deployed or executed.
 
+**Deeper dive (optional).** The project folder contains `plc.xml`, the
+PLCopen interchange representation that the Editor renders, and
+`beremiz.xml`, the small project descriptor. The required runtime instead
+mounts the located `controller.st`; OpenPLC's runtime toolchain compiles that ST
+and generates the I/O glue used by the process connection. Edit only a copy of
+the Editor project and compare its exported logic with the original rather
+than substituting it into the live lab.
+
 ## Finish and recover
 
 ```bash
@@ -219,6 +286,14 @@ program was deployed or executed.
 
 Confirm your evidence still exists, download the required bundle/memo, and
 stop or release your assigned realization using the course-provided control.
+
+**Deeper dive (optional).** `reset.sh` also dispatches by transport. The local
+path removes only an allowlist of transient scaffold files and refuses an
+unexpected runtime directory; it retains evidence bundles. The Modbus path
+reconnects to the fixed controller, writes a disclosed 56% initialization
+value, waits for a scan, and confirms coil 0 is CLOSED. This makes the retained
+hysteresis state explicit rather than assuming that a new command or page load
+reset the PLC.
 
 ## Instructor demonstration — not required student work
 
