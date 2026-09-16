@@ -190,6 +190,27 @@ limits.
 **CTF1 transfer.** Produce an evidence-backed postmortem rather than merely
 reporting success or failure.
 
+## Optional bonus exploration — OpenPLC Editor
+
+This exploration is optional and carries no penalty if skipped. OpenPLC Editor
+is a programming environment; the OpenPLC Runtime used in the required lab is
+the component that compiles and executes the located ST.
+
+1. Install or open OpenPLC Editor v3 on your own computer.
+2. Choose **Open Project** and select the entire
+   `representations/openplc_editor_project` folder (not an individual file).
+3. Expand the `HW2TankController` program and compare its variable interface
+   and ST body with `representations/controller.st`.
+4. Find the retained `inlet_valve_open` state, both threshold comparisons, and
+   the branch that leaves the previous command unchanged.
+
+As you explore, consider: What is easier to understand in the Editor than in
+the C/CFG view? What still requires runtime or process evidence? The prepared
+PLCopen XML intentionally supports visual inspection only: the current
+translation does not retain the ST `AT` locations. Therefore it cannot replace
+`controller.st` in the live Docker/OpenPLC path and is not evidence that the
+program was deployed or executed.
+
 ## Finish and recover
 
 ```bash
