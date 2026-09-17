@@ -253,8 +253,8 @@ captured artifacts remain authoritative.
 `preflight.sh` wraps `preflight.py`. The base check verifies Python, released
 files, and a writable evidence directory. In a prepared realization,
 `./preflight.sh --require-sphere` additionally checks course identity and
-expiry, `pymodbus`, `tcpdump`, `tshark`, fixed capture privilege, and the fixed
-OpenPLC endpoint. The run wrappers then select the live OpenPLC/Modbus path
+expiry, Clang, Graphviz, Frama-C, `pymodbus`, `tcpdump`, `tshark`, fixed capture
+privilege, and the fixed OpenPLC endpoint. The run wrappers then select the live OpenPLC/Modbus path
 only when `HW2_TRANSPORT=modbus_tcp`; otherwise they select the labeled local
 fallback. Preflight validates but does not install, start, or modify anything.
 
@@ -262,16 +262,21 @@ fallback. Preflight validates but does not install, start, or modify anything.
 
 ![Static analysis artifact pipeline](figures/02-static-analysis.svg)
 
-`analyze.sh` forwards to `static_view.py`, which parses the supported
-`controller_step` C statements and derives the branch edges and retained-state
-dependency from the source. It writes `controller_cfg.dot` and
-`dependency_map.json`. Try `./analyze.sh --out runs/my-analysis`. To test a
-source edit without changing the live PLC, analyze a *copy* with
+`analyze.sh` orchestrates two real analysis tools. Clang's
+`debug.DumpCFG` generates the C control-flow blocks and edges; Frama-C Eva
+and `-deps` report which inputs may affect the valve decision, including
+`SELF` when the previous state can be retained. `static_view.py` only
+converts those outputs to `controller_cfg.dot`/`.svg` and
+`dependency_map.json`. The original tool output is retained under `raw/`;
+`TOOLCHAIN.md` records the exact versions, commands, source hash, harness
+assumptions, and limits. Try `./analyze.sh --out runs/my-analysis`. Analyze
+a *copy* of the C source with
 `./analyze.sh --source /path/to/controller-copy.c --out runs/edited-analysis`;
-compare its DOT and JSON with the original. Unsupported control constructs
-fail closed instead of producing a canned graph. This bounded teaching
-analyzer is not a general C compiler analysis, and a feasible path does not
-establish execution or physical reachability.
+the live PLC is unaffected. On a local machine without Frama-C, the script
+clearly marks dependencies unavailable rather than substituting an imitation.
+On the prepared SPHERE node, missing Frama-C is an error. A CFG or possible
+dependency does not establish execution, packet traversal, or physical
+reachability. See [the full toolchain map](TOOLCHAIN.md).
 
 ### 3. One OpenPLC/Modbus cycle
 
@@ -294,7 +299,9 @@ fallback you may safely explore timing in a fresh bundle:
 `tcpdump` captures the isolated interface into `network.pcap`.
 `show_network.py` invokes the real `tshark` CLI, filters Modbus, correlates
 requests and responses by transaction ID, and decodes the two `%MD0` words as
-one IEEE-754 REAL. On your own capture, try the read-only filter:
+one IEEE-754 REAL. The live bundle's `TOOLCHAIN.json` records the actual
+capture/decode commands and tool versions. On your own capture, try the
+read-only filter:
 
 ```bash
 tshark -r RUN_DIRECTORY/network.pcap -Y 'modbus.func_code == 16'

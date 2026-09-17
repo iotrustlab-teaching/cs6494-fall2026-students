@@ -1,301 +1,211 @@
 #!/usr/bin/env python3
-"""Derive a source-based CFG for the teaching controller's supported C subset.
-
-The analyzer handles blocks, if/else, simple statements, and returns. It
-rejects unsupported control constructs rather than emitting a misleading
-diagram. It does not preprocess macros or analyze arbitrary C programs.
-"""
+"""Run Clang CFG and Frama-C dependency analyses; normalize their raw output."""
 
 from __future__ import annotations
 
 import argparse
 import hashlib
 import json
+import os
 import pathlib
 import re
-from dataclasses import dataclass
-from typing import Optional
+import shutil
+import subprocess
+import sys
 
 HERE = pathlib.Path(__file__).resolve().parent
-FUNCTION = re.compile(r"\b(?:bool|_Bool)\s+controller_step\s*\((.*?)\)\s*\{", re.S)
-BRACES = re.compile(
-    r'/\*.*?\*/|//[^\n]*|"(?:\\.|[^"\\])*"|\'(?:\\.|[^\'\\])*\'|[{}]',
-    re.S,
-)
-LEXEME = re.compile(
-    r'\s+|/\*.*?\*/|//[^\n]*|"(?:\\.|[^"\\])*"|\'(?:\\.|[^\'\\])*\''
-    r'|->|==|!=|<=|>=|&&|\|\||\+\+|--|[A-Za-z_]\w*'
-    r'|\d+(?:\.\d+)?(?:[eE][+-]?\d+)?[fFlLuU]*'
-    r'|[{}();=<>+\-*/!,.\[\]&|?]',
-    re.S,
-)
-UNSUPPORTED = {"for", "while", "do", "switch", "goto", "break", "continue"}
+BLOCK = re.compile(r"^\s*\[(B\d+)(?: \((ENTRY|EXIT)\))?\]\s*$")
+SUCCESSORS = re.compile(r"^\s*Succs \(\d+\):\s*(.*)$")
+FRAMAC_FUNCTION = re.compile(r"\[from\] Function controller_step:\n((?:  [^\n]*\n)+)")
+FRAMAC_ROW = re.compile(r"^  (\S+) FROM (.+)$", re.M)
 
 
-@dataclass(frozen=True)
-class Token:
-    text: str
-    start: int
-    end: int
+def run(command: list[str]) -> str:
+    result = subprocess.run(command, capture_output=True, text=True, check=False)
+    combined = result.stdout + result.stderr
+    if result.returncode:
+        raise RuntimeError(f"analysis command failed ({result.returncode}): {' '.join(command)}\n{combined}")
+    return combined
 
 
-@dataclass(frozen=True)
-class Statement:
-    kind: str
-    text: str
-    yes: tuple["Statement", ...] = ()
-    no: tuple["Statement", ...] = ()
+def version(command: str) -> str:
+    result = subprocess.run([command, "--version"], capture_output=True, text=True, check=False)
+    return (result.stdout or result.stderr).strip().splitlines()[0]
 
 
-def function_parts(source: str) -> tuple[str, str]:
-    match = FUNCTION.search(source)
-    if match is None:
-        raise ValueError("expected a bool controller_step(...) definition")
-    opening = match.end() - 1
-    depth = 0
-    for item in BRACES.finditer(source, opening):
-        if item.group() == "{":
-            depth += 1
-        elif item.group() == "}":
-            depth -= 1
-            if depth == 0:
-                return match.group(1), source[opening + 1:item.start()]
-    raise ValueError("controller_step has an unclosed body")
+def clang_binary() -> str:
+    candidate = os.environ.get("HW2_CLANG") or shutil.which("clang-14") or shutil.which("clang")
+    if not candidate:
+        raise RuntimeError("Clang is required for CFG generation (install clang or set HW2_CLANG)")
+    return candidate
 
 
-def tokenize(body: str) -> list[Token]:
-    tokens = []
-    position = 0
-    while position < len(body):
-        match = LEXEME.match(body, position)
-        if match is None:
-            raise ValueError("unsupported C token near " + repr(body[position:position + 24]))
-        word = match.group()
-        if not word.isspace() and not word.startswith(("/*", "//")):
-            tokens.append(Token(word, position, match.end()))
-        position = match.end()
-    return tokens
+def framac_binary() -> str | None:
+    candidate = os.environ.get("HW2_FRAMAC") or shutil.which("frama-c")
+    if candidate:
+        return candidate
+    provisioned = pathlib.Path("/opt/cs6494/frama-c-bundle/bin/frama-c")
+    return str(provisioned) if provisioned.is_file() else None
 
 
-class Parser:
-    def __init__(self, body: str):
-        self.body = body
-        self.tokens = tokenize(body)
-        self.index = 0
-
-    def peek(self) -> str:
-        return self.tokens[self.index].text if self.index < len(self.tokens) else ""
-
-    def take(self, expected: Optional[str] = None) -> Token:
-        if self.index >= len(self.tokens):
-            raise ValueError("unexpected end of controller_step")
-        token = self.tokens[self.index]
-        if expected is not None and token.text != expected:
-            raise ValueError("expected " + repr(expected) + ", found " + repr(token.text))
-        self.index += 1
-        return token
-
-    def enclosed_condition(self) -> str:
-        self.take("(")
-        start = self.index
-        depth = 1
-        while depth:
-            word = self.take().text
-            depth += (word == "(") - (word == ")")
-        end = self.index - 1
-        if start == end:
-            raise ValueError("empty branch condition")
-        if any(token.text in {"&&", "||", "?"} for token in self.tokens[start:end]):
-            raise ValueError("compound conditions are outside the supported CFG subset")
-        return self.body[self.tokens[start].start:self.tokens[end - 1].end].strip()
-
-    def simple_expression(self) -> str:
-        start = self.index
-        depth = 0
-        while True:
-            word = self.take().text
-            if word in {"(", "["}:
-                depth += 1
-            elif word in {")", "]"}:
-                depth -= 1
-            elif word == ";" and depth == 0:
-                break
-            elif word in {"{", "}"}:
-                raise ValueError("unsupported compound statement")
-        end = self.index - 1
-        if start == end:
-            raise ValueError("empty C statement")
-        if any(token.text in {"&&", "||", "?"} for token in self.tokens[start:end]):
-            raise ValueError("compound expressions are outside the supported CFG subset")
-        return self.body[self.tokens[start].start:self.tokens[end - 1].end].strip()
-
-    def branch(self) -> tuple[Statement, ...]:
-        if self.peek() == "{":
-            self.take("{")
-            result = self.sequence("}")
-            self.take("}")
-            return result
-        return (self.statement(),)
-
-    def statement(self) -> Statement:
-        word = self.peek()
-        if word in UNSUPPORTED:
-            raise ValueError(word + " is outside the supported CFG subset")
-        if word == "if":
-            self.take("if")
-            condition = self.enclosed_condition()
-            yes = self.branch()
-            no = ()
-            if self.peek() == "else":
-                self.take("else")
-                no = self.branch()
-            return Statement("if", condition, yes, no)
-        if word == "else":
-            raise ValueError("else without if")
-        if word == "return":
-            self.take("return")
-            return Statement("return", self.simple_expression())
-        return Statement("expression", self.simple_expression())
-
-    def sequence(self, until: str = "") -> tuple[Statement, ...]:
-        result = []
-        while self.peek() != until:
-            if not self.peek():
-                if until:
-                    raise ValueError("unclosed C block")
-                break
-            if self.peek() == "{":
-                self.take("{")
-                result.extend(self.sequence("}"))
-                self.take("}")
-            else:
-                result.append(self.statement())
-        return tuple(result)
-
-
-def walk(statements: tuple[Statement, ...]):
-    for statement in statements:
-        yield statement
-        if statement.kind == "if":
-            yield from walk(statement.yes)
-            yield from walk(statement.no)
-
-
-def return_write_states(
-    statements: tuple[Statement, ...], field: str, states: set[bool], found: set[bool]
-) -> set[bool]:
-    for statement in statements:
-        if statement.kind == "if":
-            yes = return_write_states(statement.yes, field, set(states), found)
-            no = return_write_states(statement.no, field, set(states), found) if statement.no else set(states)
-            states = yes | no
-        elif statement.kind == "return":
-            found.update(states)
-            states = set()
-        elif re.search(r"\bstate\s*->\s*" + re.escape(field) + r"\s*=(?!=)", statement.text):
-            states = {True for _ in states}
-    return states
-
-
-def analyze_source(source: str) -> tuple[str, dict]:
-    parameters, body = function_parts(source)
-    statements = Parser(body).sequence()
-    flat = list(walk(statements))
-    conditions = [item.text for item in flat if item.kind == "if"]
-    returns = [item.text for item in flat if item.kind == "return"]
-    if not conditions or not returns:
-        raise ValueError("controller_step needs a branch and a return")
-    fields = {
-        field for expression in returns
-        for field in re.findall(r"\bstate\s*->\s*([A-Za-z_]\w*)", expression)
-    }
-    if len(fields) != 1:
-        raise ValueError("expected one state field in controller return")
-    field = fields.pop()
-    parameter_names = [
-        re.findall(r"[A-Za-z_]\w*", item)[-1]
-        for item in parameters.split(",") if re.findall(r"[A-Za-z_]\w*", item)
-    ]
-    observation = next(
-        (name for name in parameter_names if name != "state"
-         and any(re.search(r"\b" + re.escape(name) + r"\b", condition) for condition in conditions)),
-        None,
-    )
-    if observation is None:
-        raise ValueError("no function parameter controls a branch")
-
-    nodes: list[tuple[str, str, str]] = []
-    edges: list[tuple[str, str, str]] = []
-
-    def node(label: str, shape: str = "box") -> str:
-        identifier = "n" + str(len(nodes))
-        nodes.append((identifier, label, shape))
-        return identifier
-
-    def build(sequence: tuple[Statement, ...], successor: str) -> str:
-        current = successor
-        for item in reversed(sequence):
-            if item.kind == "if":
-                decision = node(item.text + "?", "diamond")
-                yes = build(item.yes, current) if item.yes else current
-                no = build(item.no, current) if item.no else current
-                edges.extend([(decision, yes, "true"), (decision, no, "false")])
-                current = decision
-            else:
-                label = ("return " if item.kind == "return" else "") + item.text + ";"
-                step = node(label)
-                edges.append((step, exit_node if item.kind == "return" else current, ""))
-                current = step
-        return current
-
-    exit_node = node("exit", "oval")
-    first = build(statements, exit_node)
-    entry = node("entry", "oval")
-    edges.append((entry, first, ""))
-    lines = ["digraph controller_step {", "  rankdir=TB;", "  node [shape=box];"]
-    for identifier, label, shape in nodes:
-        lines.append("  " + identifier + " [label=" + json.dumps(label) + ", shape=" + shape + "];")
-    for source_id, target_id, label in edges:
-        suffix = " [label=" + json.dumps(label) + "]" if label else ""
-        lines.append("  " + source_id + " -> " + target_id + suffix + ";")
+def parse_clang_cfg(dump: str) -> tuple[str, list[dict]]:
+    blocks: list[dict] = []
+    current: dict | None = None
+    for line in dump.splitlines():
+        header = BLOCK.match(line)
+        if header:
+            current = {"id": header.group(1), "kind": header.group(2), "lines": [], "successors": []}
+            blocks.append(current)
+            continue
+        if current is None:
+            continue
+        successor = SUCCESSORS.match(line)
+        if successor:
+            current["successors"] = re.findall(r"B\d+", successor.group(1))
+        elif line.strip() and not line.lstrip().startswith("Preds "):
+            current["lines"].append(line.strip())
+    if not any(block["kind"] == "ENTRY" for block in blocks) or not any(
+        block["kind"] == "EXIT" for block in blocks
+    ):
+        raise ValueError("Clang did not emit the expected controller_step CFG")
+    identifiers = {block["id"] for block in blocks}
+    if any(next_id not in identifiers for block in blocks for next_id in block["successors"]):
+        raise ValueError("Clang CFG contains an unresolved successor")
+    lines = ["digraph controller_step {", "  rankdir=TB;", "  node [shape=box, fontname=monospace];"]
+    for block in blocks:
+        label = block["id"] + (" (" + block["kind"].lower() + ")" if block["kind"] else "")
+        if block["lines"]:
+            label += "\n" + "\n".join(block["lines"])
+        shape = "oval" if block["kind"] else "box"
+        lines.append(f'  {block["id"]} [label={json.dumps(label)}, shape={shape}];')
+    for block in blocks:
+        for index, next_id in enumerate(block["successors"]):
+            branch = "true" if index == 0 else "false"
+            suffix = f' [label="{branch}"]' if len(block["successors"]) == 2 else ""
+            lines.append(f'  {block["id"]} -> {next_id}{suffix};')
     lines.append("}")
+    return "\n".join(lines) + "\n", blocks
 
-    return_states: set[bool] = set()
-    return_write_states(statements, field, {False}, return_states)
-    dependency = {
-        "analysis_method": "source-derived structured CFG for controller_step",
-        "source_sha256": hashlib.sha256(source.encode("utf-8")).hexdigest(),
-        "external_observation": observation,
-        "control_dependencies": conditions,
-        "retained_state": field if False in return_states else None,
-        "actuator_decision": field,
-        "assumption_to_question": "the reported observation faithfully represents the process state",
-        "student_prompt": "Explain a path that can keep the inlet open even while true tank level rises.",
+
+def parse_framac_dependencies(raw: str) -> dict:
+    section = FRAMAC_FUNCTION.search(raw)
+    if section is None:
+        raise ValueError("Frama-C did not report controller_step dependencies")
+    rows = {match.group(1): match.group(2).strip() for match in FRAMAC_ROW.finditer(section.group(1))}
+    if "state" not in rows or "\\result" not in rows:
+        raise ValueError("Frama-C controller_step dependency rows are incomplete")
+    if "reported_level_pct" not in rows["state"]:
+        raise ValueError("Frama-C did not establish the reported-level dependency")
+    return {
+        "state_row": rows["state"],
+        "result_row": rows["\\result"],
+        "retains_previous_state": "(and SELF)" in rows["state"],
     }
-    return "\n".join(lines) + "\n", dependency
 
 
-def generate(output: pathlib.Path, source_path: Optional[pathlib.Path] = None) -> pathlib.Path:
-    source_file = source_path or HERE / "representations" / "controller.c"
-    dot, dependency = analyze_source(source_file.read_text(encoding="utf-8"))
+def harness_for(source: pathlib.Path, raw_dir: pathlib.Path) -> pathlib.Path:
+    default = HERE / "representations" / "controller.c"
+    harness = HERE / "representations" / "framac_harness.c"
+    target = raw_dir / "framac_harness.c"
+    if source.resolve() == default.resolve():
+        target.write_text(harness.read_text())
+        return target
+    escaped = str(source.resolve()).replace("\\", "\\\\").replace('"', '\\"')
+    target.write_text(harness.read_text().replace('"controller.c"', f'"{escaped}"'))
+    return target
+
+
+def generate(output: pathlib.Path, source_path: pathlib.Path | None = None,
+             require_framac: bool = False) -> pathlib.Path:
+    source = (source_path or HERE / "representations" / "controller.c").resolve()
+    if not source.is_file():
+        raise FileNotFoundError(source)
     output.mkdir(parents=True, exist_ok=True)
-    (output / "controller_cfg.dot").write_text(dot, encoding="utf-8")
-    (output / "dependency_map.json").write_text(
-        json.dumps(dependency, indent=2) + "\n", encoding="utf-8"
-    )
+    raw_dir = output / "raw"
+    raw_dir.mkdir(exist_ok=True)
+    clang = clang_binary()
+    clang_command = [clang, "-std=c11", "--analyze", "-o", os.devnull,
+                     "-Xclang", "-analyze-function=controller_step",
+                     "-Xclang", "-analyzer-checker=debug.DumpCFG", str(source)]
+    clang_raw = run(clang_command)
+    (raw_dir / "clang_cfg.txt").write_text(clang_raw)
+    dot, blocks = parse_clang_cfg(clang_raw)
+    (output / "controller_cfg.dot").write_text(dot)
+    dot_binary = shutil.which("dot")
+    if dot_binary:
+        subprocess.run([dot_binary, "-Tsvg", str(output / "controller_cfg.dot"),
+                        "-o", str(output / "controller_cfg.svg")], check=True)
+
+    frama = framac_binary()
+    if require_framac and frama is None:
+        raise RuntimeError("Frama-C is required for dependency analysis on SPHERE")
+    dependencies = None
+    frama_command = None
+    if frama:
+        harness = harness_for(source, raw_dir)
+        frama_command = [frama, "-eva", "-deps", "-eva-slevel", "100",
+                         f"-cpp-extra-args=-I{source.parent}", str(harness)]
+        frama_raw = run(frama_command)
+        (raw_dir / "framac_dependencies.txt").write_text(frama_raw)
+        dependencies = parse_framac_dependencies(frama_raw)
+        if re.search(r"\b[1-9]\d* alarms? generated", frama_raw):
+            raise RuntimeError("Frama-C reported analysis alarms; inspect raw/framac_dependencies.txt")
+    else:
+        for stale in ("framac_harness.c", "framac_dependencies.txt"):
+            stale_file = raw_dir / stale
+            if stale_file.exists():
+                stale_file.unlink()
+
+    contract = json.loads((HERE / "representations" / "controller_contract.json").read_text())
+    observation = next(item for item in contract["variables"] if item["concept"] == "reported process observation")
+    actuator = next(item for item in contract["variables"] if item["concept"] == "retained actuator decision")
+    result = {
+        "analysis_method": {"cfg": "Clang Static Analyzer debug.DumpCFG",
+                            "dependencies": "Frama-C Eva and -deps" if dependencies else "unavailable"},
+        "source_sha256": hashlib.sha256(source.read_bytes()).hexdigest(),
+        "cfg_blocks": [{"id": block["id"], "successors": block["successors"]} for block in blocks],
+        "external_observation": observation["c"],
+        "actuator_decision": actuator["c"],
+        "framac_dependencies": dependencies,
+        "retained_state": actuator["c"] if dependencies and dependencies["retains_previous_state"] else None,
+        "dependency_status": "analyzed" if dependencies else "Frama-C unavailable; no dependency claim",
+        "mapping_source": "representations/controller_contract.json (names only, not analysis)",
+        "limitation": "A possible source dependency does not prove a live packet, feasible attack, or physical consequence.",
+    }
+    (output / "dependency_map.json").write_text(json.dumps(result, indent=2) + "\n")
+    provenance = [
+        "# Toolchain for this analysis", "",
+        f"- Source: `{source}` (SHA-256 `{result['source_sha256']}`)",
+        f"- Clang: `{version(clang)}`", f"- CFG command: `{' '.join(clang_command)}`",
+        "- Raw CFG: `raw/clang_cfg.txt`; DOT/SVG are projections of Clang blocks and successor edges.",
+    ]
+    if frama and frama_command:
+        provenance += [f"- Frama-C: `{version(frama)}`",
+                       f"- Dependency command: `{' '.join(frama_command)}`",
+                       "- Raw Eva/dependencies: `raw/framac_dependencies.txt`; the exact harness is `raw/framac_harness.c`; `SELF` is Frama-C's retained-value indicator.",
+                       "- Harness: initialized valve state in {0,1}; reported level in [0,100]; no claim for values outside that model."]
+    else:
+        provenance += ["- Frama-C: unavailable; dependency fields are intentionally unverified."]
+    provenance += ["", "Clang CFG shows possible source-level control flow, not paths actually taken.",
+                   "Frama-C's dependency result is an over-approximation under the documented harness.",
+                   "Neither tool analyzes the ST compiler, Modbus packets, or tank physics.\n"]
+    (output / "TOOLCHAIN.md").write_text("\n".join(provenance))
     return output
 
 
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--out", type=pathlib.Path, default=HERE / "runs" / "analysis")
-    parser.add_argument(
-        "--source", type=pathlib.Path,
-        default=HERE / "representations" / "controller.c",
-        help="C file to analyze (use a copy; this never changes the live PLC)",
-    )
+    parser.add_argument("--source", type=pathlib.Path,
+                        default=HERE / "representations" / "controller.c")
+    parser.add_argument("--require-framac", action="store_true",
+                        help="fail instead of producing a CFG-only result")
     args = parser.parse_args()
-    print(generate(args.out, args.source))
+    try:
+        print(generate(args.out, args.source, args.require_framac or bool(os.environ.get("HW2_INSTANCE_ID"))))
+    except (FileNotFoundError, ValueError, RuntimeError) as error:
+        print(f"analysis failed: {error}", file=sys.stderr)
+        return 2
     return 0
 
 
