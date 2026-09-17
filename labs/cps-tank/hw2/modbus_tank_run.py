@@ -14,6 +14,7 @@ import csv
 import datetime as dt
 import getpass
 import hashlib
+import importlib.metadata
 import inspect
 import json
 import os
@@ -187,13 +188,11 @@ def write_manifest(output: pathlib.Path) -> None:
     (output / "manifest.sha256").write_text("\n".join(lines) + "\n", encoding="utf-8")
 
 
-def start_capture(output: pathlib.Path) -> subprocess.Popen[str]:
-    """Start the fixed course capture; no endpoint or filter is student supplied."""
-
+def capture_command(output: pathlib.Path) -> list[str]:
     tcpdump = shutil.which("tcpdump")
     if tcpdump is None:
         raise RuntimeError("prepared image is missing tcpdump")
-    command = [
+    return [
         "sudo",
         "-n",
         tcpdump,
@@ -208,6 +207,12 @@ def start_capture(output: pathlib.Path) -> subprocess.Popen[str]:
         str(output / "network.pcap"),
         f"tcp port {CONTROLLER_PORT} and host {CONTROLLER_HOST}",
     ]
+
+
+def start_capture(output: pathlib.Path) -> subprocess.Popen[str]:
+    """Start the fixed course capture; no endpoint or filter is student supplied."""
+
+    command = capture_command(output)
     process = subprocess.Popen(
         command,
         stdout=subprocess.DEVNULL,
@@ -236,9 +241,7 @@ def stop_capture(process: subprocess.Popen[str]) -> None:
         raise RuntimeError("fixed packet capture failed: " + error.strip())
 
 
-def project_pcap(output: pathlib.Path, *, expected_requests: int) -> None:
-    """Derive the readable Modbus table from the captured packets themselves."""
-
+def tshark_command(output: pathlib.Path) -> list[str]:
     tshark = shutil.which("tshark")
     if tshark is None:
         raise RuntimeError("prepared image is missing tshark")
@@ -261,6 +264,13 @@ def project_pcap(output: pathlib.Path, *, expected_requests: int) -> None:
     ]
     for field in PCAP_FIELDS:
         command.extend(["-e", field])
+    return command
+
+
+def project_pcap(output: pathlib.Path, *, expected_requests: int) -> None:
+    """Derive the readable Modbus table from the captured packets themselves."""
+
+    command = tshark_command(output)
     result = subprocess.run(command, check=True, capture_output=True, text=True)
     decoded = list(csv.reader(result.stdout.splitlines()))
     if not decoded:
@@ -589,6 +599,31 @@ def run_case(
     (output / "metadata.json").write_text(
         json.dumps(metadata, indent=2) + "\n", encoding="utf-8"
     )
+    if capture:
+        def first_version(binary: str) -> str:
+            result = subprocess.run(
+                [shutil.which(binary) or binary, "--version"],
+                capture_output=True, text=True, check=True,
+            )
+            return (result.stdout or result.stderr).splitlines()[0]
+
+        toolchain = {
+            "openplc_source_commit": "b5d41356dab4aeadca0dd7ca64ba542f870b595d",
+            "pymodbus_version": importlib.metadata.version("pymodbus"),
+            "tcpdump_version": first_version("tcpdump"),
+            "tshark_version": first_version("tshark"),
+            "capture_command": capture_command(output),
+            "decode_command": tshark_command(output),
+            "source_pcap": "network.pcap",
+            "derived_table": "modbus_trace.csv",
+            "limitations": (
+                "The pcap establishes observed Modbus exchange on this isolated link; "
+                "it does not establish physical tank truth or all possible behavior."
+            ),
+        }
+        (output / "TOOLCHAIN.json").write_text(
+            json.dumps(toolchain, indent=2) + "\n", encoding="utf-8"
+        )
     write_manifest(output)
     print(
         f"{case}: {property_result['verdict']} - "

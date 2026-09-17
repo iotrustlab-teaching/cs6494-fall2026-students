@@ -74,6 +74,20 @@ def inspect(require_sphere: bool = False) -> dict:
     sphere_values = {name: os.environ.get(name, "").strip() for name in SPHERE_ENVIRONMENT}
     sphere_present = all(sphere_values.values())
     if require_sphere:
+        analysis_tools = [
+            name for name in ("clang-14", "dot")
+            if shutil.which(name) is None
+        ]
+        framac = pathlib.Path("/opt/cs6494/frama-c-bundle/bin/frama-c")
+        record(
+            "program-analysis tools",
+            not analysis_tools and framac.is_file(),
+            "Clang 14, Graphviz, and Frama-C present"
+            if not analysis_tools and framac.is_file()
+            else "missing: " + ", ".join(
+                analysis_tools + ([] if framac.is_file() else ["Frama-C"])
+            ),
+        )
         transport_ok = sphere_values["HW2_TRANSPORT"] == "modbus_tcp"
         record(
             "prepared SPHERE identity",

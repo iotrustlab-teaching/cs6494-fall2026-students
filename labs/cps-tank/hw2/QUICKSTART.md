@@ -35,6 +35,9 @@ Each run prints the path to a new evidence directory and refuses to overwrite
 an existing one. The prepared process node sets `HW2_TRANSPORT=modbus_tcp`, so
 the short run commands use real OpenPLC and captured Modbus TCP. The authorized
 local fallback uses modeled JSON/TCP semantics and produces no packet capture.
+On a local machine without Frama-C, `./analyze.sh` still produces Clang's CFG
+but explicitly marks the dependency result unavailable; the prepared SPHERE
+node requires both analyzers. See [the toolchain map](TOOLCHAIN.md).
 SPHERE dependencies should already be installed; report a failed preflight
 line to staff rather than installing or discovering infrastructure yourself.
 
