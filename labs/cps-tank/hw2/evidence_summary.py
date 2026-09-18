@@ -33,6 +33,10 @@ def summarize(bundle: pathlib.Path) -> dict:
             row for row in network_rows if row["operation"] == "replace_whitelisted_value"
         ]
     first = result.get("first_violation")
+    onset = ladder.get(
+        "physical_violation_onset_detection",
+        {"verdict": "NOT_RECORDED"},
+    )
     return {
         "case": metadata["case"],
         "property": result["expression"],
@@ -41,6 +45,9 @@ def summarize(bundle: pathlib.Path) -> dict:
         "first_violation_s": None if first is None else first["elapsed_s"],
         "reported_oracle": ladder["reported_state_below_high_high"]["verdict"],
         "physical_oracle": ladder["physical_state_below_high_high"]["verdict"],
+        "onset_detection": onset["verdict"],
+        "onset_decision_s": onset.get("violation_causing_decision_s"),
+        "onset_reported_pct": onset.get("reported_level_at_decision_pct"),
         "modeled_network_operations": len(network_rows),
         "allowlisted_overrides": len(overrides),
         "network_evidence_kind": "pcap" if is_modbus else "semantic reconstruction",
@@ -66,9 +73,16 @@ def main() -> int:
     if item["first_violation_s"] is not None:
         print(f"First violation: {item['first_violation_s']:.1f} s")
     print(
-        "Oracle comparison: "
+        "Whole-run oracle comparison: "
         f"reported={item['reported_oracle']}, physical={item['physical_oracle']}"
     )
+    if item["onset_detection"] != "NOT_APPLICABLE":
+        print(
+            "First-violation onset: "
+            f"{item['onset_detection']} "
+            f"(decision at {item['onset_decision_s']:.1f} s used "
+            f"{item['onset_reported_pct']:.1f}%)"
+        )
     print(
         "Network view: "
         f"{item['network_evidence_kind']}; "

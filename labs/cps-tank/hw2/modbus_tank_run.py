@@ -12,7 +12,6 @@ from __future__ import annotations
 import argparse
 import csv
 import datetime as dt
-import getpass
 import hashlib
 import importlib.metadata
 import inspect
@@ -189,23 +188,14 @@ def write_manifest(output: pathlib.Path) -> None:
 
 
 def capture_command(output: pathlib.Path) -> list[str]:
-    tcpdump = shutil.which("tcpdump")
-    if tcpdump is None:
-        raise RuntimeError("prepared image is missing tcpdump")
+    capture_wrapper = pathlib.Path("/usr/local/sbin/cs6494-hw2-capture")
+    if not capture_wrapper.is_file():
+        raise RuntimeError("prepared image is missing the fixed packet-capture wrapper")
     return [
         "sudo",
         "-n",
-        tcpdump,
-        "-i",
-        CAPTURE_INTERFACE,
-        "-s",
-        "0",
-        "-U",
-        "-Z",
-        getpass.getuser(),
-        "-w",
+        str(capture_wrapper),
         str(output / "network.pcap"),
-        f"tcp port {CONTROLLER_PORT} and host {CONTROLLER_HOST}",
     ]
 
 
@@ -538,6 +528,36 @@ def run_case(
         json.dumps(property_result, indent=2) + "\n", encoding="utf-8"
     )
     reported_max = max(float(row["plc_readback_level_pct"]) for row in observation_rows)
+    first_violation = property_result.get("first_violation")
+    if first_violation is None:
+        onset_detection = {
+            "verdict": "NOT_APPLICABLE",
+            "reason": "no physical violation occurred in the bounded run",
+        }
+    else:
+        violation_index = next(
+            index
+            for index, row in enumerate(process_rows)
+            if float(row["elapsed_s"]) == float(first_violation["elapsed_s"])
+        )
+        decision_index = max(0, violation_index - 1)
+        decision_observation = observation_rows[decision_index]
+        reported_at_decision = float(decision_observation["plc_readback_level_pct"])
+        onset_detection = {
+            "verdict": (
+                "DETECTED" if reported_at_decision >= HIGH_HIGH_LEVEL else "MISSED"
+            ),
+            "first_physical_violation_s": float(first_violation["elapsed_s"]),
+            "violation_causing_decision_s": float(
+                decision_observation["elapsed_s"]
+            ),
+            "reported_level_at_decision_pct": reported_at_decision,
+            "threshold_pct": HIGH_HIGH_LEVEL,
+            "observes": (
+                "the PLC readback used for the process step immediately before "
+                "the first sampled physical violation"
+            ),
+        }
     oracle_ladder = {
         "network_capture_decoded": {
             "verdict": "PASS" if capture else "NOT_RUN",
@@ -559,7 +579,9 @@ def run_case(
         "reported_state_below_high_high": {
             "verdict": "PASS" if reported_max < HIGH_HIGH_LEVEL else "FAIL",
             "maximum_observed_pct": reported_max,
+            "scope": "whole bounded run, including post-attack aftermath",
         },
+        "physical_violation_onset_detection": onset_detection,
         "physical_state_below_high_high": property_result,
         "bounded_claim": "These verdicts describe this finite software-process run only.",
     }

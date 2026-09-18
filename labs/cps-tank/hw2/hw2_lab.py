@@ -316,6 +316,40 @@ def run_case(
     (output / "README.txt").write_text(BUNDLE_README, encoding="utf-8")
     result = check_bundle(output)
     reported_maximum = max(float(row["reported_sensor_level_pct"]) for row in observation_rows)
+    first_violation = result.get("first_violation")
+    if first_violation is None:
+        onset_detection = {
+            "verdict": "NOT_APPLICABLE",
+            "reason": "no physical violation occurred in the bounded run",
+        }
+    else:
+        violation_index = next(
+            index
+            for index, row in enumerate(process_rows)
+            if float(row["elapsed_s"]) == float(first_violation["elapsed_s"])
+        )
+        decision_index = max(0, violation_index - 1)
+        decision_observation = observation_rows[decision_index]
+        reported_at_decision = float(
+            decision_observation["controller_input_level_pct"]
+        )
+        onset_detection = {
+            "verdict": (
+                "DETECTED"
+                if reported_at_decision >= model.HIGH_HIGH_LEVEL
+                else "MISSED"
+            ),
+            "first_physical_violation_s": float(first_violation["elapsed_s"]),
+            "violation_causing_decision_s": float(
+                decision_observation["elapsed_s"]
+            ),
+            "reported_level_at_decision_pct": reported_at_decision,
+            "threshold_pct": model.HIGH_HIGH_LEVEL,
+            "observes": (
+                "the controller input used for the process step immediately before "
+                "the first sampled physical violation"
+            ),
+        }
     oracle_ladder = {
         "execution_completed": {"verdict": "PASS", "observes": "runner completion"},
         "controller_responsive": {
@@ -326,7 +360,9 @@ def run_case(
             "verdict": "PASS" if reported_maximum < model.HIGH_HIGH_LEVEL else "FAIL",
             "observes": "reported_sensor_level_pct",
             "maximum_observed_pct": reported_maximum,
+            "scope": "whole bounded run, including post-attack aftermath",
         },
+        "physical_violation_onset_detection": onset_detection,
         "physical_state_below_high_high": {
             "verdict": result["verdict"],
             "observes": "true_level_pct",

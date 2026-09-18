@@ -66,6 +66,11 @@ projection derived from that pcap). For the authorized local fallback, use
 `network_trace.csv` and `messages.jsonl` only as **semantic reconstruction**;
 neither is packet evidence.
 
+For a spoof run, distinguish the whole-run reported-state verdict from
+`physical_violation_onset_detection`. The latter checks the controller input
+used for the process step immediately before the first sampled physical
+violation; a later honest report does not undo an earlier missed onset.
+
 Your work begins after the commands succeed: explain why the two cases differ, which evidence supports the property verdict, and what the run cannot establish.
 
 ## Bounded search
