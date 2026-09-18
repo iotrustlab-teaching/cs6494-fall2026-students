@@ -20,7 +20,7 @@ not equate those timestamps without aligning the run events.
 | `messages.jsonl` | direction, semantic payload | Model-generated application messages | Packets on a real network |
 | `events.log` | perturbation, command, violation timing | Event ordering on the common clock | Causality by itself |
 | `property_results.json` | expression, verdict, maximum, first violation | Result of one predicate over this finite trace | Universal safety or causal attribution |
-| `oracle_ladder.json` | layer verdicts, whole-run reported maximum, and first-violation onset decision | Whether the controller's view missed the decision immediately before a physical violation, even if it later saw the aftermath | Correctness outside this run or whether an unsafe level was hidden for the entire run |
+| `oracle_ladder.json` | layer verdicts, whole-run reported maximum, and first-violation onset decision | Values needed to compare controller awareness at onset with the whole-run report | The interpretation of any disagreement, correctness outside this run, or causal attribution |
 | `manifest.sha256` | digest and filename | Whether bundle files later changed | Who created them or whether the source was truthful |
 
 ## Default property
@@ -29,30 +29,34 @@ not equate those timestamps without aligning the run events.
 P1: always(true_level_pct < 90)
 ```
 
-The checker uses process truth because the property concerns the simulated physical consequence. Checking only the reported sensor would answer a different question: whether the controller's *view* appeared below 90%. In the bounded live spoof, the whole-run reported oracle can fail after the manipulation stops, while `physical_violation_onset_detection` still says `MISSED`: the decision that led to the first unsafe physical sample used a below-threshold report.
-
-The primary property and checker are provided. Your task is to explain why this
-oracle is tied to process truth, interpret its finite-trace verdict, and either
-critique one limitation or define one small secondary property. You are not
-being asked to invent a complete specification from scratch.
+The primary property and checker are provided. Your task is to justify the
+chosen trace field, compare it with at least one plausible alternative field,
+and interpret the result from your own run. In particular, inspect the
+whole-run reported-state verdict and `physical_violation_onset_detection`
+rather than assuming that agreement or disagreement has a fixed meaning. Then
+either critique one limitation of the checker or define one small secondary
+property. You are not being asked to invent a complete specification from
+scratch.
 
 ## Evidence and claim layers
 
-Keep these conclusions distinct in your memo:
+Keep the required claim layers distinct in your memo. Complete this worksheet
+with evidence from your own run; a single file may support more than one claim,
+but you must explain what it establishes at each layer.
 
-| Claim layer | Typical support | Boundary |
-|---|---|---|
-| Program-level capability | source, CFG, dependency map | A feasible influence path may still be physically unrealizable |
-| Runtime observation | controller/timeline events | Observed execution does not by itself identify network authority or physical truth |
-| Network/authority evidence | pcap and derived Modbus trace | A valid or accepted operation is not proof of authorization, controller use, or safety |
-| Physical/process evidence | simulator-owned process state | This establishes model behavior, not the state of a real tank |
-| Property verdict | checker output over the named trace fields | A finite verdict is scoped to the tested model, inputs, initial state, and horizon |
+| Claim layer | Exact evidence cited | What that evidence establishes | One limitation or stronger unsupported claim |
+|---|---|---|---|
+| Program-level capability |  |  |  |
+| Runtime observation |  |  |  |
+| Network/authority evidence |  |  |  |
+| Physical/process evidence |  |  |  |
+| Property verdict |  |  |  |
 
 The primary SPHERE path combines a real OpenPLC runtime and captured Modbus
 traffic with an emulated deployment and a simulated water-tank process. The
 local fallback uses modeled JSON/TCP semantics instead. State explicitly which
-path you used and which claim would require higher fidelity, such as a hardware
-actuator, physical tank, or a less constrained network/adversary model.
+path you used. Choose and defend one concrete claim that would require higher
+fidelity rather than repeating this architecture description.
 
 ## Packet evidence
 

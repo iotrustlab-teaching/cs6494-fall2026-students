@@ -6,7 +6,11 @@ transport, fixed OpenPLC endpoint, and network tools. It reports the expiry
 value but does not enforce the course resource deadline. Students do not need
 to compile C or install dependencies.
 
-`analyze.sh` parses the supported `controller_step` C subset and derives a CFG and retained-state dependency map from the source. It rejects unsupported control constructs; it is not a general C analyzer. You must still interpret the observation-to-actuator path.
+`analyze.sh` launches Clang's `debug.DumpCFG` and Frama-C Eva with `-deps`,
+preserves their raw output, and projects those results into the course CFG and
+dependency-map formats. `static_view.py` is an adapter, not a substitute C
+analyzer. You must still interpret the observation-to-actuator path and the
+tools' stated assumptions.
 
 `verify_representations.sh` executes six stateful sequences through the reference, existing Python controller, compiled C, and supported ST model. Passing establishes bounded agreement on those sequences, not universal equivalence.
 
@@ -14,12 +18,13 @@ to compile C or install dependencies.
 `HW2_TRANSPORT=modbus_tcp`; otherwise it selects the labeled local model. Both
 begin with a fresh tank model and evaluate the provided physical property.
 
-`run_spoof.sh` uses the same transport selector for the bounded manipulation.
-The reported value is `max(5%, true level − 50%)` during 8–16 seconds; it does
-not directly set the valve, tank level, or PLC program. On SPHERE, the fixed
-process client writes that value to OpenPLC with Modbus TCP and captures the
-traffic. In the local fallback, `run_case.sh sensor_spoof` models the exchange
-and produces no pcap.
+`run_spoof.sh` uses the same transport selector for a fixed, bounded
+reported-level manipulation. Inspect the released runner constants and
+transformation before writing your prediction; this page deliberately does not
+pre-summarize them. The manipulation does not directly set the valve, tank
+level, or PLC program. On SPHERE, the fixed process client writes the resulting
+value to OpenPLC with Modbus TCP and captures the traffic. In the local
+fallback, `run_case.sh sensor_spoof` models the exchange and produces no pcap.
 
 `search.sh` runs a transparent finite grid over selected initial levels, attack starts, and sensor biases. It is bounded search, not a production fuzzer or proof engine.
 

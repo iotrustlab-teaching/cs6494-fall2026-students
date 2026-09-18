@@ -54,12 +54,13 @@ That file belongs to the JSON/TCP fallback and is a semantic reconstruction,
 not a pcap. In SPHERE, use `network.pcap` and its tshark-derived
 `modbus_trace.csv` instead.
 
-## A Modbus write is described as a program download
+## I am unsure how to classify a Modbus operation
 
-That classification is wrong for this lab. `%MD`/holding-register and
-`%QX`/coil operations manipulate process data. OpenPLC program deployment uses
-a separate engineering/management path. Recheck `REPRESENTATION_MAP.md` and
-Part B of the assignment.
+Use the function, object type, address, endpoints, and observed effect to argue
+for a process/data-plane or engineering/program-management classification.
+Compare the captured operation with the separately documented OpenPLC
+deployment path. Recheck `REPRESENTATION_MAP.md` and Part B, but supply the
+classification and evidence-based explanation yourself.
 
 ## SPHERE URL is unreachable
 
