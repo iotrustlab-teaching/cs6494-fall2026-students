@@ -28,22 +28,12 @@ Do not reward probing outside the assigned realization, arbitrary address
 entry, credential sharing, or program upload. Route suspected boundary
 violations to course policy rather than improvising a technical penalty.
 
-## Evidence checks used during grading
+## How reasoning is graded
 
-- A pcap establishes traffic on the captured interface; it does not establish
-  PLC semantics, actuator obedience, or process truth.
-- Primary SPHERE `modbus_trace.csv` is a readable projection of
-  `network.pcap`; fallback `network_trace.csv` is only modeled semantics and is
-  not a packet capture.
-- A property `FAIL` exit is a valid experiment result, not a broken tool.
-- A finite `PASS` is not proof of universal safety.
-- A static influence path is not proof that its physical consequence is
-  reachable under the tested plant, starting state, horizon, and authority.
-- A valid or accepted Modbus write is not proof of authorization, controller
-  use, safe outcome, or physical actuation.
-- The provided primary checker answers a process-truth question. Full credit
-  requires explaining that choice and critiquing one limitation or defining a
-  small secondary property; students do not need to invent the primary
-  specification.
-- Alternative evidence selections earn full credit when the student explains
-  why they are sufficient and what they cannot establish.
+The rubric intentionally names the required claim layers without supplying a
+completed interpretation. Full credit depends on citing exact evidence from
+your own run, explaining what it establishes, and naming a limit or stronger
+unsupported claim. Raw command output, copied reference prose, or a verdict
+without that reasoning does not satisfy the rubric. Alternative evidence
+selections can earn full credit when their sufficiency and limitations are
+defended.

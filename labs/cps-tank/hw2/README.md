@@ -64,7 +64,9 @@ violation remains unreachable.
 
 **Student artifact.** An annotated dependency chain or a short CFG explanation
 that names the input, retained state, decision, and output, followed by your
-physical-realizability assumptions and one reachability limitation.
+physical-realizability assumptions and one reachability limitation. Cite the
+source or generated block supporting each step; copied reference prose is not
+an analysis.
 
 **Learning outcome.** Distinguish what static structure says *can* happen from
 what a later execution says *did* happen.
@@ -98,7 +100,9 @@ was safe.
 **Student artifact.** A completed concept/tag/address/owner/authority table and
 a two- or three-sentence explanation of why a Modbus data write is not a PLC
 program download. Include one example separating protocol validity from
-authorized or safe outcome.
+authorized or safe outcome. `REPRESENTATION_MAP.md` supplies the mechanical
+name/address columns and leaves the assessed ownership, authority, plane, and
+evidence-limit columns for you.
 
 **Learning outcome.** Connect source intent, PLC memory, and network-visible
 objects without treating representations as interchangeable proof.
@@ -150,7 +154,9 @@ start, or sensor bias—and run a small disclosed search. Example:
 ```
 
 You are not implementing a fuzzer. You are designing a bounded search over an
-allowed input or perturbation surface.
+allowed input or perturbation surface. Do not submit the example grid without
+a hypothesis-driven justification; choose different values or explain why the
+example values are appropriate for the specific boundary you are testing.
 
 **Student decision.** Choose and justify a range and step size, including why
 the selected values could expose the property violation. Identify which oracle
@@ -161,11 +167,10 @@ truth rather than reported state, then either critique one limitation of the
 checker or define one small secondary property.
 
 `oracle_ladder.json` separates the whole-run reported-state verdict from
-`physical_violation_onset_detection`. For a violating run, the onset field
-compares the PLC input at the decision immediately before the first sampled
-physical violation with the 90% threshold. The live spoof may eventually
-report an unsafe level after the bounded manipulation ends; that later report
-does not mean the controller saw the danger in time to prevent its onset.
+`physical_violation_onset_detection`. For a violating run, compare their
+inputs, sampling points, and timestamps. Explain any agreement or disagreement
+from your own trace; do not infer timely controller awareness from a later
+sample alone.
 
 **Student artifact.** A compact search table or plot plus the explored space,
 oracle, and your checker critique or secondary property. If you find a
@@ -192,7 +197,9 @@ branch, actuator response, or physical consequence by itself.
 **Student decision.** Select the minimum evidence needed to support each layer
 of your conclusion. Keep program-level capability, runtime observation,
 network/authority evidence, physical/process evidence, and the property verdict
-separate rather than treating one layer as proof of another.
+separate rather than treating one layer as proof of another. Complete the
+worksheet in `EVIDENCE_REFERENCE.md` with exact rows, timestamps, packet
+transactions, or source blocks from your run.
 
 **Student artifact.** A concise investigation memo containing:
 
@@ -339,8 +346,9 @@ targets.
 
 `collect.sh` checks required files, columns, schema version, pcap presence,
 cross-file verdict agreement, and the SHA-256 manifest. `property_oracle.py`
-evaluates `always(true_level_pct < 90)` over `process.csv` because the property
-concerns simulator-owned truth. For a non-writing sensitivity check, try:
+records the selected trace field and evaluates
+`always(true_level_pct < 90)`. Your graded explanation must justify that field
+against at least one alternative. For a non-writing sensitivity check, try:
 
 ```bash
 python3 property_oracle.py RUN_DIRECTORY --max-level 85 --no-write
