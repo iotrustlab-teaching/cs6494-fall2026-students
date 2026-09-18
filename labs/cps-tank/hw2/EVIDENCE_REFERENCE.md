@@ -20,7 +20,7 @@ not equate those timestamps without aligning the run events.
 | `messages.jsonl` | direction, semantic payload | Model-generated application messages | Packets on a real network |
 | `events.log` | perturbation, command, violation timing | Event ordering on the common clock | Causality by itself |
 | `property_results.json` | expression, verdict, maximum, first violation | Result of one predicate over this finite trace | Universal safety or causal attribution |
-| `oracle_ladder.json` | four verdicts and observed fields | Why software/report success can coexist with physical failure | Correctness outside this run |
+| `oracle_ladder.json` | layer verdicts, whole-run reported maximum, and first-violation onset decision | Whether the controller's view missed the decision immediately before a physical violation, even if it later saw the aftermath | Correctness outside this run or whether an unsafe level was hidden for the entire run |
 | `manifest.sha256` | digest and filename | Whether bundle files later changed | Who created them or whether the source was truthful |
 
 ## Default property
@@ -29,7 +29,7 @@ not equate those timestamps without aligning the run events.
 P1: always(true_level_pct < 90)
 ```
 
-The checker uses process truth because the property concerns the simulated physical consequence. Checking only the reported sensor would answer a different question: whether the controller's *view* appeared below 90%.
+The checker uses process truth because the property concerns the simulated physical consequence. Checking only the reported sensor would answer a different question: whether the controller's *view* appeared below 90%. In the bounded live spoof, the whole-run reported oracle can fail after the manipulation stops, while `physical_violation_onset_detection` still says `MISSED`: the decision that led to the first unsafe physical sample used a below-threshold report.
 
 The primary property and checker are provided. Your task is to explain why this
 oracle is tied to process truth, interpret its finite-trace verdict, and either

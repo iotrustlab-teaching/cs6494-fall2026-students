@@ -47,7 +47,8 @@ in staff provisioning). Its entrypoint mounts the released ST and invokes
 that revision's `webserver/scripts/compile_program.sh` before starting the
 runtime. This is an actual ST compilation and PLC scan, not the C reference
 model. PyModbus writes the reported REAL to the fixed Modbus registers and
-reads the fixed coil. tcpdump captures the isolated interface; TShark
+reads the fixed coil. A privileged, fixed-argument wrapper runs tcpdump only
+on the isolated interface and writes only into the student's HW2 run; TShark
 decodes the pcap. `modbus_trace.csv` is a projection of those packets.
 `TOOLCHAIN.json` in each live bundle records the exact tcpdump/TShark
 versions and commands, PyModbus version, pinned OpenPLC source commit, and

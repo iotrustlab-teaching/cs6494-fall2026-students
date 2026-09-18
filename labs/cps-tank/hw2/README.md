@@ -160,6 +160,13 @@ primary property and checker are provided: explain why they consume process
 truth rather than reported state, then either critique one limitation of the
 checker or define one small secondary property.
 
+`oracle_ladder.json` separates the whole-run reported-state verdict from
+`physical_violation_onset_detection`. For a violating run, the onset field
+compares the PLC input at the decision immediately before the first sampled
+physical violation with the 90% threshold. The live spoof may eventually
+report an unsafe level after the bounded manipulation ends; that later report
+does not mean the controller saw the danger in time to prevent its onset.
+
 **Student artifact.** A compact search table or plot plus the explored space,
 oracle, and your checker critique or secondary property. If you find a
 violation, describe it as a concrete counterexample under the tested model,
@@ -296,7 +303,8 @@ fallback you may safely explore timing in a fresh bundle:
 
 ![Packet capture and readable Modbus projection](figures/04-packet-evidence.svg)
 
-`tcpdump` captures the isolated interface into `network.pcap`.
+The prepared capture wrapper runs `tcpdump` on the isolated interface into
+`network.pcap`; it does not grant general privileged packet capture.
 `show_network.py` invokes the real `tshark` CLI, filters Modbus, correlates
 requests and responses by transaction ID, and decodes the two `%MD0` words as
 one IEEE-754 REAL. The live bundle's `TOOLCHAIN.json` records the actual

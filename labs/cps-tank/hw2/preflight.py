@@ -121,11 +121,16 @@ def inspect(require_sphere: bool = False) -> dict:
             ),
         )
         capture_ready = False
-        capture_detail = "tcpdump privilege not checked"
+        capture_detail = "fixed capture wrapper not checked"
         if not tools:
             try:
                 probe = subprocess.run(
-                    ["sudo", "-n", shutil.which("tcpdump") or "tcpdump", "--version"],
+                    [
+                        "sudo",
+                        "-n",
+                        "/usr/local/sbin/cs6494-hw2-capture",
+                        "--check",
+                    ],
                     capture_output=True,
                     text=True,
                     timeout=3,
@@ -134,7 +139,7 @@ def inspect(require_sphere: bool = False) -> dict:
                 capture_detail = (
                     "fixed capture can start without a password prompt"
                     if capture_ready
-                    else "prepared capture privilege is missing"
+                    else "prepared fixed-capture privilege is missing"
                 )
             except (OSError, subprocess.TimeoutExpired):
                 capture_detail = "prepared capture privilege is unavailable"
