@@ -9,7 +9,7 @@
   <path d="M265 148H335" class="arrow"/>
   <rect x="335" y="80" width="355" height="135" rx="12" class="check"/><text x="512" y="116" text-anchor="middle" class="t">Always checked</text><text x="365" y="150" class="s">Python • released files • writable runs/</text><text x="365" y="180" class="s">No installs, services, or controller writes</text>
   <path d="M690 148H760" class="arrow"/>
-  <rect x="760" y="65" width="395" height="165" rx="12" class="check"/><text x="957" y="102" text-anchor="middle" class="t">With --require-sphere</text><text x="790" y="136" class="s">instance/team/expiry • pymodbus</text><text x="790" y="166" class="s">tcpdump/tshark • capture privilege</text><text x="790" y="196" class="s">fixed OpenPLC endpoint 10.42.0.20:502</text>
+  <rect x="760" y="65" width="395" height="165" rx="12" class="check"/><text x="957" y="102" text-anchor="middle" class="t">With --require-sphere</text><text x="790" y="136" class="s">instance/allocation/expiry • pymodbus</text><text x="790" y="166" class="s">tcpdump/tshark • capture privilege</text><text x="790" y="196" class="s">fixed OpenPLC endpoint 10.42.0.20:502</text>
   <rect x="250" y="285" width="250" height="90" rx="12" class="box"/><text x="375" y="320" text-anchor="middle" class="t">run_*.sh</text><text x="375" y="350" text-anchor="middle" class="s">checks HW2_TRANSPORT</text>
   <path d="M500 315H600V270H690" class="arrow"/><path d="M500 345H600V390H690" class="arrow"/>
   <rect x="690" y="245" width="420" height="80" rx="12" class="live"/><text x="900" y="278" text-anchor="middle" class="t">modbus_tcp → live OpenPLC path</text><text x="900" y="306" text-anchor="middle" class="s">real ST runtime + Modbus + pcap</text>

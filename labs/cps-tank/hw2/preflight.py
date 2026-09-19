@@ -33,7 +33,7 @@ REQUIRED_FILES = (
 )
 SPHERE_ENVIRONMENT = (
     "HW2_INSTANCE_ID",
-    "HW2_TEAM_ID",
+    "HW2_ALLOCATION_ID",
     "HW2_EXPIRES_UTC",
     "HW2_TRANSPORT",
 )
@@ -94,7 +94,7 @@ def inspect(require_sphere: bool = False) -> dict:
             sphere_present and transport_ok,
             (
                 f"instance={sphere_values['HW2_INSTANCE_ID']}, "
-                f"team={sphere_values['HW2_TEAM_ID']}, "
+                f"allocation={sphere_values['HW2_ALLOCATION_ID']}, "
                 f"expires={sphere_values['HW2_EXPIRES_UTC']}, "
                 f"transport={sphere_values['HW2_TRANSPORT']}"
                 if sphere_present and transport_ok

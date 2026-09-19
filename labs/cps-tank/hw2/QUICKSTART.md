@@ -4,9 +4,13 @@ This lab follows one question through program, PLC, network, controller, and pro
 
 ## Start
 
+HW2 is completed individually. Course staff provision the same isolated
+two-node topology for every student; wait for the access announcement and do
+not create a realization yourself.
+
 Use the **process-node shell** reached through your assigned SPHERE XDC (not
 the XDC shell itself). Follow the course-provided access instructions; do not
-guess a host or use another team's realization. On the process node, prepare
+guess a host or use another student's realization. On the process node, prepare
 your workspace, change into the printed HW2 directory, and run:
 
 ```bash
