@@ -1,0 +1,303 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# Student-facing lifecycle wrapper for the fixed CS 6494 HW2 environment.
+# Names, project, model revision, duration, nodes, and provisioning payload are
+# intentionally fixed. The only variable input is the authenticated username.
+project="cs6494hw2"
+experiment="hw2lab"
+model_revision="3e40e7e2675258f40379508f6c2b54d84acddc1e"
+duration="8h"
+bundle="/project/cs6494hw2/hw2-provision-v2"
+
+usage() {
+    cat <<'EOF'
+usage: ./sphere/hw2-sphere COMMAND
+
+Commands:
+  create          Create, attach, and provision your fixed HW2 environment
+  status          Show your realization, expiry, and XDC URL
+  connect         Open a shell on your HW2 process node
+  release [--yes] Release your XDC and realization
+
+The wrapper derives resource names from `mrg whoami`. It accepts no topology,
+host, address, program, or attack parameters.
+EOF
+}
+
+require_tool() {
+    command -v "$1" >/dev/null 2>&1 || {
+        echo "missing required local tool: $1" >&2
+        exit 2
+    }
+}
+
+require_tool mrg
+require_tool python3
+
+username="$(mrg --colorless whoami | tr -d '\r\n')"
+if [[ ! "$username" =~ ^[A-Za-z0-9][A-Za-z0-9._-]*$ ]]; then
+    echo "could not derive a safe SPHERE username from mrg whoami" >&2
+    exit 2
+fi
+slug="$(printf '%s' "$username" | tr '[:upper:]' '[:lower:]' | tr -cd 'a-z0-9')"
+if [[ -z "$slug" ]]; then
+    echo "SPHERE username does not produce a usable resource name" >&2
+    exit 2
+fi
+
+realization="hw2${slug}.${experiment}.${project}"
+# SPHERE permits personal XDCs only in the authenticated user's personal
+# project. The XDC can still attach to this course-project materialization.
+xdc="hw2${slug}.${username}"
+
+realization_json() {
+    mrg --colorless show realization "$realization" --json 2>/dev/null
+}
+
+realization_exists() {
+    realization_json >/dev/null
+}
+
+materialization_exists() {
+    mrg --colorless list materializations --json | python3 -c '
+import json, sys
+target = sys.argv[1]
+data = json.load(sys.stdin)
+found = any(
+    ".".join((item.get("rid", ""), item.get("eid", ""), item.get("pid", ""))) == target
+    for item in data.get("summaries", [])
+)
+raise SystemExit(0 if found else 1)
+' "$realization"
+}
+
+xdc_record() {
+    mrg --colorless list xdcs --json | python3 -c '
+import json, sys
+target = sys.argv[1]
+for item in json.load(sys.stdin).get("XDCs", []):
+    if item.get("name") == target:
+        print(json.dumps(item))
+        raise SystemExit(0)
+raise SystemExit(1)
+' "$xdc"
+}
+
+exact_expiry() {
+    realization_json | python3 -c '
+import json, sys
+print(json.load(sys.stdin)["result"]["realization"]["expires"])
+'
+}
+
+attached_materialization() {
+    xdc_record | python3 -c '
+import json, sys
+print(json.load(sys.stdin).get("materialization", ""))
+'
+}
+
+bootstrap_access() {
+    require_tool expect
+    require_tool ssh-keygen
+
+    local key_root
+    key_root="$(mktemp -d /tmp/cs6494-hw2-key.XXXXXX)"
+    trap 'rm -rf "$key_root"' RETURN
+    ssh-keygen -q -t ed25519 -N '' -C cs6494-hw2-ansible -f "$key_root/key"
+
+    mrg xdc scp upload "$key_root/key" "$xdc:/tmp/hw2-ansible-key"
+    mrg xdc scp upload "$key_root/key.pub" "$xdc:/tmp/hw2-ansible-key.pub"
+
+    local node
+    for node in controller process; do
+        mrg xdc scp upload -x "$xdc" "$key_root/key.pub" \
+            "$node:/tmp/hw2-ansible-key.pub"
+        HW2_XDC="$xdc" HW2_NODE="$node" expect <<'EXPECT'
+set timeout 60
+spawn mrg xdc ssh -x $env(HW2_XDC) $env(HW2_NODE)
+expect -re {[#$] $}
+send -- {install -d -m 700 "$HOME/.ssh"; touch "$HOME/.ssh/authorized_keys"; chmod 600 "$HOME/.ssh/authorized_keys"; sed -i '/ cs6494-hw2-ansible$/d' "$HOME/.ssh/authorized_keys"; cat /tmp/hw2-ansible-key.pub >> "$HOME/.ssh/authorized_keys"}
+send "\r"
+expect -re {[#$] $}
+send "exit\r"
+expect eof
+EXPECT
+    done
+}
+
+provision() {
+    local expires
+    expires="$(exact_expiry)"
+    HW2_XDC="$xdc" \
+    HW2_BUNDLE="$bundle" \
+    HW2_INSTANCE="$realization" \
+    HW2_ALLOCATION="$username" \
+    HW2_EXPIRES="$expires" \
+    expect <<'EXPECT'
+set timeout 1800
+spawn mrg xdc ssh $env(HW2_XDC)
+expect -re {[#$] $}
+send -- "test -r $env(HW2_BUNDLE)/ansible/provision.sh && bash $env(HW2_BUNDLE)/ansible/provision.sh $env(HW2_INSTANCE) $env(HW2_ALLOCATION) $env(HW2_EXPIRES)"
+send -- {; rc=$?; printf '\n__HW2_RC__%s\n' "$rc"}
+send "\r"
+expect {
+    -re {__HW2_RC__([0-9]+)} {
+        set rc $expect_out(1,string)
+        if {$rc != 0} { exit $rc }
+    }
+    timeout { exit 124 }
+    eof { exit 1 }
+}
+expect -re {[#$] $}
+send "exit\r"
+expect eof
+EXPECT
+}
+
+show_status() {
+    if ! realization_exists; then
+        echo "No HW2 realization exists for $username."
+        echo "Create it with: ./sphere/hw2-sphere create"
+        return 1
+    fi
+    realization_json | python3 -c '
+import json, sys
+r = json.load(sys.stdin)["result"]["realization"]
+print("realization: {}.{}.{}".format(r["id"], r["eid"], r["pid"]))
+print("model:       {}".format(r["xhash"]))
+print("expires:     {}".format(r["expires"]))
+print("complete:    {}".format(str(r.get("complete", False)).lower()))
+'
+    if xdc_record >/dev/null; then
+        xdc_record | python3 -c '
+import json, sys
+x = json.load(sys.stdin)
+print("xdc:         {}".format(x["name"]))
+print("xdc URL:     {}".format(x["url"]))
+print("attached:    {}".format(x.get("materialization", "not attached")))
+'
+    else
+        echo "xdc:         not created"
+    fi
+}
+
+create_environment() {
+    require_tool expect
+    require_tool ssh-keygen
+
+    if realization_exists; then
+        local existing_revision
+        existing_revision="$(realization_json | python3 -c 'import json,sys; print(json.load(sys.stdin)["result"]["realization"]["xhash"])')"
+        if [[ "$existing_revision" != "$model_revision" ]]; then
+            echo "existing realization uses unexpected model $existing_revision" >&2
+            echo "release it before continuing" >&2
+            exit 2
+        fi
+        echo "Reusing your existing fixed realization: $realization"
+    else
+        echo "Creating your fixed HW2 realization (duration: $duration)..."
+        mrg realize "$realization" revision "$model_revision" --duration "$duration"
+    fi
+
+    if materialization_exists; then
+        echo "Materialization already exists."
+    else
+        echo "Materializing the two-node topology..."
+        mrg materialize "$realization"
+    fi
+
+    if xdc_record >/dev/null; then
+        local attached
+        attached="$(attached_materialization)"
+        if [[ -n "$attached" && "$attached" != "$realization" ]]; then
+            echo "$xdc is attached to unexpected materialization $attached" >&2
+            exit 2
+        fi
+    else
+        echo "Creating your private-access XDC..."
+        mrg new xdc "$xdc" --type personal --duration "$duration"
+        if ! xdc_record >/dev/null; then
+            echo "SPHERE did not create $xdc; contact course staff with this message" >&2
+            exit 2
+        fi
+    fi
+
+    if [[ "$(attached_materialization)" != "$realization" ]]; then
+        echo "Attaching your XDC..."
+        mrg xdc attach "$xdc" "$realization"
+    fi
+
+    echo "Preparing short-lived deployment access..."
+    bootstrap_access
+    echo "Installing the fixed course environment. This can take several minutes..."
+    provision
+
+    echo
+    echo "HW2 is ready."
+    show_status
+    echo
+    echo "Next: ./sphere/hw2-sphere connect"
+    echo "Then run: hw2-prepare"
+}
+
+connect_environment() {
+    if ! materialization_exists || ! xdc_record >/dev/null; then
+        echo "HW2 is not ready. Run: ./sphere/hw2-sphere create" >&2
+        exit 2
+    fi
+    exec mrg xdc ssh -x "$xdc" process
+}
+
+release_environment() {
+    local confirmed="${1:-}"
+    if [[ "$confirmed" != "--yes" ]]; then
+        echo "This releases only $realization and $xdc."
+        printf 'Type RELEASE to continue: '
+        read -r answer
+        [[ "$answer" == "RELEASE" ]] || {
+            echo "Release cancelled."
+            exit 1
+        }
+    fi
+
+    if xdc_record >/dev/null; then
+        mrg xdc detach "$xdc" || true
+        mrg delete xdc "$xdc"
+    fi
+    if materialization_exists; then
+        mrg dematerialize "$realization"
+    fi
+    if realization_exists; then
+        mrg relinquish "$realization"
+    fi
+    echo "Released $realization and $xdc."
+}
+
+command="${1:-}"
+case "$command" in
+    create)
+        [[ $# -eq 1 ]] || { usage >&2; exit 2; }
+        create_environment
+        ;;
+    status)
+        [[ $# -eq 1 ]] || { usage >&2; exit 2; }
+        show_status
+        ;;
+    connect)
+        [[ $# -eq 1 ]] || { usage >&2; exit 2; }
+        connect_environment
+        ;;
+    release)
+        [[ $# -le 2 ]] || { usage >&2; exit 2; }
+        release_environment "${2:-}"
+        ;;
+    -h|--help|help|"")
+        usage
+        ;;
+    *)
+        usage >&2
+        exit 2
+        ;;
+esac

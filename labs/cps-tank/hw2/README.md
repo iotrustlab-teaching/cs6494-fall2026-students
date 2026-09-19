@@ -5,9 +5,10 @@
 
 ## Purpose
 
-**This is an individual assignment.** Course staff provision the same isolated
-SPHERE topology and released lab payload for each student. Your allocation
-identifier only distinguishes infrastructure instances.
+**This is an individual assignment.** Each student uses the released lifecycle
+wrapper to create an isolated copy of the same pinned SPHERE topology and lab
+payload. Your allocation identifier only distinguishes infrastructure
+instances.
 
 You will follow one causal chain across several views of the same small water
 tank:
@@ -26,18 +27,25 @@ preflight.
 
 ## Authorization and safety boundary
 
-Use only your assigned course realization and the fixed commands in this
-assignment. The prepared manipulation can affect only the reported-level object
-in your own realization, for a bounded interval. Do not enter arbitrary hosts,
-ports, tags, addresses, credentials, or programs. Do not probe other course
-instances. Run `./reset.sh` when directed and release the realization using
-the course instructions.
+Use only the realization derived from your authenticated username by
+`./sphere/hw2-sphere`. The prepared manipulation can affect only the
+reported-level object in your own realization, for a bounded interval. Do not
+enter arbitrary hosts, ports, tags, addresses, credentials, or programs. Do
+not probe or attach to other course instances. Run `./reset.sh` when directed
+and release your resources with the lifecycle wrapper.
 
 ## Start
 
-On your assigned SPHERE **process node** (not the XDC shell), follow the
-course-provided access instructions, then run `hw2-prepare`, enter the printed
-HW2 directory, and check the prepared environment:
+On your workstation, follow the [self-service lifecycle guide](sphere/README.md)
+to create and enter your fixed environment:
+
+```bash
+./sphere/hw2-sphere create
+./sphere/hw2-sphere connect
+```
+
+After `connect`, you are on your SPHERE **process node**. Prepare your workspace
+and check the environment:
 
 ```bash
 hw2-prepare
@@ -233,7 +241,11 @@ reporting success or failure.
 ```
 
 Confirm your evidence still exists, download the required bundle/memo, and
-stop or release your assigned realization using the course-provided control.
+leave the process-node shell. On your workstation, release the allocation:
+
+```bash
+./sphere/hw2-sphere release
+```
 
 ## Instructor demonstration — not required student work
 

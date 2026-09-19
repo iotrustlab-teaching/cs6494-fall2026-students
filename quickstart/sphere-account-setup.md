@@ -1,8 +1,10 @@
 # CS 6494 SPHERE account setup
 
 Course staff will create your SPHERE class account from a verified email
-address. Compute and experiment access may be added later. You may see an empty
-course project before resources are assigned; that is normal.
+address and add the activated account to the course project. You may see an
+empty course project before access is enabled; that is normal. HW2 compute is
+not preassigned: after access is enabled, you create and release your own fixed
+course environment with the provided wrapper.
 
 ## Activate your class account
 
@@ -19,8 +21,9 @@ course project before resources are assigned; that is normal.
 ## Verify activation
 
 `mrg` is the command-line client for SPHERE's underlying Merge testbed
-services. It verifies your account and later provides access to an assigned
-environment; these commands do **not** allocate or provision HW2 compute.
+services. It verifies your account and is also used by the released HW2
+lifecycle wrapper to create and release your own fixed course environment.
+The login commands below do **not** allocate compute by themselves.
 
 Before using the commands below:
 
@@ -40,11 +43,11 @@ mrg login <YOUR_SPHERE_USERNAME>
 mrg whoami
 ```
 
-Successful `mrg whoami` is the account checkpoint. Whether an empty course
-project is already visible depends on the current Class UI workflow; compute is
-not expected yet. HW2 is an individual assignment. Course staff will provision
-the same isolated HW2 topology for each student and announce how to reach your
-assigned allocation; do not create your own realization.
+Successful `mrg whoami` is the account checkpoint. HW2 is an individual
+assignment: after course project access is enabled, you will use the fixed
+[`hw2-sphere` lifecycle wrapper](../labs/cps-tank/hw2/sphere/README.md) to
+create, enter, and release your own isolated allocation. Do not create or attach
+resources manually outside that wrapper.
 
 If you do not know the password, use Launch account recovery for the exact email
 address course staff registered. Do not create another account.
@@ -62,5 +65,5 @@ address course staff registered. Do not create another account.
   be pending; report your generated SPHERE username.
 - **Launch is empty or access is denied:** the account is likely pending or
   frozen; report your username and the exact message.
-- **No course project is listed:** acceptable during account onboarding; staff
-  will announce when project-backed compute is ready.
+- **No `cs6494hw2` project is listed:** your account is not yet active in the
+  course project; report your SPHERE username to staff.
