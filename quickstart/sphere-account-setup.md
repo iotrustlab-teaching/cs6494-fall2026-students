@@ -22,8 +22,17 @@ course project before resources are assigned; that is normal.
 services. It verifies your account and later provides access to an assigned
 environment; these commands do **not** allocate or provision HW2 compute.
 
-After staff announces approval and provides the course CLI setup instructions,
-configure the client and log in:
+Before using the commands below:
+
+1. Download the correct binary for your operating system and CPU from the
+   [latest official `mrg` release](https://gitlab.com/mergetb/portal/cli/-/releases/permalink/latest).
+2. Make the binary executable and place it somewhere on your `PATH` as `mrg`.
+3. Confirm the installation with `mrg --version`. The official
+   [Merge account setup](https://mergetb.org/docs/experimentation/getting-started/)
+   and [`mrg` CLI reference](https://mergetb.org/docs/experimentation/cli-reference/)
+   provide platform-independent background and command documentation.
+
+After staff announces account approval, configure the client and log in:
 
 ```bash
 mrg config set server grpc.sphere-testbed.net
