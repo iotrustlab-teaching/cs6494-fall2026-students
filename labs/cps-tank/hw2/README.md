@@ -5,6 +5,10 @@
 
 ## Purpose
 
+**This is an individual assignment.** Course staff provision the same isolated
+SPHERE topology and released lab payload for each student. Your allocation
+identifier only distinguishes infrastructure instances.
+
 You will follow one causal chain across several views of the same small water
 tank:
 
@@ -41,8 +45,8 @@ cd ~/cs6494-hw2/hw2
 ./preflight.sh --require-sphere
 ```
 
-Preflight must report your instance, team, and expiry value and verify the
-fixed OpenPLC endpoint and packet-capture tools. It does not itself enforce
+Preflight must report your instance, allocation identifier, and expiry value
+and verify the fixed OpenPLC endpoint and packet-capture tools. It does not itself enforce
 resource expiry; follow the course release instructions. If preflight fails,
 stop and send the failed line to course staff. Do not install packages. Staff
 may authorize the local fallback described in [QUICKSTART.md](QUICKSTART.md)

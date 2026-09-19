@@ -1,8 +1,5 @@
 # CS 6494 SPHERE account setup
 
-> **DRAFT — publish only after the `cs6494` organization is active and one
-> student-shaped test succeeds.**
-
 Course staff will create your SPHERE class account from a verified email
 address. Compute and experiment access may be added later. You may see an empty
 course project before resources are assigned; that is normal.
@@ -21,7 +18,12 @@ course project before resources are assigned; that is normal.
 
 ## Verify activation
 
-After staff announces approval, configure the CLI and log in:
+`mrg` is the command-line client for SPHERE's underlying Merge testbed
+services. It verifies your account and later provides access to an assigned
+environment; these commands do **not** allocate or provision HW2 compute.
+
+After staff announces approval and provides the course CLI setup instructions,
+configure the client and log in:
 
 ```bash
 mrg config set server grpc.sphere-testbed.net
@@ -31,7 +33,9 @@ mrg whoami
 
 Successful `mrg whoami` is the account checkpoint. Whether an empty course
 project is already visible depends on the current Class UI workflow; compute is
-not expected yet.
+not expected yet. HW2 is an individual assignment. Course staff will provision
+the same isolated HW2 topology for each student and announce how to reach your
+assigned allocation; do not create your own realization.
 
 If you do not know the password, use Launch account recovery for the exact email
 address course staff registered. Do not create another account.

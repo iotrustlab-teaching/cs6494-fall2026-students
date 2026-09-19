@@ -69,8 +69,8 @@ Check that the realization is materialized, the XDC is attached, the service is 
 If the XDC terminal works, use the course-provided instructions to reach your
 assigned **process-node shell**, run `hw2-prepare`, enter the printed HW2
 directory, then run `./preflight.sh --require-sphere`. Do not run the lab on
-the XDC shell itself. A missing instance/team/expiry value means provisioning
-was not prepared correctly and is a staff issue. Use the documented local
+the XDC shell itself. A missing instance/allocation/expiry value means
+provisioning was not prepared correctly and is a staff issue. Use the documented local
 fallback only when staff authorize it; do not debug SPHERE internals.
 
 ## Reset refuses to continue
