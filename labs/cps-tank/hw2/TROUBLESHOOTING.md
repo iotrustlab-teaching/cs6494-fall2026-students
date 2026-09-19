@@ -1,7 +1,8 @@
 # HW2 troubleshooting
 
-Start with `./preflight.sh --require-sphere` on your assigned SPHERE process
-node, or `./preflight.sh` in an instructor-authorized local fallback. If a
+Start with `./sphere/hw2-sphere status` on your workstation, then
+`./preflight.sh --require-sphere` on your SPHERE process node. Use
+`./preflight.sh` only in an instructor-authorized local fallback. If a
 prepared SPHERE environment fails preflight,
 copy the complete failed line to course staff; do not install packages or
 invent a replacement port.
@@ -64,14 +65,24 @@ classification and evidence-based explanation yourself.
 
 ## SPHERE URL is unreachable
 
-Check that the realization is materialized, the XDC is attached, the service is running, and the HTTP ingress still exists. URLs and tokens are deployment-specific; do not copy an old class URL from another realization.
+Run `./sphere/hw2-sphere status` on your workstation. If your allocation
+expired, run `create` again to obtain a fresh environment. Do not copy an old
+class URL or another student's XDC URL.
 
-If the XDC terminal works, use the course-provided instructions to reach your
-assigned **process-node shell**, run `hw2-prepare`, enter the printed HW2
-directory, then run `./preflight.sh --require-sphere`. Do not run the lab on
-the XDC shell itself. A missing instance/allocation/expiry value means
-provisioning was not prepared correctly and is a staff issue. Use the documented local
-fallback only when staff authorize it; do not debug SPHERE internals.
+Use `./sphere/hw2-sphere connect` to reach your **process-node shell**, run
+`hw2-prepare`, enter the printed HW2 directory, then run
+`./preflight.sh --require-sphere`. Do not run the lab on the XDC shell itself.
+A missing instance/allocation/expiry value means provisioning did not finish;
+leave the node and rerun `./sphere/hw2-sphere create` to resume it. Use the
+documented local fallback only when staff authorize it.
+
+## Self-service creation stops partway through
+
+Run `./sphere/hw2-sphere status`, then rerun
+`./sphere/hw2-sphere create`. The wrapper recognizes only the realization and
+personal XDC derived from your authenticated SPHERE username and resumes the
+fixed setup. If the existing realization reports an unexpected model revision,
+release it and contact staff rather than overriding the check.
 
 ## Reset refuses to continue
 

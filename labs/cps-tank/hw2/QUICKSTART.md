@@ -4,14 +4,18 @@ This lab follows one question through program, PLC, network, controller, and pro
 
 ## Start
 
-HW2 is completed individually. Course staff provision the same isolated
-two-node topology for every student; wait for the access announcement and do
-not create a realization yourself.
+HW2 is completed individually. From this directory on your workstation, use
+the fixed lifecycle wrapper to create your own eight-hour allocation:
 
-Use the **process-node shell** reached through your assigned SPHERE XDC (not
-the XDC shell itself). Follow the course-provided access instructions; do not
-guess a host or use another student's realization. On the process node, prepare
-your workspace, change into the printed HW2 directory, and run:
+```bash
+./sphere/hw2-sphere create
+./sphere/hw2-sphere status
+./sphere/hw2-sphere connect
+```
+
+The wrapper pins the course project, model revision, topology, duration, and
+provisioning payload. Do not create resources manually or attach to another
+student's realization. After `connect`, you are on your **process node**. Run:
 
 ```bash
 hw2-prepare
@@ -21,6 +25,16 @@ cd ~/cs6494-hw2/hw2
 ./run_nominal.sh
 ./run_spoof.sh
 ```
+
+Before the allocation expires, download your evidence, leave the process-node
+shell, and release the resources from this directory on your workstation:
+
+```bash
+./sphere/hw2-sphere release
+```
+
+See [the self-service lifecycle guide](sphere/README.md) for recovery and
+status commands.
 
 For an **instructor-authorized** local fallback, clone the public starter
 repository on your own machine, enter this directory, and omit
