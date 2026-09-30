@@ -101,17 +101,26 @@ without being handed the answer.
 
 ## Part B — Map PLC logic and network authority (45–60 minutes)
 
-**Scaffolded mechanics.** Inspect `representations/controller.st` and
-`REPRESENTATION_MAP.md`. Map the reported REAL to `%MD0` / holding
-registers 2048–2049 and the inlet BOOL to `%QX0.0` / coil 0. This mechanical
-mapping is provided scaffolding; you are not being asked to rediscover the
-addresses.
+**Scaffolded mechanics.** Inspect `representations/controller.st` and the
+[`REPRESENTATION_MAP.md` mechanical mapping](REPRESENTATION_MAP.md#provided-mechanical-mapping).
+The reported REAL is `%MD0` / holding registers 2048–2049 and the inlet BOOL
+is `%QX0.0` / coil 0. That mapping is provided reference information, not an
+example answer, and you are not being asked to rediscover the addresses.
 
-Complete the source- and architecture-based worksheet columns now. Do **not**
-run the nominal case early just to obtain packet evidence: Part C requires you
-to record predictions before execution. After recording those predictions and
-producing your nominal bundle in Part C, return to the packet-dependent
-columns and inspect the captured Modbus operations with:
+Complete the [Student analysis worksheet](REPRESENTATION_MAP.md#student-analysis-worksheet)
+in two passes:
+
+1. **Before Part C:** complete `Owner`, `Who may observe it?`, `Authorized role
+   and basis`, `Process/data or engineering/program plane?`, and `Physical
+   meaning and evidence limit` from the source and architecture. It is fine to
+   refine an evidence limit after seeing the trace.
+2. **After the nominal run in Part C:** complete `Representative transaction`
+   and `Read or write?` from the captured evidence.
+
+Do **not** run the nominal case early just to fill the packet-dependent
+columns. Part C first asks you to record a prediction. After recording that
+prediction and producing your nominal bundle, return here and inspect the
+captured Modbus operations with:
 
 ```bash
 ./show_network.sh RUN_DIRECTORY
@@ -136,12 +145,12 @@ packet evidence. Explain why a syntactically valid or accepted write does not
 by itself establish that the writer was authorized, that the controller used
 the value, or that the result was safe.
 
-**Student artifact.** A completed concept/tag/address/owner/authority table and
-a two- or three-sentence explanation of why a Modbus data write is not a PLC
-program download. Include one example separating protocol validity from
-authorized or safe outcome. `REPRESENTATION_MAP.md` supplies the mechanical
-name/address columns and leaves the assessed ownership, authority, plane, and
-evidence-limit columns for you. One representative transaction per distinct
+**Student artifact.** The completed
+[Student analysis worksheet](REPRESENTATION_MAP.md#student-analysis-worksheet),
+using the provided mechanical mapping as its tag/address reference, and a
+two- or three-sentence explanation of why a Modbus data write is not a PLC
+program download. Include one example separating protocol validity from an
+authorized or safe outcome. One representative transaction per distinct
 function/object combination is sufficient; repeated scans do not require
 repeated worksheet rows.
 
@@ -154,7 +163,16 @@ each capability actually permits.
 ## Part C — Predict, then execute (45–60 minutes)
 
 **Scaffolded mechanics.** Before executing, write a prediction for the nominal
-case and for the prepared reported-level manipulation. Then run:
+case and for the prepared reported-level manipulation. This prediction is a
+separate Part C note, not a column in the Part B worksheet. You may use this
+planning table or provide equivalent prose in your submission:
+
+| Case | Expected reported input | Expected controller branch/command | Expected true-process effect/property | Evidence that would distinguish this prediction |
+|---|---|---|---|---|
+| Nominal |  |  |  |  |
+| Prepared manipulation |  |  |  |  |
+
+Only after recording both predictions, run:
 
 ```bash
 ./run_nominal.sh

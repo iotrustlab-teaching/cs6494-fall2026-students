@@ -8,6 +8,9 @@ of your analysis.
 
 ## Provided mechanical mapping
 
+This table is supplied reference information, not an example answer. Use it to
+connect the names and addresses in the source, worksheet, and packet trace.
+
 | Concept | C/Python view | IEC ST variable | OpenPLC location | Modbus object/address | Wire encoding |
 |---|---|---|---|---|---|
 | Reported observation | `reported_level_pct` / `reported_level` | `reported_level_pct` | `%MD0` | holding registers 2048–2049 | IEEE-754 binary32, big-endian bytes, high word first; one FC16 pair write |
@@ -19,8 +22,11 @@ of your analysis.
 
 ## Student analysis worksheet
 
-Complete this from the source and your own trace. Use a separate row when an
-object has different owners or authorities at different layers.
+Complete this in two passes. Before running Part C, fill the columns marked
+**before run** from the source and architecture. After you record the separate
+Part C predictions and produce the nominal bundle, fill the columns marked
+**after run** from your own trace. Use a separate row when an object has
+different owners or authorities at different layers.
 
 For the packet-dependent columns, select one representative request/response
 transaction for each distinct function/object combination in your nominal
@@ -28,7 +34,7 @@ trace. Record its timestamp or transaction identifier; do not add a row for
 every repeated controller scan. Use `N/A` when a concept has no captured
 network operation, and explain that evidence limit rather than inventing one.
 
-| Concept/object | Owner | Who may observe it? | Representative transaction or `N/A` | Read or write? | Authorized role and basis | Process/data or engineering/program plane? | Physical meaning and evidence limit |
+| Concept/object | Owner (**before run**) | Who may observe it? (**before run**) | Representative transaction or `N/A` (**after run**) | Read or write? (**after run**) | Authorized role and basis (**before run**) | Process/data or engineering/program plane? (**before run**) | Physical meaning and evidence limit (**before run**; refine if needed) |
 |---|---|---|---|---|---|---|---|
 | Reported observation |  |  |  |  |  |  |  |
 | Prior command/state |  |  |  |  |  |  |  |
