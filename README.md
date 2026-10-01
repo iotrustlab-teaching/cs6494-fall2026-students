@@ -3,11 +3,16 @@
 Student-facing materials: quickstarts, lab instructions, challenge handouts, and submission
 templates.
 
-**Canvas is authoritative.** Announcements, assignment instructions, due dates, grades, and
-submissions all live in Canvas. This repo is where the *materials* live, so they can be versioned
-and corrected without re-uploading files.
+## Where to find the current answer
 
-If Canvas and this repo disagree, Canvas wins. Check the announcement.
+- **Canvas** is authoritative for due dates, points, submission settings, grades, and official
+  announcements.
+- **This repository** is authoritative for the maintained technical workflow: detailed lab
+  instructions, scripts, commands, and troubleshooting guidance.
+
+Canvas assignment pages may summarize or link to the more detailed material here. If an actual
+requirement conflicts across the two, follow the latest dated staff clarification and ask course
+staff rather than guessing.
 
 ## What's here
 
