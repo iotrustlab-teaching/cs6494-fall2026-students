@@ -28,6 +28,16 @@ Part C predictions and produce the nominal bundle, fill the columns marked
 **after run** from your own trace. Use a separate row when an object has
 different owners or authorities at different layers.
 
+- **Owner** is the component or role responsible for maintaining the
+  authoritative value at the layer represented by that row. It is not merely
+  the place where the underlying physical phenomenon originated.
+- **Who may observe it?** identifies roles that can read or receive the value
+  at that layer.
+- **Authorized role and basis** identifies who is permitted to perform the
+  selected read or write and the design rule, course boundary, or allowlist
+  that grants that permission. It does not ask what functional effect the
+  object has on the controller.
+
 For the packet-dependent columns, select one representative request/response
 transaction for each distinct function/object combination in your nominal
 trace. Record its timestamp or transaction identifier; do not add a row for

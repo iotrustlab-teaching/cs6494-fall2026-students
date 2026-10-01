@@ -117,6 +117,15 @@ in two passes:
 2. **After the nominal run in Part C:** complete `Representative transaction`
    and `Read or write?` from the captured evidence.
 
+Interpret the assessed columns by layer. `Owner` means the component or role
+responsible for maintaining the authoritative value at that layer; it does not
+simply mean where the physical phenomenon originated. `Who may observe it?`
+asks which roles can read or receive that value. `Authorized role and basis`
+asks which role is permitted to perform the selected read or write and what
+design rule, course boundary, or allowlist grants that permission; it is not a
+description of the object's effect on controller state. Use separate rows when
+ownership or authority changes across layers.
+
 Do **not** run the nominal case early just to fill the packet-dependent
 columns. Part C first asks you to record a prediction. After recording that
 prediction and producing your nominal bundle, return here and inspect the
