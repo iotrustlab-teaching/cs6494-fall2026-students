@@ -1,0 +1,2 @@
+# Preserve the vendored MatIEC library byte-for-byte.
+toolchain/lib/** -whitespace

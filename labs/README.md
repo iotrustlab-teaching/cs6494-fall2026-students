@@ -21,3 +21,6 @@ through Canvas unless the lab says otherwise.
 - [Live agent authority demo](agent-authority-demo/) — a local model proposes a
   fixed fake CPS action, while a deterministic policy gate decides whether the
   in-memory effect is allowed and records the evidence. Replay mode requires no model.
+- [Substation Recovery Lab](substation-recovery-demo/) — a browser-based
+  Structured Text repair activity connecting controller decisions, actual
+  breaker positions, electrical consequences, protection, and required service.

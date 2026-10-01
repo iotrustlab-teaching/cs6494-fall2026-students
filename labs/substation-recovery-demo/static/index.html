@@ -1,0 +1,291 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="icon" href="data:,">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src 'self'; base-uri 'none'; form-action 'none'">
+  <title>Substation Recovery Lab</title>
+  <link rel="stylesheet" href="app.css">
+</head>
+<body>
+  <section class="access-gate" id="access-gate" aria-labelledby="access-title">
+    <div class="access-panel">
+      <div class="access-heading">
+        <p class="eyebrow">CS 6494 classroom activity</p>
+        <h1 id="access-title">Substation Recovery Lab</h1>
+      </div>
+      <form class="access-form" id="access-form">
+        <p>Enter the private access code assigned to you.</p>
+        <label class="control-label" for="access-code">Access code</label>
+        <input class="access-input" id="access-code" name="access-code" type="text" autocomplete="one-time-code" autocapitalize="characters" spellcheck="false" required>
+        <button class="button primary" id="access-submit" type="submit">Open my lab</button>
+        <div class="access-feedback" id="access-feedback" role="alert"></div>
+      </form>
+    </div>
+  </section>
+
+  <div id="lab-shell" hidden>
+  <header class="topbar">
+    <div class="topbar-main">
+      <div class="brand-lockup">
+        <p class="eyebrow">CS 6494 classroom activity</p>
+        <h1>Substation Recovery Lab</h1>
+      </div>
+      <div class="mode-lockup" aria-label="Execution provenance">
+        <span class="mode-badge" id="execution-badge">CONNECTING</span>
+        <span class="mode-badge secondary" id="requester-badge">MANUAL</span>
+        <span class="mode-badge secondary" id="student-badge">PRIVATE SESSION</span>
+        <button class="sign-out" id="sign-out" type="button">Sign out</button>
+      </div>
+    </div>
+    <div class="metadata" aria-label="Run metadata">
+      <div class="meta-item"><span class="meta-label">Run ID</span><span class="meta-value" id="run-id">preview-vuln-01</span></div>
+      <div class="meta-item"><span class="meta-label">Scenario</span><span class="meta-value" id="scenario-id">S3 maintenance fault</span></div>
+      <div class="meta-item"><span class="meta-label">Controller build</span><span class="meta-value" id="build-id">fixture-vulnerable-01</span></div>
+      <div class="meta-item"><span class="meta-label">Execution</span><span class="meta-value" id="execution-mode">Connecting</span></div>
+      <div class="meta-item"><span class="meta-label">Requester</span><span class="meta-value" id="requester-mode">Fixed test</span></div>
+      <div class="meta-item"><span class="meta-label">Simulation time</span><span class="meta-value" id="sim-time">0 ms</span></div>
+    </div>
+  </header>
+
+  <div class="notice" role="note">
+    <strong id="connection-label">Connecting:</strong>
+    <span id="connection-detail">Waiting for the local simulator and compiled controller service.</span>
+  </div>
+
+  <main class="workspace">
+    <div class="scenario-toolbar">
+      <div class="scenario-control">
+        <label class="control-label" for="trace-select">Regression test</label>
+        <select id="trace-select"></select>
+      </div>
+      <div class="toolbar-note" id="trace-purpose">Select a fixed test, then run it against the active compiled ST build.</div>
+    </div>
+
+    <section class="mission-strip" aria-label="Mission status">
+      <div class="mission-item">
+        <div class="mission-top"><span class="mission-name">Safety</span><span class="verdict pending" id="safety-verdict">Pending</span></div>
+        <div class="mission-detail" id="safety-detail">No prohibited section energized</div>
+      </div>
+      <div class="mission-item">
+        <div class="mission-top"><span class="mission-name">Protection</span><span class="verdict pending" id="protection-verdict">Pending</span></div>
+        <div class="mission-detail" id="protection-detail">No protective trip</div>
+      </div>
+      <div class="mission-item">
+        <div class="mission-top"><span class="mission-name">Required service</span><span class="verdict pending" id="service-verdict">Pending</span></div>
+        <div class="mission-detail" id="service-detail">S1 and S2 must be served</div>
+      </div>
+      <div class="mission-item">
+        <div class="mission-top"><span class="mission-name">Sustained service</span><span class="verdict pending" id="duration-verdict">Pending</span></div>
+        <div class="mission-detail" id="duration-detail">0 / 1000 ms</div>
+      </div>
+    </section>
+
+    <div class="main-grid">
+      <section class="diagram-panel" aria-labelledby="diagram-title">
+        <div class="panel-heading">
+          <div>
+            <h2 id="diagram-title">Station one-line</h2>
+            <span class="panel-subtitle">Actual contacts and independently reported electrical state</span>
+          </div>
+          <span class="tag" id="station-state">Disconnected</span>
+        </div>
+
+        <div class="diagram-wrap">
+          <svg id="one-line" viewBox="0 0 900 470" role="img" aria-labelledby="svg-title svg-desc">
+            <title id="svg-title">Substation one-line diagram</title>
+            <desc id="svg-desc">A source connects through main breaker B0 to a bus with three branch breakers S1, S2, and S3. S3 is initially the declared out-of-service branch.</desc>
+
+            <g aria-hidden="true">
+              <circle class="source-symbol" cx="450" cy="44" r="27"></circle>
+              <path d="M431 44 C438 29, 446 59, 454 44 C462 29, 470 59, 478 44" fill="none" stroke="#3f5f6a" stroke-width="3"></path>
+              <text x="450" y="89" text-anchor="middle" class="svg-label">SOURCE</text>
+              <text x="450" y="106" text-anchor="middle" class="svg-small">120 V teaching supply</text>
+            </g>
+
+            <path id="source-wire" class="wire dead" d="M450 71 L450 121"></path>
+
+            <g class="device-node" data-device="B0" role="button" tabindex="0" aria-label="Select main breaker B0">
+              <rect class="device-box" x="401" y="118" width="98" height="76" rx="5"></rect>
+              <line x1="450" y1="126" x2="450" y2="143" stroke="#26343b" stroke-width="7" stroke-linecap="round"></line>
+              <line id="contact-B0" class="contact open" x1="450" y1="168" x2="450" y2="145"></line>
+              <line x1="450" y1="168" x2="450" y2="187" stroke="#26343b" stroke-width="7" stroke-linecap="round"></line>
+              <text x="416" y="147" class="svg-label">B0</text>
+              <text id="label-B0" x="416" y="174" class="svg-small">OPEN</text>
+            </g>
+
+            <path id="b0-bus-wire" class="wire dead" d="M450 194 L450 229"></path>
+            <path id="bus-wire" class="wire busbar dead" d="M160 229 L740 229"></path>
+            <text x="168" y="212" class="svg-label">STATION BUS</text>
+            <text id="bus-voltage" x="732" y="212" text-anchor="end" class="svg-data">0.0 V</text>
+
+            <path id="wire-S1" class="wire dead" d="M260 229 L260 308"></path>
+            <path id="wire-S2" class="wire dead" d="M450 229 L450 308"></path>
+            <path id="wire-S3" class="wire dead" d="M640 229 L640 308"></path>
+
+            <g class="device-node" data-device="S1" role="button" tabindex="0" aria-label="Select branch breaker S1">
+              <rect class="device-box" x="215" y="266" width="90" height="81" rx="5"></rect>
+              <line x1="260" y1="274" x2="260" y2="291" stroke="#26343b" stroke-width="7" stroke-linecap="round"></line>
+              <line id="contact-S1" class="contact open" x1="260" y1="321" x2="260" y2="293"></line>
+              <line x1="260" y1="321" x2="260" y2="339" stroke="#26343b" stroke-width="7" stroke-linecap="round"></line>
+              <text x="227" y="295" class="svg-label">S1</text>
+              <text id="label-S1" x="227" y="323" class="svg-small">OPEN</text>
+            </g>
+
+            <g class="device-node" data-device="S2" role="button" tabindex="0" aria-label="Select branch breaker S2">
+              <rect class="device-box" x="405" y="266" width="90" height="81" rx="5"></rect>
+              <line x1="450" y1="274" x2="450" y2="291" stroke="#26343b" stroke-width="7" stroke-linecap="round"></line>
+              <line id="contact-S2" class="contact open" x1="450" y1="321" x2="450" y2="293"></line>
+              <line x1="450" y1="321" x2="450" y2="339" stroke="#26343b" stroke-width="7" stroke-linecap="round"></line>
+              <text x="417" y="295" class="svg-label">S2</text>
+              <text id="label-S2" x="417" y="323" class="svg-small">OPEN</text>
+            </g>
+
+            <g class="device-node oos" data-device="S3" role="button" tabindex="0" aria-label="Select out-of-service branch breaker S3">
+              <rect class="device-box" x="595" y="266" width="90" height="81" rx="5"></rect>
+              <line x1="640" y1="274" x2="640" y2="291" stroke="#26343b" stroke-width="7" stroke-linecap="round"></line>
+              <line id="contact-S3" class="contact open" x1="640" y1="321" x2="640" y2="293"></line>
+              <line x1="640" y1="321" x2="640" y2="339" stroke="#26343b" stroke-width="7" stroke-linecap="round"></line>
+              <text x="607" y="295" class="svg-label">S3</text>
+              <text id="label-S3" x="607" y="323" class="svg-small">OPEN</text>
+            </g>
+
+            <path id="load-wire-S1" class="wire dead" d="M260 347 L260 375"></path>
+            <path id="load-wire-S2" class="wire dead" d="M450 347 L450 375"></path>
+            <path id="load-wire-S3" class="wire dead" d="M640 347 L640 375"></path>
+
+            <rect id="load-S1" class="load-box" x="200" y="375" width="120" height="62" rx="5"></rect>
+            <rect id="load-S2" class="load-box" x="390" y="375" width="120" height="62" rx="5"></rect>
+            <rect id="load-S3" class="load-box oos" x="580" y="375" width="120" height="62" rx="5"></rect>
+            <text id="title-S1" x="260" y="397" text-anchor="middle" class="svg-label">LOAD 1</text>
+            <text id="title-S2" x="450" y="397" text-anchor="middle" class="svg-label">LOAD 2</text>
+            <text id="title-S3" x="640" y="397" text-anchor="middle" class="svg-label">FAULTED</text>
+            <text id="current-S1" x="260" y="420" text-anchor="middle" class="svg-data">0.0 A | OFF</text>
+            <text id="current-S2" x="450" y="420" text-anchor="middle" class="svg-data">0.0 A | OFF</text>
+            <text id="current-S3" x="640" y="420" text-anchor="middle" class="svg-data svg-danger">0.0 A | OOS</text>
+            <text id="oos-label" x="640" y="457" text-anchor="middle" class="svg-small svg-danger">DECLARED OUT OF SERVICE</text>
+          </svg>
+        </div>
+
+        <div class="state-callout" aria-live="polite">
+          <div>
+            <div class="event-kicker" id="event-kicker">Initial state</div>
+            <div class="event-description" id="event-description">The station is disconnected. S3 is declared out of service.</div>
+          </div>
+          <div class="diagram-actions" aria-label="Select a device for a request">
+            <button class="device-button" type="button" data-pick="B0">B0</button>
+            <button class="device-button" type="button" data-pick="S1">S1</button>
+            <button class="device-button" type="button" data-pick="S2">S2</button>
+            <button class="device-button" type="button" data-pick="S3">S3</button>
+          </div>
+        </div>
+      </section>
+
+      <aside class="side-panel" aria-label="Activity tools">
+        <div class="tabs" role="tablist" aria-label="Activity views">
+          <button class="tab-button" id="tab-requests" role="tab" aria-selected="true" aria-controls="panel-requests" type="button">Requests</button>
+          <button class="tab-button" id="tab-controller" role="tab" aria-selected="false" aria-controls="panel-controller" type="button">Controller ST</button>
+          <button class="tab-button" id="tab-evidence" role="tab" aria-selected="false" aria-controls="panel-evidence" type="button">Evidence</button>
+        </div>
+
+        <section class="tab-panel active" id="panel-requests" role="tabpanel" aria-labelledby="tab-requests">
+          <h3 class="section-title">Send a bounded operation</h3>
+          <div class="form-grid">
+            <div class="field">
+              <label class="control-label" for="request-device">Device</label>
+              <select id="request-device">
+                <option>B0</option><option>S1</option><option>S2</option><option>S3</option>
+              </select>
+            </div>
+            <div class="field">
+              <label class="control-label" for="request-action">Action</label>
+              <select id="request-action">
+                <option value="CLOSE">CLOSE</option>
+                <option value="OPEN">OPEN (human recovery)</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="request-preview" id="request-preview">
+            <div class="request-line"><span>Operation</span><strong id="draft-operation">CLOSE B0</strong></div>
+            <div class="request-line"><span>Authority</span><strong id="draft-authority">Bounded requester</strong></div>
+            <div class="request-line"><span>Generation</span><strong id="draft-generation">preview-01</strong></div>
+          </div>
+
+          <div class="button-row">
+            <button class="button primary" id="prepare-request" type="button">Send request</button>
+            <button class="button" id="jump-request-event" type="button">Run regression</button>
+          </div>
+          <div class="feedback" id="request-feedback" role="status">Commands enter the live queue and are applied only after a controller decision.</div>
+
+          <h3 class="section-title section-spaced">Regression steps</h3>
+          <ol class="sequence-list" id="sequence-list"></ol>
+        </section>
+
+        <section class="tab-panel" id="panel-controller" role="tabpanel" aria-labelledby="tab-controller">
+          <h3 class="section-title">Student-editable compiled close interlock</h3>
+          <div class="code-meta">
+            <div class="field">
+              <label class="control-label" for="source-preset">Starting source</label>
+              <select id="source-preset"></select>
+            </div>
+            <div class="field">
+              <label class="control-label" for="source-id">Source identity</label>
+              <input class="source-id" id="source-id" value="st-vulnerable-fixture" readonly>
+            </div>
+          </div>
+          <label class="control-label" for="st-source">FB_CloseInterlock.st</label>
+          <textarea id="st-source" spellcheck="false"></textarea>
+          <p class="source-warning">Compilation uses the bundled matiec IEC 61131-3 compiler. The resulting native function runs in a bounded child process.</p>
+          <div class="button-row">
+            <button class="button primary" id="compile-draft" type="button">Compile and activate</button>
+            <button class="button" id="restore-source" type="button">Reload active preset</button>
+            <button class="button danger" id="compile-error" type="button">Insert syntax error</button>
+          </div>
+          <div class="feedback" id="compile-feedback" role="status">Loading the active build.</div>
+          <h3 class="section-title section-spaced-small">Change from vulnerable source</h3>
+          <div class="diff" id="source-diff" aria-label="Source comparison"></div>
+        </section>
+
+        <section class="tab-panel" id="panel-evidence" role="tabpanel" aria-labelledby="tab-evidence">
+          <div class="evidence-heading">
+            <h3 class="section-title">Selected event</h3>
+            <button class="button" id="export-evidence" type="button">Export JSON</button>
+          </div>
+          <div class="evidence-detail">
+            <dl class="evidence-grid" id="evidence-grid"></dl>
+          </div>
+          <h3 class="section-title">Correlated run events</h3>
+          <ol class="event-list" id="event-list"></ol>
+        </section>
+      </aside>
+    </div>
+
+    <section class="timeline-panel" aria-labelledby="timeline-title">
+      <div class="panel-heading">
+        <div>
+          <h2 id="timeline-title">Run timeline</h2>
+          <span class="panel-subtitle">Recorded events from the current live run</span>
+        </div>
+        <span class="tag" id="timeline-position">Event 1 of 1</span>
+      </div>
+      <div class="playback">
+        <div class="playback-buttons" aria-label="Playback controls">
+          <button class="icon-button" id="previous-event" type="button" title="Previous event" aria-label="Previous event">&#9664;</button>
+          <button class="icon-button" id="play-events" type="button" title="Play trace" aria-label="Play trace">&#9654;</button>
+          <button class="icon-button" id="next-event" type="button" title="Next event" aria-label="Next event">&#9654;&#124;</button>
+          <button class="icon-button" id="reset-events" type="button" title="Reset trace" aria-label="Reset trace">&#8634;</button>
+        </div>
+        <label class="sr-only" for="scrubber">Timeline event</label>
+        <input id="scrubber" type="range" min="0" max="0" value="0" step="1">
+        <div class="playback-time" id="playback-time">0 ms</div>
+      </div>
+      <div class="timeline-track" id="timeline-track"></div>
+    </section>
+  </main>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
