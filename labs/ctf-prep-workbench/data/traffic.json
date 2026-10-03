@@ -1,0 +1,126 @@
+{
+  "provenance": "Constructed synthetic Modbus/TCP packets; decoded with TShark, not captured from a PLC.",
+  "parser": "TShark Modbus dissector",
+  "events": [
+    {
+      "packet": 1,
+      "seconds": 0.0,
+      "source": "192.0.2.11",
+      "destination": "192.0.2.20",
+      "port": 502,
+      "function": 3,
+      "address": 100,
+      "value": null,
+      "data": null,
+      "direction": "request"
+    },
+    {
+      "packet": 2,
+      "seconds": 0.03,
+      "source": "192.0.2.20",
+      "destination": "192.0.2.11",
+      "port": 15011,
+      "function": 3,
+      "address": null,
+      "value": 0,
+      "data": null,
+      "direction": "response"
+    },
+    {
+      "packet": 3,
+      "seconds": 0.4,
+      "source": "192.0.2.31",
+      "destination": "192.0.2.20",
+      "port": 502,
+      "function": 3,
+      "address": 101,
+      "value": null,
+      "data": null,
+      "direction": "request"
+    },
+    {
+      "packet": 4,
+      "seconds": 0.43,
+      "source": "192.0.2.20",
+      "destination": "192.0.2.31",
+      "port": 15031,
+      "function": 3,
+      "address": null,
+      "value": 1,
+      "data": null,
+      "direction": "response"
+    },
+    {
+      "packet": 5,
+      "seconds": 1.0,
+      "source": "192.0.2.11",
+      "destination": "192.0.2.20",
+      "port": 502,
+      "function": 6,
+      "address": 120,
+      "value": null,
+      "data": "0001",
+      "direction": "request"
+    },
+    {
+      "packet": 6,
+      "seconds": 1.03,
+      "source": "192.0.2.20",
+      "destination": "192.0.2.11",
+      "port": 15011,
+      "function": 6,
+      "address": 120,
+      "value": null,
+      "data": "0001",
+      "direction": "response"
+    },
+    {
+      "packet": 7,
+      "seconds": 1.6,
+      "source": "192.0.2.11",
+      "destination": "192.0.2.20",
+      "port": 502,
+      "function": 3,
+      "address": 100,
+      "value": null,
+      "data": null,
+      "direction": "request"
+    },
+    {
+      "packet": 8,
+      "seconds": 1.63,
+      "source": "192.0.2.20",
+      "destination": "192.0.2.11",
+      "port": 15011,
+      "function": 3,
+      "address": null,
+      "value": 1,
+      "data": null,
+      "direction": "response"
+    },
+    {
+      "packet": 9,
+      "seconds": 3.1,
+      "source": "192.0.2.31",
+      "destination": "192.0.2.20",
+      "port": 502,
+      "function": 3,
+      "address": 102,
+      "value": null,
+      "data": null,
+      "direction": "request"
+    },
+    {
+      "packet": 10,
+      "seconds": 3.13,
+      "source": "192.0.2.20",
+      "destination": "192.0.2.31",
+      "port": 15031,
+      "function": 3,
+      "address": null,
+      "value": 1,
+      "data": null,
+      "direction": "response"
+    }
+  ]
+}

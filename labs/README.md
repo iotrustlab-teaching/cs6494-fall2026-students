@@ -15,6 +15,10 @@ through Canvas unless the lab says otherwise.
 
 ## Lecture demos
 
+- [CTF Prep Workbench](ctf-prep-workbench/) — an offline OT visibility exercise
+  with a frozen Modbus packet trace, controller/process context, and fixed
+  guardrail cases. It is not the official HW3 assignment; course announcements
+  provide submission requirements and dates.
 - [SMT solver demo](smt-solver-demo/) — the tank sensor-bias query, a bounded
   distribution-feeder example, and the mapping from executable controller code
   to Z3 constraints.

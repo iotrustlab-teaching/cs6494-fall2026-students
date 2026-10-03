@@ -1,0 +1,113 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>CTF Prep Workbench | CS 6494</title>
+  <link rel="stylesheet" href="static/app.css">
+</head>
+<body>
+  <header class="topbar">
+    <div>
+      <div class="eyebrow">CS 6494 / CTF PREP</div>
+      <h1>Transfer skid 04</h1>
+    </div>
+    <div class="header-meta"><strong>Frozen evidence</strong><span>Synthetic teaching fixture · offline</span></div>
+  </header>
+
+  <nav class="tabs" aria-label="Workbench views">
+    <button class="tab active" type="button" data-view="visibility" aria-current="page">01&nbsp; OT visibility</button>
+    <button class="tab" type="button" data-view="controller" disabled>02&nbsp; Controller</button>
+    <button class="tab" type="button" data-view="process" disabled>03&nbsp; Process</button>
+    <button class="tab" type="button" data-view="controls" disabled>04&nbsp; Controls + evidence</button>
+  </nav>
+
+  <main>
+    <section class="view active" id="view-visibility" aria-labelledby="visibility-title">
+      <div class="section-head">
+        <div><div class="eyebrow">OBSERVE / MONDAY</div><h2 id="visibility-title">What can the traffic establish?</h2></div>
+        <span class="source-tag">TShark-decoded PCAP</span>
+      </div>
+      <div class="work-grid">
+        <div class="primary-column">
+          <section class="surface">
+            <div class="surface-head"><h3>Communication map</h3><span>Modbus/TCP · 10 packets</span></div>
+            <div class="map-scroll"><svg class="map" viewBox="0 0 760 265" role="img" aria-label="Operator client and historian client exchange Modbus TCP traffic with a controller endpoint">
+              <defs><marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#d67646"/></marker></defs>
+              <path class="flow" d="M200 80 L380 132 M200 190 L380 132"/>
+              <path class="flow-return" d="M380 143 L200 91 M380 155 L200 202"/>
+              <g class="map-node"><rect x="30" y="35" width="180" height="82"/><text x="46" y="66">OPERATOR CLIENT</text><text x="46" y="92">192.0.2.11</text></g>
+              <g class="map-node"><rect x="30" y="155" width="180" height="82"/><text x="46" y="186">HISTORIAN CLIENT</text><text x="46" y="212">192.0.2.31</text></g>
+              <g class="map-node controller-node"><rect x="380" y="91" width="320" height="91"/><text x="398" y="123">CONTROLLER ENDPOINT</text><text x="398" y="152">192.0.2.20 : 502</text></g>
+              <text class="flow-label" x="241" y="60">reads / start write</text>
+              <text class="flow-label" x="236" y="220">status reads</text>
+            </svg></div>
+            <p class="fine-print">Endpoint addresses and Modbus operations come from packets. Asset names and roles come from the fictional exercise manifest; packets alone do not authenticate either client.</p>
+          </section>
+          <section class="surface">
+            <div class="surface-head"><h3>Packet timeline</h3><span>Select a row for decoded fields</span></div>
+            <div class="table-scroll"><table><thead><tr><th>t + s</th><th>From → to</th><th>Operation</th><th>Register</th><th>Value</th></tr></thead><tbody id="traffic-rows"></tbody></table></div>
+          </section>
+        </div>
+        <aside class="side-column">
+          <section class="surface"><div class="surface-head"><h3>Observed endpoints</h3></div><div id="asset-list"></div></section>
+          <section class="surface detail" aria-live="polite"><div class="surface-head"><h3>Selected packet</h3><span id="packet-id">#5</span></div><dl id="packet-detail"></dl></section>
+          <section class="prompt-panel"><span class="eyebrow">WORK QUESTION</span><p>Is a valid start-request write enough to conclude that the motor ran safely?</p><button type="button" class="primary-action" id="reveal-controller">Reveal controller context →</button></section>
+        </aside>
+      </div>
+    </section>
+
+    <section class="view" id="view-controller" aria-labelledby="controller-title">
+      <div class="section-head"><div><div class="eyebrow">INTERPRET / MONDAY</div><h2 id="controller-title">What did the program decide?</h2></div><span class="source-tag authored">Authored source fixture</span></div>
+      <div class="work-grid">
+        <div class="primary-column">
+          <section class="surface"><div class="surface-head"><h3>Relevant Structured Text</h3><span>Illustrative starting build</span></div><pre class="source"><code id="st-source"></code></pre></section>
+          <section class="surface"><div class="surface-head"><h3>Register map</h3><span>Supplied configuration, not inferred from traffic</span></div><div class="table-scroll"><table><thead><tr><th>Address</th><th>Meaning</th><th>Evidence source</th></tr></thead><tbody id="register-rows"></tbody></table></div></section>
+        </div>
+        <aside class="side-column">
+          <section class="surface"><div class="surface-head"><h3>Decision boundary</h3></div><div class="boundary"><span>Requester</span><b>→</b><span>Register 120</span><b>→</b><strong>FB_StartPermit</strong><b>→</b><span>Motor output</span></div><p class="fine-print">A Modbus write requests an operation. It does not prove the motor output, contact state, flow, or pressure.</p></section>
+          <section class="prompt-panel"><span class="eyebrow">REVISE YOUR CLAIM</span><p>Which variables exist in the source, and which ones does the starting decision actually use?</p><button type="button" class="primary-action" id="reveal-process">Reveal process evidence →</button></section>
+        </aside>
+      </div>
+    </section>
+
+    <section class="view" id="view-process" aria-labelledby="process-title">
+      <div class="section-head"><div><div class="eyebrow">CONSEQUENCE / MONDAY</div><h2 id="process-title">What happened in the process?</h2></div><span class="source-tag authored">Authored physical simulation</span></div>
+      <div class="work-grid">
+        <div class="primary-column">
+          <section class="surface"><div class="surface-head"><h3>Correlated baseline</h3><span>Fixed authored timeline</span></div><div id="baseline-timeline" class="event-list"></div></section>
+        </div>
+        <aside class="side-column">
+          <section class="metric-row"><div class="metric"><span>Discharge valve</span><strong>Closed</strong></div><div class="metric"><span>Useful flow</span><strong>0 L/min</strong></div></section>
+          <section class="surface"><div class="surface-head"><h3>Safety + service</h3></div><p>Unsafe pressure develops before independent protection trips the motor. The trip contains the event; it does not make the initial start safe or restore useful transfer.</p><div class="outcome bad">Safety violated before trip</div><div class="outcome neutral">Service not delivered</div></section>
+          <section class="prompt-panel"><span class="eyebrow">WORK QUESTION</span><p>Which conclusion changed when program and process evidence were added?</p><button type="button" class="primary-action" id="reveal-controls">Open control cases →</button></section>
+        </aside>
+      </div>
+    </section>
+
+    <section class="view" id="view-controls" aria-labelledby="controls-title">
+      <div class="section-head"><div><div class="eyebrow">DEFEND / WEDNESDAY</div><h2 id="controls-title">Place the control. Test the claim.</h2></div><span class="source-tag authored">Fixed scenario replay</span></div>
+      <div class="work-grid">
+        <div class="primary-column">
+          <section class="surface"><div class="surface-head"><h3>Replay cases</h3><span>Same bounded start request</span></div><div id="case-picker" class="segmented" role="group" aria-label="Replay case"></div><div id="case-summary"></div><div id="case-timeline" class="event-list"></div></section>
+          <section class="surface"><div class="surface-head"><h3>Control boundaries</h3><span>Mark where your claim lives</span></div><div class="control-grid">
+            <label><input type="checkbox" data-control="Detect"><strong>Detect</strong><small>Observe or alert on a write or unusual path.</small></label>
+            <label><input type="checkbox" data-control="Prevent"><strong>Prevent</strong><small>State-aware controller interlock before actuation.</small></label>
+            <label><input type="checkbox" data-control="Contain"><strong>Contain</strong><small>Independent protection after consequence begins.</small></label>
+            <label><input type="checkbox" data-control="Recover"><strong>Recover</strong><small>Verify safe state and useful service after intervention.</small></label>
+          </div></section>
+        </div>
+        <aside class="side-column">
+          <section class="surface"><div class="surface-head"><h3>Evidence notebook</h3><span>Stored only in this browser</span></div><label class="note-label" for="claim">Bounded claim</label><textarea id="claim" rows="5" placeholder="What does your chosen evidence establish? What remains uncertain?"></textarea><label class="note-label" for="challenge">Changed assumption</label><textarea id="challenge" rows="4" placeholder="What if valve feedback is stale?"></textarea><button type="button" class="secondary-action" id="export-notes">Download notes</button><button type="button" class="text-action" id="reset-notes">Clear local notes</button></section>
+          <section class="surface"><div class="surface-head"><h3>Provenance</h3></div><ul class="provenance"><li><b>Network:</b> synthetic packet fixture, decoded by TShark.</li><li><b>Controller:</b> illustrative ST; not compiled here.</li><li><b>Process:</b> authored simulated outcomes.</li><li><b>Replay:</b> fixed cases; no live PLC or agent.</li></ul></section>
+        </aside>
+      </div>
+    </section>
+  </main>
+
+  <footer><span>Cyber Vision-inspired teaching view · not Cisco Cyber Vision</span><span>All addresses and devices are fictional.</span></footer>
+  <script src="data/traffic.js"></script>
+  <script src="data/scenario.js"></script>
+  <script src="static/app.js"></script>
+</body>
+</html>
