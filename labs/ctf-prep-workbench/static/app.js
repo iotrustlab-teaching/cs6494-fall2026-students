@@ -43,6 +43,7 @@
     document.querySelectorAll(".view").forEach((section) => section.classList.toggle("active", section.id === `view-${view}`));
     document.querySelectorAll(".tabs button").forEach((button) => {
       const active = button.dataset.view === view;
+      button.hidden = views.indexOf(button.dataset.view) > state.unlocked + 1;
       button.classList.toggle("active", active);
       button.disabled = views.indexOf(button.dataset.view) > state.unlocked;
       if (active) button.setAttribute("aria-current", "page"); else button.removeAttribute("aria-current");
@@ -69,8 +70,8 @@
   function renderOverview() {
     byId("metric-observed").textContent = observed.length;
     byId("metric-leads").textContent = leads.length;
-    byId("metric-protocols").textContent = new Set(traffic.events.map((event) => event.function ? "Modbus/TCP" : "unknown")).size;
     byId("metric-writes").textContent = requestEvents.filter((event) => policy.operation(event) === "write").length;
+    byId("site-layout").hidden = !state.manifestOpen;
     byId("utility-chain").innerHTML = scenario.areas.map((area, index) => `
       <div class="chain-stage ${state.manifestOpen && area === "Transfer skid" ? "chain-focus" : ""}">
         <small>AREA ${String(index + 1).padStart(2, "0")}</small><b>${state.manifestOpen ? esc(area) : "Unverified area"}</b>
@@ -289,4 +290,5 @@
     byId("claim").value = ""; byId("challenge").value = "";
     document.querySelectorAll("[data-control]").forEach((input) => { input.checked = false; }); saveNotes();
   });
+  showView("overview");
 })();

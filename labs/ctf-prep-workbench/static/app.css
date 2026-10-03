@@ -18,6 +18,7 @@ h3 { font-size: 15px; margin: 0; }
 .tabs button { min-width: 140px; padding: 16px 14px; border: 0; border-bottom: 3px solid transparent; background: #fff; color: #597175; font-size: 13px; font-weight: 700; white-space: nowrap; }
 .tabs button.active { color: #18343d; border-color: #d97848; }
 .tabs button:not(:disabled):hover { background: #edf4f1; }
+.tabs button[hidden] { display: none; }
 main { max-width: 1528px; margin: auto; padding: 24px; }
 .view { display: none; }
 .view.active { display: block; }
@@ -30,6 +31,22 @@ main { max-width: 1528px; margin: auto; padding: 24px; }
 .metrics strong, .metrics span { display: block; }
 .metrics strong { font-size: 27px; color: #1e675e; }
 .metrics span { font-size: 12px; color: #587073; line-height: 1.35; }
+.metrics.compact { display: flex; flex-wrap: wrap; margin: 0 0 18px; }
+.metrics.compact div { display: flex; min-height: 52px; align-items: center; gap: 8px; padding: 11px 18px; }
+.metrics.compact strong { font-size: 18px; }
+.metrics.compact span { font-size: 12px; }
+.focus-task { margin-bottom: 16px; padding: 20px 22px; border-left: 4px solid #24746b; background: #e5f0eb; }
+.focus-task h3 { margin: 8px 0; font-size: 20px; }
+.focus-task p { max-width: 720px; margin: 0 0 16px; color: #4e6868; font-size: 13px; line-height: 1.45; }
+.focus-prompt { margin: 0 0 18px; padding: 12px 15px; border-left: 3px solid #d67543; background: #f8eee8; font-size: 13px; line-height: 1.45; }
+.focus-prompt b { margin-right: 8px; color: #8d4e2e; }
+.disclosure { margin: 16px 0 18px; border: 1px solid #d1ddd8; border-radius: 3px; background: white; overflow: hidden; }
+.disclosure[hidden] { display: none; }
+.disclosure summary { padding: 14px 18px; cursor: pointer; font-size: 13px; font-weight: 700; }
+.disclosure summary:hover { background: #eff5f1; }
+.disclosure[open] summary { border-bottom: 1px solid #e3ebe7; }
+.disclosure > .two-col { margin: 0; }
+.view > .surface { margin-bottom: 18px; }
 .two-col { display: grid; grid-template-columns: minmax(0, 1.55fr) minmax(320px, .85fr); gap: 18px; margin-bottom: 18px; align-items: start; }
 .surface { min-width: 0; background: #fff; border: 1px solid #d1ddd8; border-radius: 3px; overflow: hidden; }
 .surface-head { min-height: 49px; padding: 15px 18px; border-bottom: 1px solid #e3ebe7; display: flex; justify-content: space-between; gap: 10px; align-items: baseline; }
@@ -154,4 +171,4 @@ textarea { display: block; width: calc(100% - 36px); margin: 0 18px; padding: 10
 .note-actions { display: flex; align-items: center; gap: 8px; padding: 17px 18px; }
 footer { display: flex; justify-content: space-between; gap: 15px; padding: 17px max(24px, calc((100vw - 1480px)/2)); border-top: 1px solid #d1ddd8; color: #667a7b; font-size: 11px; }
 @media (max-width: 920px) { .two-col { grid-template-columns: 1fr; } .inventory-layout { grid-template-columns: 1fr; } .control-grid { grid-template-columns: repeat(2,1fr); } }
-@media (max-width: 620px) { main { padding: 16px 12px; } .topbar { padding: 17px; } .header-status { display: none; } h1 { font-size: 21px; } h2 { font-size: 19px; } .tabs { padding: 0 8px; } .tabs button { min-width: 118px; padding: 14px 10px; } .section-head { display: block; } .provenance-tag { margin-top: 11px; } .metrics { grid-template-columns: repeat(2,1fr); } .metrics div:nth-child(2) { border-right: 0; } .metrics div:nth-child(-n+2) { border-bottom: 1px solid #dbe4df; } .action-band.full { display: block; } .action-band.full p { margin-bottom: 12px; } .comparison { grid-template-columns: 1fr; } .group-summary { grid-template-columns: 1fr; } .control-grid { grid-template-columns: 1fr; } .rule-form { grid-template-columns: 1fr; } .challenge-facts strong { font-size: 15px; } .event { grid-template-columns: 50px 67px 1fr; gap: 6px; padding: 9px; } footer { display: block; padding: 18px; } footer span { display: block; margin-bottom: 5px; } }
+@media (max-width: 620px) { main { padding: 16px 12px; } .topbar { padding: 17px; } .header-status { display: none; } h1 { font-size: 21px; } h2 { font-size: 19px; } .tabs { padding: 0 8px; } .tabs button { min-width: 118px; padding: 14px 10px; } .section-head { display: block; } .provenance-tag { margin-top: 11px; } .metrics.compact div { width: 100%; min-height: 42px; border-right: 0; border-bottom: 1px solid #dbe4df; } .metrics.compact div:last-child { border-bottom: 0; } .action-band.full { display: block; } .action-band.full p { margin-bottom: 12px; } .comparison { grid-template-columns: 1fr; } .group-summary { grid-template-columns: 1fr; } .control-grid { grid-template-columns: 1fr; } .rule-form { grid-template-columns: 1fr; } .challenge-facts strong { font-size: 15px; } .event { grid-template-columns: 50px 67px 1fr; gap: 6px; padding: 9px; } footer { display: block; padding: 18px; } footer span { display: block; margin-bottom: 5px; } }

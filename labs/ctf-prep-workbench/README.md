@@ -22,6 +22,10 @@ directly. All data and scripts are local. There is no login or shared mutable
 backend. Group assignments, proposed rules, criticality assessments, and notes
 remain only in this browser. Download the notebook to keep a copy.
 
+The guided path shows one investigation question at a time. The full packet
+timeline, site layout, rule list, and controller code remain available in
+expandable evidence sections when needed.
+
 The companion [worksheet](WORKSHEET.md) is a classroom exercise, not the
 official HW3 assignment or deadline notice.
 
