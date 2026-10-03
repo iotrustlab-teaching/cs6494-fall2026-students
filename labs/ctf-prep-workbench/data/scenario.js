@@ -1,9 +1,17 @@
 window.WORKBENCH_SCENARIO = {
-  title: "Transfer skid 04",
+  title: "Riverbend Water Utility",
+  subtitle: "Transfer skid 04 is the only process area with packet and authored process evidence.",
+  areas: ["Source / intake", "Treatment", "Clearwell / storage", "Transfer skid", "Distribution"],
   assets: [
-    { ip: "192.0.2.11", name: "Operator client", role: "Role supplied by exercise manifest, not proven by packets", kind: "client" },
-    { ip: "192.0.2.20", name: "Controller endpoint", role: "Modbus/TCP server on port 502; PLC identity supplied by manifest", kind: "controller" },
-    { ip: "192.0.2.31", name: "Historian client", role: "Role supplied by exercise manifest, not proven by packets", kind: "client" }
+    { id: "OP-01", ip: "192.0.2.11", name: "Operator station", role: "Operator client", kind: "client", area: "Transfer skid", group: "Supervisory", source: "packet + site record" },
+    { id: "PLC-TR-01", ip: "192.0.2.20", name: "Transfer controller", role: "PLC", kind: "controller", area: "Transfer skid", group: "Control", source: "packet + site record" },
+    { id: "HIST-01", ip: "192.0.2.31", name: "Historian", role: "Historian client", kind: "client", area: "Shared services", group: "Supervisory", source: "packet + site record" },
+    { id: "ENG-01", ip: "192.0.2.41", name: "Engineering station", role: "Engineering workstation", kind: "client", area: "Shared services", group: "Engineering", source: "site record only" },
+    { id: "PLC-TREAT-01", ip: "192.0.2.50", name: "Treatment controller", role: "PLC", kind: "controller", area: "Treatment", group: "Control", source: "site record only" },
+    { id: "RIO-TR-01", ip: "192.0.2.21", name: "Transfer remote I/O", role: "Remote I/O", kind: "device", area: "Transfer skid", group: "Process I/O", source: "site record only" },
+    { id: "VFD-TR-01", ip: "192.0.2.22", name: "Transfer pump drive", role: "VFD", kind: "device", area: "Transfer skid", group: "Process I/O", source: "site record only" },
+    { id: "GW-DIST-01", ip: "192.0.2.60", name: "Distribution gateway", role: "Gateway", kind: "device", area: "Distribution", group: "Infrastructure", source: "site record only" },
+    { id: "MNT-UNKNOWN", ip: "192.0.2.71", name: "Unclassified maintenance device", role: "Unconfirmed", kind: "unknown", area: "Unknown", group: "Unassigned", source: "site record only" }
   ],
   registers: [
     { address: 100, label: "Reported motor run", source: "Controller register map" },

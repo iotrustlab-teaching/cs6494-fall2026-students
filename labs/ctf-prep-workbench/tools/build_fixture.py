@@ -93,7 +93,7 @@ def write_capture(frames, output):
 
 def normalize_capture(capture):
     tshark = shutil.which("tshark") or "/Applications/Wireshark.app/Contents/MacOS/tshark"
-    fields = ["frame.number", "frame.time_epoch", "ip.src", "ip.dst", "tcp.srcport",
+    fields = ["frame.number", "frame.time_epoch", "eth.src", "eth.dst", "ip.src", "ip.dst", "tcp.srcport",
               "tcp.dstport", "modbus.func_code", "modbus.reference_num",
               "modbus.regval_uint16", "modbus.data"]
     command = [tshark, "-r", str(capture), "-T", "fields", "-E", "separator=\t",
@@ -111,8 +111,13 @@ def normalize_capture(capture):
         events.append({
             "packet": int(row["frame.number"]),
             "seconds": round(float(row["frame.time_epoch"]) - EPOCH, 2),
+            "evidence_source": "synthetic-pcap:tshark",
+            "protocol": "Modbus/TCP",
+            "operation": "write" if int(row["modbus.func_code"]) in (6, 16) else "read",
             "source": row["ip.src"],
             "destination": row["ip.dst"],
+            "source_mac": row["eth.src"],
+            "destination_mac": row["eth.dst"],
             "port": int(row["tcp.dstport"]),
             "function": int(row["modbus.func_code"]),
             "address": int(row["modbus.reference_num"]) if row["modbus.reference_num"] else None,

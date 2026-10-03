@@ -1,62 +1,66 @@
-# CTF Prep Workbench
+# Utility OT Security Workbench
 
-An offline-capable browser exercise about OT visibility, controller authority,
-physical consequence, and evidence. The OT visibility view is inspired by the
-teaching abstraction of an industrial asset/flow map. **This is not Cisco Cyber
-Vision** and does not reproduce that product.
+An offline, fictional municipal-water-utility investigation. Students start
+with network visibility, form an asset and communication map, test proposed
+group-based network rules, then add controller and process evidence to make a
+bounded cyber-physical security claim.
+
+The workflow is **inspired by Cisco Cyber Vision, not Cisco Cyber Vision**. It
+does not use Cisco software, logos, proprietary datasets, switch enforcement,
+or vendor risk scores. The course adds program semantics, physical state,
+authority, service, and recovery evidence beyond the network view.
 
 ## Start
-
-From this directory:
 
 ```sh
 ./run_demo.sh
 ```
 
-Open `http://127.0.0.1:8766/`. Set `PORT=8767` (or another free local port)
-if needed. No account, network connection, package installation, or mutable
-server state is needed. The server binds only to localhost. For a no-server
-fallback, open `index.html` directly in a browser; all data is bundled in local
-scripts, so `file://` also works.
+Open `http://127.0.0.1:8766/`. Set `PORT=8767` if that port is occupied. The
+server binds to localhost. For an offline, no-server fallback, open `index.html`
+directly. All data and scripts are local. There is no login or shared mutable
+backend. Group assignments, proposed rules, criticality assessments, and notes
+remain only in this browser. Download the notebook to keep a copy.
 
-The activity materials are in [WORKSHEET.md](WORKSHEET.md). The browser's notes
-remain in local browser storage and can be downloaded as Markdown. They are not
-submitted or shared automatically.
+The companion [worksheet](WORKSHEET.md) is a classroom exercise, not the
+official HW3 assignment or deadline notice.
 
-## Evidence boundary
+## Evidence model
 
-| Component | What it really is |
+| Layer | Provenance and limit |
 |---|---|
-| `data/monday-synthetic.pcap` | Constructed Modbus/TCP packet fixture, not live capture |
-| `data/traffic.json` / `.js` | Decoded from that PCAP with TShark; ten packets |
-| Asset names, register meanings | Fictional exercise manifest, not packet-derived identity |
-| Controller view | Authored illustrative ST source, not compiled or executed here |
-| Process view | Authored fixed simulation outcomes, not physical telemetry |
-| Replay cases | Fixed teaching traces, not new results from running student code |
-| Staff agent, IEC-104, Cisco host | Not connected to this workbench |
+| Packet endpoints and exchanges | Ten **synthetic** Modbus/TCP packets in `data/monday-synthetic.pcap`, decoded with TShark into `traffic.json` / `traffic.js`; not a live capture |
+| Initial assets | Three IP/MAC endpoints genuinely present in that packet fixture; protocol and first/last seen derive from the decoded events |
+| Site record | Six additional **unverified leads**, plus names, roles and process areas for all nine records; none of those identities is authenticated by packets |
+| Communication map | Two observed client-to-controller paths; no fabricated traffic for unverified leads |
+| Segmentation | Local first-match allow/deny **what-if** calculation on frozen requests plus one explicitly authored legitimate-service test; no switch or firewall is changed |
+| Controller | Illustrative Structured Text and register map authored for the exercise; not compiled or executed in this workbench |
+| Process | Fixed authored simulation outcomes for transfer skid 04; no physical device or live telemetry |
+| Challenge | Authored stale-valve-feedback case; report age is 30 seconds |
 
-The Modbus address map is **not** the HW2 tank map, and the capture contains no
-HW2 solution or credentials. The addresses use documentation-only `192.0.2.0/24`.
+The fictional site spans source/intake, treatment, clearwell/storage, transfer,
+and distribution. Only the transfer-skid subset has packet and rich process
+evidence. The unused site-record IPs are documentation-only `192.0.2.0/24`
+addresses, not extra discovered hosts. The packet fixture does not contain the
+HW2 tank solution, credentials, or live infrastructure details.
 
-The browser distinguishes request, protocol acknowledgment, controller decision,
-reported state, and physical outcome. A successful write response alone does not
-prove safe actuation.
+## Verify or rebuild
 
-## Verify or rebuild the fixture
-
-TShark is only required to verify or rebuild the frozen capture, not to run the
-browser activity.
+TShark is needed to verify or rebuild the fixture, **not** to use the browser
+workbench. Node is used for the small policy/scenario checks when available.
 
 ```sh
 ./run_demo.sh check
 ./run_demo.sh rebuild
 ```
 
-The builder uses only the Python standard library to construct Ethernet/IP/TCP
-frames with Modbus/TCP payloads, then requires TShark to decode every packet.
-The checked-in browser event data comes from the TShark decoder. Optional Zeek
-or Suricata inputs are not qualified or required.
+The builder constructs valid Ethernet/IP/TCP Modbus packets with the Python
+standard library and requires TShark to decode every packet before writing the
+normalized browser event data. `static/policy.js` is the local, testable
+policy-impact model. It intentionally does not decide physical safety. The
+normalized event fields and future-adapter boundary are in
+[EVENT_SCHEMA.md](EVENT_SCHEMA.md).
 
-The separate Substation Recovery Lab remains a development/demo track, not a
-dependency for this activity. Official HW3 requirements and due dates must come
-from the course announcement or Canvas.
+Zeek, Suricata, a staff agent, IEC-104, Cisco hosting, and SPHERE are not
+required or connected. The separate Substation Recovery Lab remains another
+development/demo track.
