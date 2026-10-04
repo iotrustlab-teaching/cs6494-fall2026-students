@@ -30,7 +30,6 @@ VAR_OUTPUT
   PermitStart : BOOL;
 END_VAR
 
-(* Starting build: state inputs exist, but this decision ignores them. *)
 PermitStart := StartRequest AND NOT MaintenanceLockout;
 END_FUNCTION_BLOCK`,
   provenance: {
@@ -40,19 +39,22 @@ END_FUNCTION_BLOCK`,
   },
   cases: [
     {
-      id: "baseline", label: "Observed baseline", condition: "Discharge valve physically closed; reported open; no maintenance lockout.",
+      id: "baseline", label: "Baseline replay (authored)", condition: "Discharge valve physically closed; reported open; no maintenance lockout.",
       command: "Modbus write requests motor start at register 120.",
       decision: "Starting interlock permits the request because it checks only lockout.",
       feedback: "Controller reports motor running, then protection trip.",
       physical: "No useful flow. Discharge pressure rises; independent protection trips the motor after 2.1 s.",
       safety: "Failed before containment", service: "Not delivered",
       steps: [
-        ["0.0 s", "Physical", "Discharge valve closed; flow 0 L/min."],
-        ["1.0 s", "Network", "Start request reaches controller."],
-        ["1.1 s", "Controller", "PermitStart = TRUE; run command issued."],
-        ["1.6 s", "Network", "Reported run register reads 1."],
-        ["2.0 s", "Physical", "Pressure exceeds 6 bar; flow remains 0."],
-        ["3.1 s", "Protection", "Motor trips; containment occurs after unsafe exposure."]
+        ["0.0 s", "Replay", "Modeled discharge valve closed; flow 0 L/min."],
+        ["0.43 s", "Packet #4", "Reported valve-open register reads 1; this is not verified physical position."],
+        ["1.00 s", "Packet #5", "FC06 write request targets register 120, value 1."],
+        ["1.03 s", "Packet #6", "Endpoint echoes the write; controller authorization is not established."],
+        ["1.1 s", "Replay", "Authored controller decision permits the request and issues a modeled run command."],
+        ["1.63 s", "Packet #8", "Reported motor-run register reads 1; physical motion is not verified."],
+        ["2.0 s", "Replay", "Modeled pressure exceeds 6 bar; flow remains 0."],
+        ["3.1 s", "Replay", "Modeled protection trips after unsafe exposure."],
+        ["3.13 s", "Packet #10", "Reported protection-trip register reads 1; packet-backed report, not physical proof."]
       ]
     },
     {
@@ -63,10 +65,10 @@ END_FUNCTION_BLOCK`,
       physical: "Flow remains 0; pressure stays below 1 bar.",
       safety: "Preserved", service: "Not applicable to prohibited request",
       steps: [
-        ["0.0 s", "Physical", "Closed valve feedback is fresh."],
-        ["1.0 s", "Network", "Start request reaches controller."],
-        ["1.1 s", "Controller", "Interlock denies motor start."],
-        ["1.6 s", "Physical", "Motor stopped; no pressure excursion."]
+        ["0.0 s", "Replay", "Closed valve feedback is fresh in this authored case."],
+        ["1.0 s", "Replay", "Same bounded start request is modeled."],
+        ["1.1 s", "Replay", "State-aware interlock denies modeled motor start."],
+        ["1.6 s", "Replay", "Modeled motor remains stopped; no pressure excursion."]
       ]
     },
     {
@@ -77,11 +79,11 @@ END_FUNCTION_BLOCK`,
       physical: "Flow reaches 40 L/min; pressure remains below 4 bar.",
       safety: "Preserved", service: "Delivered",
       steps: [
-        ["0.0 s", "Physical", "Valve open and fresh."],
-        ["1.0 s", "Network", "Start request reaches controller."],
-        ["1.1 s", "Controller", "Interlock permits motor start."],
-        ["2.0 s", "Physical", "Flow 40 L/min; pressure 3 bar."],
-        ["3.1 s", "Protection", "No trip; service sustained."]
+        ["0.0 s", "Replay", "Modeled valve open and fresh."],
+        ["1.0 s", "Replay", "Same bounded start request is modeled."],
+        ["1.1 s", "Replay", "State-aware interlock permits modeled motor start."],
+        ["2.0 s", "Replay", "Modeled flow 40 L/min; pressure 3 bar."],
+        ["3.1 s", "Replay", "No modeled trip; service sustained."]
       ]
     },
     {
@@ -92,10 +94,10 @@ END_FUNCTION_BLOCK`,
       physical: "If permitted, flow stays 0 and pressure rises before protection trips.",
       safety: "Depends on freshness control", service: "Not delivered",
       steps: [
-        ["0.0 s", "Feedback", "Last open report is 30 s old."],
-        ["1.0 s", "Network", "Start request reaches controller."],
-        ["1.1 s", "Controller", "Freshness-aware design denies; open-only design fails."],
-        ["2.0 s", "Physical", "Closed valve means no flow if start is allowed."]
+        ["0.0 s", "Replay", "Last open report is 30 s old in the authored case."],
+        ["1.0 s", "Replay", "Same start request is modeled after feedback stops updating."],
+        ["1.1 s", "Replay", "Freshness-aware design denies; open-only design fails."],
+        ["2.0 s", "Replay", "Modeled closed valve means no flow if start is allowed."]
       ]
     }
   ]

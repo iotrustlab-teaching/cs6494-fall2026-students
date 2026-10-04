@@ -3,19 +3,19 @@
   const traffic = window.WORKBENCH_TRAFFIC;
   const scenario = window.WORKBENCH_SCENARIO;
   const policy = window.WORKBENCH_POLICY;
-  const views = ["overview", "assets", "communications", "segmentation", "assurance", "challenge"];
+  const views = ["overview", "assets", "communications", "assurance", "segmentation", "challenge"];
   const byId = (id) => document.getElementById(id);
   const esc = (value) => String(value ?? "").replace(/[&<>"']/g, (ch) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[ch]);
   const observedIps = new Set(traffic.events.flatMap((event) => [event.source, event.destination]));
   const observed = scenario.assets.filter((asset) => observedIps.has(asset.ip));
   const leads = scenario.assets.filter((asset) => !observedIps.has(asset.ip));
   const requestEvents = traffic.events.filter((event) => event.direction === "request");
-  const storageKey = "utilityOtWorkbenchStateV1";
+  const storageKey = "utilityOtWorkbenchStateV2";
   const noteKey = "utilityOtWorkbenchNotesV1";
   const state = {
     view: "overview", unlocked: 2, explore: false, manifestOpen: false, selectedAsset: observed[0].ip,
-    selectedFlow: "192.0.2.11|192.0.2.20", mapMode: "assets", operationFilter: "all",
-    groups: Object.fromEntries(scenario.assets.map((asset) => [asset.ip, asset.group])),
+    selectedFlow: "192.0.2.11|192.0.2.20", selectedCandidate: null, mapMode: "assets", operationFilter: "all",
+    groups: Object.fromEntries(scenario.assets.map((asset) => [asset.ip, "Unassigned"])),
     criticality: {}, rules: [], selectedCase: "baseline"
   };
 
@@ -26,6 +26,10 @@
         for (const asset of scenario.assets) if (policy.GROUPS.includes(saved.groups[asset.ip])) state.groups[asset.ip] = saved.groups[asset.ip];
       }
       if (saved.criticality && typeof saved.criticality === "object") state.criticality = saved.criticality;
+      if (saved.manifestOpen === true) state.manifestOpen = true;
+      if (Number.isInteger(saved.unlocked) && saved.unlocked >= 2 && saved.unlocked < views.length) state.unlocked = saved.unlocked;
+      if (requestEvents.some((event) => event.packet === saved.selectedCandidate)) state.selectedCandidate = saved.selectedCandidate;
+      if (views.includes(saved.view) && views.indexOf(saved.view) <= state.unlocked) state.view = saved.view;
       if (Array.isArray(saved.rules)) state.rules = saved.rules.filter((rule) =>
         rule && typeof rule.id === "string" && ["allow", "deny"].includes(rule.action) &&
         ["any", "write", "read"].includes(rule.operation) &&
@@ -34,7 +38,8 @@
     } catch (_) { /* Browser storage can be unavailable. */ }
   }
   function saveState() {
-    try { localStorage.setItem(storageKey, JSON.stringify({ groups: state.groups, criticality: state.criticality, rules: state.rules })); } catch (_) { /* Local only. */ }
+    try { localStorage.setItem(storageKey, JSON.stringify({ groups: state.groups, criticality: state.criticality, rules: state.rules,
+      manifestOpen: state.manifestOpen, unlocked: state.unlocked, selectedCandidate: state.selectedCandidate, view: state.view })); } catch (_) { /* Local only. */ }
   }
   function showView(view) {
     const index = views.indexOf(view);
@@ -48,6 +53,7 @@
       button.disabled = views.indexOf(button.dataset.view) > state.unlocked;
       if (active) button.setAttribute("aria-current", "page"); else button.removeAttribute("aria-current");
     });
+    saveState();
     window.scrollTo({ top: 0, behavior: "instant" });
   }
   function unlock(view) { state.unlocked = Math.max(state.unlocked, views.indexOf(view)); showView(view); }
@@ -66,6 +72,14 @@
     if (event.function === 6) return event.direction === "request" ? "Write single register" : "Write response";
     return event.direction === "request" ? "Read holding register" : "Read response";
   }
+  function packetRole(asset) {
+    if (!isObserved(asset)) return "Not observed";
+    const sends = requestEvents.some((event) => event.source === asset.ip);
+    const receives = requestEvents.some((event) => event.destination === asset.ip);
+    if (sends && !receives) return "Modbus client candidate";
+    if (receives && !sends) return "Modbus server candidate";
+    return "Modbus endpoint; role unresolved";
+  }
 
   function renderOverview() {
     byId("metric-observed").textContent = observed.length;
@@ -81,11 +95,11 @@
     byId("map-status").textContent = state.manifestOpen ? "Site-record layout opened · only transfer-skid traffic observed" : "Site layout withheld · packet evidence covers one unknown cell";
   }
 
-  function renderNextAction() {
-    byId("open-segmentation").textContent = state.manifestOpen ? "Test a zone rule →" : "Open site record to test a zone rule →";
-  }
-
   function visibleAssets() { return state.manifestOpen ? scenario.assets : observed; }
+  function setAssetGroup(ip, group) {
+    state.groups[ip] = group;
+    saveState(); renderAssets(); renderGroups(); renderMap(); renderSimulation(); renderGroupReadiness();
+  }
   function renderAssets() {
     const query = byId("asset-search").value.trim().toLowerCase();
     const showAll = state.manifestOpen && byId("asset-filter").value === "all";
@@ -93,15 +107,11 @@
       [asset.id, asset.ip, asset.name, asset.role].some((value) => value.toLowerCase().includes(query))
     );
     byId("asset-filter").querySelector('option[value="all"]').disabled = !state.manifestOpen;
-    byId("asset-rows").innerHTML = records.map((asset) => {
-      const events = eventsFor(asset);
-      return `<tr class="asset-row ${state.selectedAsset === asset.ip ? "selected" : ""}" tabindex="0" data-ip="${esc(asset.ip)}">
-        <td><b>${state.manifestOpen ? esc(asset.id) : "unresolved"}</b><small>${state.manifestOpen ? esc(asset.name) : "Packet endpoint"}</small></td>
-        <td><code>${esc(asset.ip)}</code><small>${macFor(asset) || "MAC not observed"}</small></td>
-        <td>${state.manifestOpen ? esc(asset.role) : (events.some((event) => event.port === 502 && event.direction === "request") ? "Modbus server candidate" : "Modbus client candidate")}</td>
-        <td><span class="badge ${isObserved(asset) ? "observed" : "supplied"}">${isObserved(asset) ? "Packet" : "Site record"}</span></td>
-        <td>${state.manifestOpen ? esc(state.groups[asset.ip]) : "Unassigned"}</td><td>${esc(state.criticality[asset.ip] || "Unassessed")}</td></tr>`;
-    }).join("") || '<tr><td colspan="6">No assets match this filter.</td></tr>';
+    byId("asset-rows").innerHTML = records.map((asset) => `<tr class="asset-row ${state.selectedAsset === asset.ip ? "selected" : ""}" tabindex="0" data-ip="${esc(asset.ip)}">
+      <td><code>${esc(asset.ip)}</code><small>${isObserved(asset) ? esc(macFor(asset)) : "Site-record IP; not in packets"}</small></td>
+      <td><span class="badge ${isObserved(asset) ? "observed" : "supplied"}">${isObserved(asset) ? "PACKET" : "NOT SEEN"}</span><small>${esc(packetRole(asset))}</small></td>
+      <td>${state.manifestOpen ? `<span class="badge supplied">SUPPLIED</span><small>${esc(asset.id)} · ${esc(asset.name)} · ${esc(asset.role)}</small>` : "Withheld"}</td>
+      <td>${esc(state.groups[asset.ip])}</td><td>${esc(state.criticality[asset.ip] || "Unassessed")}</td></tr>`).join("") || '<tr><td colspan="5">No assets match this filter.</td></tr>';
     document.querySelectorAll(".asset-row").forEach((row) => {
       const select = () => { state.selectedAsset = row.dataset.ip; renderAssets(); };
       row.addEventListener("click", select);
@@ -118,14 +128,16 @@
       <div class="sheet-block"><span class="sheet-label">OBSERVED FROM PACKETS</span>
         <dl><dt>IP</dt><dd>${isObserved(asset) ? esc(asset.ip) : "Not observed"}</dd><dt>MAC</dt><dd>${macFor(asset) || "Not observed"}</dd>
         <dt>Protocol</dt><dd>${isObserved(asset) ? "Modbus/TCP" : "Not observed"}</dd><dt>First / last</dt><dd>${seen}</dd>
-        <dt>Peers</dt><dd>${peers.length ? peers.map(esc).join(", ") : "None observed"}</dd><dt>Packets</dt><dd>${events.map((event) => `#${event.packet}`).join(", ") || "None"}</dd></dl></div>
+        <dt>Packet role</dt><dd>${esc(packetRole(asset))}</dd><dt>Peers</dt><dd>${peers.length ? peers.map(esc).join(", ") : "None observed"}</dd><dt>Packets</dt><dd>${events.map((event) => `#${event.packet}`).join(", ") || "None"}</dd></dl></div>
       <div class="sheet-block"><span class="sheet-label supplied-text">SUPPLIED SITE RECORD</span>
-        <p>${state.manifestOpen ? `${esc(asset.name)} · ${esc(asset.role)} · ${esc(asset.area)}` : "Open the site record to compare names and roles with packet evidence."}</p></div>
+        <p>${state.manifestOpen ? `${esc(asset.name)} · ${esc(asset.role)} · ${esc(asset.area)}. Suggested group: ${esc(asset.group)}.` : "Open the site record to compare names and roles with packet evidence."}</p>
+        ${state.manifestOpen && asset.group !== "Unassigned" ? '<button type="button" id="use-suggested-group" class="secondary-action">Use suggested group</button>' : ""}</div>
       <div class="sheet-block"><span class="sheet-label">UNKNOWN / STUDENT ASSESSMENT</span>
         <p>Vendor, model, firmware, exact program and physical authority are not established by these packets.</p>
-        <label>Proposed asset group<select id="asset-group" ${state.manifestOpen ? "" : "disabled"}>${groupOptions}</select></label>
+        <label>Your assigned group<select id="asset-group" ${state.manifestOpen ? "" : "disabled"}>${groupOptions}</select></label>
         <label>Process criticality<select id="asset-criticality">${criticalityOptions}</select></label></div>`;
-    byId("asset-group").addEventListener("change", (event) => { state.groups[asset.ip] = event.target.value; saveState(); renderAssets(); renderGroups(); renderMap(); renderSimulation(); });
+    byId("asset-group").addEventListener("change", (event) => setAssetGroup(asset.ip, event.target.value));
+    byId("use-suggested-group")?.addEventListener("click", () => setAssetGroup(asset.ip, asset.group));
     byId("asset-criticality").addEventListener("change", (event) => { state.criticality[asset.ip] = event.target.value; saveState(); renderAssets(); });
     byId("manifest-status").textContent = state.manifestOpen ? "Site record opened · unverified leads visible" : "6 leads withheld";
     byId("open-manifest").disabled = state.manifestOpen;
@@ -151,8 +163,8 @@
     if (state.mapMode === "assets") return active.map((flow) => ({ ...flow, key: `${flow.source}|${flow.destination}`, packets: filteredFlowPackets(flow) }));
     const grouped = new Map();
     active.forEach((flow) => {
-      const source = state.manifestOpen ? state.groups[flow.source] : "Unassigned";
-      const destination = state.manifestOpen ? state.groups[flow.destination] : "Unassigned";
+      const source = state.groups[flow.source];
+      const destination = state.groups[flow.destination];
       const key = `${source}|${destination}`;
       if (!grouped.has(key)) grouped.set(key, { source, destination, key, packets: [] });
       grouped.get(key).packets.push(...filteredFlowPackets(flow));
@@ -161,26 +173,31 @@
   }
   function renderMap() {
     const flows = mapFlows();
-    const groupMode = state.mapMode === "groups";
-    const svg = byId("flow-map");
-    const coords = flows.map((flow, index) => ({ ...flow, y: 75 + index * 150 }));
-    const text = (value) => esc(value);
-    svg.innerHTML = `<defs><marker id="flow-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto"><path d="M0 0 L10 5 L0 10Z" fill="#c8663c"/></marker></defs>
-      <rect x="610" y="120" width="248" height="105" rx="4" class="map-dest"/><text x="628" y="159" class="node-label">${groupMode ? text(state.manifestOpen ? state.groups["192.0.2.20"] : "Unassigned") : "192.0.2.20"}</text><text x="628" y="187" class="node-sub">${groupMode ? "group / controller endpoint" : (state.manifestOpen ? "Transfer controller" : "Modbus server candidate")}</text>
-      ${coords.map((flow) => `<g data-flow="${esc(flow.key)}" class="map-flow" tabindex="0" role="button" aria-label="Inspect ${text(flow.source)} to ${text(flow.destination)} flow">
-        <rect x="42" y="${flow.y - 28}" width="250" height="85" rx="4" class="map-source"/><text x="60" y="${flow.y + 5}" class="node-label">${text(flow.source)}</text><text x="60" y="${flow.y + 32}" class="node-sub">${groupMode ? "asset group" : (state.manifestOpen ? text(scenario.assets.find((asset) => asset.ip === flow.source)?.name) : "packet endpoint")}</text>
-        <path d="M292 ${flow.y + 13} L610 172" class="map-line" marker-end="url(#flow-arrow)"/><text x="365" y="${flow.y - 7}" class="edge-label">Modbus/TCP · ${flow.packets.length} packets</text></g>`).join("")}
-      ${!flows.length ? '<text x="75" y="165" class="empty-map">No flows match this operation filter.</text>' : ""}`;
-    svg.querySelectorAll("[data-flow]").forEach((node) => {
-      const select = () => { state.selectedFlow = node.dataset.flow; renderMap(); };
-      node.addEventListener("click", select);
-      node.addEventListener("keydown", (event) => { if (event.key === "Enter" || event.key === " ") { event.preventDefault(); select(); } });
-      node.classList.toggle("selected", node.dataset.flow === state.selectedFlow);
-    });
     const selected = flows.find((flow) => flow.key === state.selectedFlow) || flows[0];
     if (selected) state.selectedFlow = selected.key;
-    byId("edge-detail").innerHTML = selected ? `<div class="edge-summary"><b>${text(selected.source)} → ${text(selected.destination)}</b><p>${selected.packets.length} observed packets · Modbus/TCP</p><p>Direction and counts from PCAP. Names and groups are student/supplied context.</p></div>
-      <div class="edge-packets">${selected.packets.map((event) => `<div><b>#${event.packet}</b><span>${text(operationLabel(event))}${event.address !== null ? ` · reg ${event.address}` : ""}${packetValue(event) !== "—" ? ` · value ${text(packetValue(event))}` : ""}</span></div>`).join("")}</div>` : '<p class="surface-note">No captured packets match this filter.</p>';
+    byId("flow-map").innerHTML = flows.length ? flows.map((flow) => `<button type="button" class="flow-item ${flow.key === state.selectedFlow ? "selected" : ""}" data-flow="${esc(flow.key)}" aria-pressed="${flow.key === state.selectedFlow}" aria-label="Inspect ${esc(flow.source)} to ${esc(flow.destination)} path">
+      <span class="flow-endpoint">${esc(flow.source)}</span><span class="flow-direction">→<small>Modbus/TCP · ${flow.packets.length} packets</small></span><span class="flow-endpoint">${esc(flow.destination)}</span></button>`).join("") : '<p class="surface-note">No paths match this operation filter.</p>';
+    byId("flow-map").querySelectorAll("[data-flow]").forEach((button) => button.addEventListener("click", () => { state.selectedFlow = button.dataset.flow; renderMap(); }));
+    byId("edge-detail").innerHTML = selected ? `<div class="edge-summary"><b>${esc(selected.source)} → ${esc(selected.destination)}</b><p>${selected.packets.length} packet-observed exchanges · Modbus/TCP</p><p>Names and process roles are supplied, not verified by these packets.</p></div>
+      <div class="edge-packets">${selected.packets.map((event) => `<div><b>#${event.packet}</b><span>${esc(operationLabel(event))}${event.address !== null ? ` · reg ${event.address}` : ""}${packetValue(event) !== "—" ? ` · value ${esc(packetValue(event))}` : ""}</span></div>`).join("")}</div>` : '<p class="surface-note">No packets match this filter.</p>';
+  }
+  function responseFor(request) {
+    return traffic.events.find((event) => event.direction === "response" && event.source === request.destination &&
+      event.destination === request.source && event.function === request.function && event.packet === request.packet + 1);
+  }
+  function renderCandidate() {
+    byId("candidate-packet").innerHTML = '<option value="" disabled>Choose a request</option>' + requestEvents.map((event) =>
+      `<option value="${event.packet}">#${event.packet} · ${esc(policy.operation(event))} · target ${event.address}</option>`).join("");
+    byId("candidate-packet").value = state.selectedCandidate ? String(state.selectedCandidate) : "";
+    const request = requestEvents.find((event) => event.packet === state.selectedCandidate);
+    const mapped = request?.packet === 5;
+    const response = request && responseFor(request);
+    byId("candidate-result").innerHTML = request ? `<div class="candidate-facts"><span><b>Requester</b>${esc(request.source)}</span><span><b>Operation</b>${esc(policy.operation(request))}</span><span><b>Target</b>${request.address}</span><span><b>Value</b>${esc(packetValue(request))}</span><span><b>Response</b>${response ? `#${response.packet}` : "Not seen"}</span></div>
+      <p>${mapped ? `Packet #${response?.packet} is a normal Modbus FC06 echo consistent with processing the protocol write. It does not establish controller authorization, actuator motion, or a safe physical outcome.` : "This read request has no supplied command-to-process mapping in the exercise. Inspect the write candidate if you want to trace a possible state change."}</p>
+      <p>A normal response confirms a protocol-level reply, not physical success. An exception or negative response would show protocol-level rejection or failure; neither response alone proves the device's physical state. No exception response appears in this trace.</p>
+      <p class="surface-note">Modbus detail: FC${request.function}, register ${request.address}. The transferable fields are requester, operation, target, value, and response.</p>` : '<p class="surface-note">Select a packet request to make a bounded claim about it.</p>';
+    byId("claim-notebook").hidden = !mapped;
+    byId("open-assurance").disabled = !mapped;
   }
   function renderTraffic() {
     byId("traffic-rows").innerHTML = traffic.events.map((event) => `<tr><td>#${event.packet}</td><td>${event.seconds.toFixed(2)}</td>
@@ -188,7 +205,12 @@
       <td>${event.address ?? "—"}</td><td>${esc(packetValue(event))}</td></tr>`).join("");
   }
 
-  function groupOptions() { return ["Any", ...policy.GROUPS].map((group) => `<option value="${esc(group)}">${esc(group)}</option>`).join(""); }
+  function groupOptions() { return '<option value="" selected disabled>Choose group</option>' + ["Any", ...policy.GROUPS].map((group) => `<option value="${esc(group)}">${esc(group)}</option>`).join(""); }
+  function renderGroupReadiness() {
+    const ready = state.groups["192.0.2.11"] !== "Unassigned" && state.groups["192.0.2.20"] !== "Unassigned";
+    byId("group-prereq").hidden = ready;
+    byId("add-rule").disabled = !ready;
+  }
   function renderGroups() {
     const grouped = new Map();
     visibleAssets().forEach((asset) => {
@@ -210,8 +232,14 @@
     const cases = requestEvents.map((event) => ({ ...event, origin: `PCAP #${event.packet}` })).concat(serviceTest);
     byId("simulation-rows").innerHTML = cases.map((event) => {
       const outcome = policy.evaluate(event, state.groups, state.rules);
-      return `<tr><td><b>${esc(event.origin)}</b></td><td>${esc(outcome.source)} → ${esc(outcome.destination)}</td>
-        <td>${esc(outcome.operation)} · reg ${event.address ?? "?"}</td><td><span class="badge ${outcome.action === "deny" ? "denied" : "allowed"}">${esc(outcome.action)}</span></td><td>${esc(outcome.rule)}</td></tr>`;
+      const service = event.origin === "Authored legitimate-service test";
+      const verdict = service ? (outcome.action === "deny" ? "Legitimate service blocked" : "Service request network-permitted; delivery unproven") :
+        event.packet === 5 ? (outcome.action === "deny" ? "Observed write would be blocked" : "Write network-permitted; safety unknown") :
+        `${outcome.operation === "read" ? "Read" : "Write"} ${outcome.action === "deny" ? "would be blocked" : "network-permitted"}`;
+      const ruleIndex = state.rules.findIndex((rule) => rule.id === outcome.rule);
+      const ruleLabel = ruleIndex >= 0 ? `Rule ${ruleIndex + 1}` : "Default allow";
+      return `<div class="impact-row"><div><b>${esc(event.origin)}</b><small>${esc(outcome.source)} → ${esc(outcome.destination)} · ${esc(outcome.operation)} · target ${event.address ?? "?"}</small></div>
+        <div class="impact-verdict"><span class="badge ${outcome.action === "deny" ? "denied" : "allowed"}">${esc(outcome.action.toUpperCase())}</span><strong class="${service && outcome.action === "deny" ? "service-blocked" : ""}">${esc(verdict)}</strong></div><span class="impact-rule">${esc(ruleLabel)}</span></div>`;
     }).join("");
   }
 
@@ -222,9 +250,9 @@
     const selected = scenario.cases.find((item) => item.id === id && id !== "stale") || scenario.cases[0];
     state.selectedCase = selected.id;
     byId("case-picker").querySelectorAll("button").forEach((button) => button.classList.toggle("active", button.dataset.case === selected.id));
-    byId("case-summary").innerHTML = `<div class="case-body"><b>${esc(selected.label)}</b><p><strong>Initial state</strong> ${esc(selected.condition)}</p>
+    byId("case-summary").innerHTML = `<div class="case-body"><span class="badge authored">AUTHORED REPLAY</span><b>${esc(selected.label)}</b><p><strong>Initial state</strong> ${esc(selected.condition)}</p>
       <p><strong>Request</strong> ${esc(selected.command)}</p><p><strong>Decision</strong> ${esc(selected.decision)}</p>
-      <p><strong>Reported</strong> ${esc(selected.feedback)}</p><p><strong>Physical</strong> ${esc(selected.physical)}</p>
+      <p><strong>${selected.id === "baseline" ? "Packet-backed reports" : "Authored reports"}</strong> ${esc(selected.feedback)}</p><p><strong>Authored physical replay</strong> ${esc(selected.physical)}</p>
       <div class="case-outcomes"><span class="badge ${selected.safety === "Preserved" ? "allowed" : "denied"}">Safety: ${esc(selected.safety)}</span>
       <span class="badge ${selected.service === "Delivered" ? "allowed" : "supplied"}">Service: ${esc(selected.service)}</span></div></div>`;
     byId("case-timeline").innerHTML = timeline(selected.steps);
@@ -239,29 +267,34 @@
   }
 
   function noteData() {
-    return { claim: byId("claim").value, challenge: byId("challenge").value,
+    return { claim: byId("claim").value, falsifier: byId("falsifier").value,
+      positiveTest: byId("positive-test").value, unknown: byId("unknown").value, challenge: byId("challenge").value,
       controls: [...document.querySelectorAll("[data-control]:checked")].map((input) => input.dataset.control) };
   }
+  function renderOriginalClaim() { byId("original-claim").textContent = byId("claim").value.trim() || "No working claim recorded yet."; }
   function loadNotes() {
     try {
       const notes = JSON.parse(localStorage.getItem(noteKey) || "{}");
-      byId("claim").value = notes.claim || ""; byId("challenge").value = notes.challenge || "";
+      byId("claim").value = notes.claim || ""; byId("falsifier").value = notes.falsifier || "";
+      byId("positive-test").value = notes.positiveTest || ""; byId("unknown").value = notes.unknown || "";
+      byId("challenge").value = notes.challenge || "";
       document.querySelectorAll("[data-control]").forEach((input) => { input.checked = (notes.controls || []).includes(input.dataset.control); });
     } catch (_) { /* Export still works without storage. */ }
+    renderOriginalClaim();
   }
-  function saveNotes() { try { localStorage.setItem(noteKey, JSON.stringify(noteData())); } catch (_) { /* Local only. */ } }
+  function saveNotes() { renderOriginalClaim(); try { localStorage.setItem(noteKey, JSON.stringify(noteData())); } catch (_) { /* Local only. */ } }
   function downloadNotes() {
     const notes = noteData();
-    const body = `# Utility OT Security Workbench notes\n\nFixture: Riverbend Water Utility (fictional)\n\n## Proposed asset groups\n${scenario.assets.map((asset) => `- ${asset.id}: ${state.groups[asset.ip]} (${isObserved(asset) ? "packet endpoint" : "site record only"})`).join("\n")}\n\n## Process criticality assessment\n${scenario.assets.map((asset) => `- ${asset.id}: ${state.criticality[asset.ip] || "Unassessed"}`).join("\n")}\n\n## Proposed network rules\n${state.rules.map((rule) => `- ${rule.action} ${rule.source} -> ${rule.destination} ${rule.operation}`).join("\n") || "No rules"}\n\n## Control boundaries\n${notes.controls.join(", ") || "None marked"}\n\n## Bounded claim\n${notes.claim || "(not entered)"}\n\n## Revised claim\n${notes.challenge || "(not entered)"}\n`;
+    const body = `# Utility OT Security Workbench notes\n\nFixture: Riverbend Water Utility (fictional)\n\n## Assigned asset groups\n${scenario.assets.map((asset) => `- ${asset.id}: ${state.groups[asset.ip]} (${isObserved(asset) ? "packet endpoint" : "site record only"})`).join("\n")}\n\n## Process criticality assessment\n${scenario.assets.map((asset) => `- ${asset.id}: ${state.criticality[asset.ip] || "Unassessed"}`).join("\n")}\n\n## Proposed network rules\n${state.rules.map((rule) => `- ${rule.action} ${rule.source} -> ${rule.destination} ${rule.operation}`).join("\n") || "No rules"}\n\n## Control boundaries\n${notes.controls.join(", ") || "None marked"}\n\n## Working claim\n${notes.claim || "(not entered)"}\n\n## Falsifier\n${notes.falsifier || "(not entered)"}\n\n## Positive-service test\n${notes.positiveTest || "(not entered)"}\n\n## Remaining unknown\n${notes.unknown || "(not entered)"}\n\n## Revised claim\n${notes.challenge || "(not entered)"}\n`;
     const url = URL.createObjectURL(new Blob([body], { type: "text/markdown" }));
     const link = document.createElement("a"); link.href = url; link.download = "utility-ot-workbench-notes.md"; link.click();
     setTimeout(() => URL.revokeObjectURL(url), 1000);
   }
 
   if (!traffic || !scenario || !policy) { document.querySelector("main").textContent = "Local evidence files could not be loaded."; return; }
-  loadState(); renderOverview(); renderNextAction(); renderAssets(); renderTraffic(); renderMap(); renderGroups(); renderRules(); renderSimulation(); renderAssurance(); loadNotes();
+  loadState(); renderOverview(); renderAssets(); renderTraffic(); renderMap(); renderCandidate(); renderGroups(); renderRules(); renderSimulation(); renderAssurance(); loadNotes();
   byId("rule-source").innerHTML = groupOptions(); byId("rule-destination").innerHTML = groupOptions();
-  byId("rule-source").value = "Supervisory"; byId("rule-destination").value = "Control";
+  renderGroupReadiness();
   document.querySelectorAll(".tabs button, [data-open]").forEach((button) => button.addEventListener("click", () => showView(button.dataset.view || button.dataset.open)));
   byId("explore-toggle").addEventListener("click", () => {
     state.explore = !state.explore;
@@ -273,9 +306,9 @@
     else showView(state.view);
   });
   byId("open-manifest").addEventListener("click", () => {
-    state.manifestOpen = true; state.unlocked = Math.max(state.unlocked, 3);
+    state.manifestOpen = true; saveState();
     byId("asset-filter").value = "all";
-    renderOverview(); renderNextAction(); renderAssets(); renderGroups(); renderMap();
+    renderOverview(); renderAssets(); renderGroups(); renderMap();
   });
   byId("asset-search").addEventListener("input", renderAssets);
   byId("asset-filter").addEventListener("change", renderAssets);
@@ -285,24 +318,29 @@
     state.selectedFlow = ""; renderMap();
   }));
   byId("operation-filter").addEventListener("change", (event) => { state.operationFilter = event.target.value; renderMap(); });
-  byId("open-segmentation").addEventListener("click", () => {
-    if (!state.manifestOpen) { showView("assets"); byId("open-manifest").focus(); return; }
-    unlock("segmentation");
+  byId("mark-candidate").addEventListener("click", () => {
+    const packet = Number(byId("candidate-packet").value);
+    if (!requestEvents.some((event) => event.packet === packet)) return;
+    state.selectedCandidate = packet; saveState(); renderCandidate();
+  });
+  byId("open-assurance").addEventListener("click", () => unlock("assurance"));
+  byId("open-segmentation").addEventListener("click", () => unlock("segmentation"));
+  byId("go-assign-groups").addEventListener("click", () => {
+    showView("assets"); byId(state.manifestOpen ? "asset-group" : "open-manifest").focus();
   });
   byId("rule-form").addEventListener("submit", (event) => {
     event.preventDefault();
-    if (state.rules.length >= 20) return;
+    if (state.rules.length >= 20 || byId("add-rule").disabled) return;
     state.rules.push({ id: `r${Date.now()}-${Math.random().toString(16).slice(2, 6)}`, source: byId("rule-source").value,
       destination: byId("rule-destination").value, operation: byId("rule-operation").value, action: byId("rule-action").value });
-    saveState(); renderRules(); renderSimulation();
+    byId("rule-form").reset(); saveState(); renderRules(); renderSimulation();
   });
-  byId("open-assurance").addEventListener("click", () => unlock("assurance"));
   byId("open-challenge").addEventListener("click", () => unlock("challenge"));
   document.querySelectorAll("textarea, [data-control]").forEach((input) => input.addEventListener("input", saveNotes));
   byId("export-notes").addEventListener("click", downloadNotes);
   byId("reset-notes").addEventListener("click", () => {
-    byId("claim").value = ""; byId("challenge").value = "";
+    for (const id of ["claim", "falsifier", "positive-test", "unknown", "challenge"]) byId(id).value = "";
     document.querySelectorAll("[data-control]").forEach((input) => { input.checked = false; }); saveNotes();
   });
-  showView("overview");
+  showView(state.view);
 })();

@@ -12,4 +12,9 @@ assert.equal(assets.filter((asset) => asset.source === "packet + site record").l
 assert.equal(assets.filter((asset) => asset.source === "site record only").length, 6);
 assert.ok(assets.every((asset) => asset.ip.startsWith("192.0.2.")));
 assert.ok(context.window.WORKBENCH_SCENARIO.cases.some((item) => item.id === "stale"));
+const baseline = context.window.WORKBENCH_SCENARIO.cases.find((item) => item.id === "baseline");
+assert.match(baseline.label, /authored/i);
+for (const packet of ["Packet #4", "Packet #5", "Packet #6", "Packet #8", "Packet #10"]) {
+  assert.ok(baseline.steps.some((step) => step[1] === packet), `${packet} must be cited in the baseline replay`);
+}
 console.log("Scenario verified: 3 packet endpoints, 6 unverified site leads, fictional addresses.");

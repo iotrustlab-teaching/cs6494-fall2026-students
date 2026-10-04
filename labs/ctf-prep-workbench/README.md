@@ -1,9 +1,9 @@
 # Utility OT Security Workbench
 
 An offline, fictional municipal-water-utility investigation. Students start
-with network visibility, form an asset and communication map, test proposed
-group-based network rules, then add controller and process evidence to make a
-bounded cyber-physical security claim.
+with network visibility, identify a consequential request, map its supplied
+controller and authored process context, then test proposed group-based rules
+and revise a bounded cyber-physical claim under stale feedback.
 
 The workflow is **inspired by Cisco Cyber Vision, not Cisco Cyber Vision**. It
 does not use Cisco software, logos, proprietary datasets, switch enforcement,
@@ -27,20 +27,27 @@ timeline, site layout, rule list, and controller code remain available in
 expandable evidence sections when needed.
 
 The companion [worksheet](WORKSHEET.md) is a classroom exercise, not the
-official HW3 assignment or deadline notice.
+official HW3 assignment or deadline notice. The browser is an instructor/paired
+preview, not yet a required HW3 dependency; two cold human rehearsals remain
+part of its release gate.
 
 ## Evidence model
 
 | Layer | Provenance and limit |
 |---|---|
 | Packet endpoints and exchanges | Ten **synthetic** Modbus/TCP packets in `data/monday-synthetic.pcap`, decoded with TShark into `traffic.json` / `traffic.js`; not a live capture |
-| Initial assets | Three IP/MAC endpoints genuinely present in that packet fixture; protocol and first/last seen derive from the decoded events |
+| Initial assets | Three IP/MAC endpoints genuinely present in that packet fixture; request direction supports client/server candidates, not authenticated device identities |
 | Site record | Six additional **unverified leads**, plus names, roles and process areas for all nine records; none of those identities is authenticated by packets |
 | Communication map | Two observed client-to-controller paths; no fabricated traffic for unverified leads |
-| Segmentation | Local first-match allow/deny **what-if** calculation on frozen requests plus one explicitly authored legitimate-service test; no switch or firewall is changed |
+| Grouping and segmentation | Site-record group labels are suggestions until a student explicitly assigns them. Local first-match allow/deny **what-if** calculation uses frozen requests plus one explicitly authored legitimate-service test; no switch or firewall is changed |
 | Controller | Illustrative Structured Text and register map authored for the exercise; not compiled or executed in this workbench |
 | Process | Fixed authored simulation outcomes for transfer skid 04; no physical device or live telemetry |
-| Challenge | Authored stale-valve-feedback case; report age is 30 seconds |
+| Assumption stress test | Authored stale-valve-feedback case; report age is 30 seconds |
+
+The normal Modbus response to packet #5 is packet #6, an echo consistent with
+processing the protocol write. It does not prove controller authorization or
+physical action. Packets #4, #8, and #10 report valve, motor, and protection
+states; the physical process shown alongside them is an authored replay.
 
 The fictional site spans source/intake, treatment, clearwell/storage, transfer,
 and distribution. Only the transfer-skid subset has packet and rich process
