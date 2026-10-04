@@ -13,7 +13,7 @@
   const storageKey = "utilityOtWorkbenchStateV1";
   const noteKey = "utilityOtWorkbenchNotesV1";
   const state = {
-    view: "overview", unlocked: 2, manifestOpen: false, selectedAsset: observed[0].ip,
+    view: "overview", unlocked: 2, explore: false, manifestOpen: false, selectedAsset: observed[0].ip,
     selectedFlow: "192.0.2.11|192.0.2.20", mapMode: "assets", operationFilter: "all",
     groups: Object.fromEntries(scenario.assets.map((asset) => [asset.ip, asset.group])),
     criticality: {}, rules: [], selectedCase: "baseline"
@@ -71,6 +71,7 @@
     byId("metric-observed").textContent = observed.length;
     byId("metric-leads").textContent = leads.length;
     byId("metric-writes").textContent = requestEvents.filter((event) => policy.operation(event) === "write").length;
+    byId("overview-flows").innerHTML = rawFlows.map((flow) => `<div class="overview-flow"><code>${esc(flow.source)}</code><span>Modbus/TCP <b aria-hidden="true">→</b></span><code>${esc(flow.destination)}</code></div>`).join("");
     byId("site-layout").hidden = !state.manifestOpen;
     byId("utility-chain").innerHTML = scenario.areas.map((area, index) => `
       <div class="chain-stage ${state.manifestOpen && area === "Transfer skid" ? "chain-focus" : ""}">
@@ -78,6 +79,10 @@
         <span>${state.manifestOpen && area === "Transfer skid" ? "process context available" : "site record not validated"}</span>
       </div>${index < scenario.areas.length - 1 ? '<span class="chain-arrow">→</span>' : ""}`).join("");
     byId("map-status").textContent = state.manifestOpen ? "Site-record layout opened · only transfer-skid traffic observed" : "Site layout withheld · packet evidence covers one unknown cell";
+  }
+
+  function renderNextAction() {
+    byId("open-segmentation").textContent = state.manifestOpen ? "Test a zone rule →" : "Open site record to test a zone rule →";
   }
 
   function visibleAssets() { return state.manifestOpen ? scenario.assets : observed; }
@@ -254,14 +259,23 @@
   }
 
   if (!traffic || !scenario || !policy) { document.querySelector("main").textContent = "Local evidence files could not be loaded."; return; }
-  loadState(); renderOverview(); renderAssets(); renderTraffic(); renderMap(); renderGroups(); renderRules(); renderSimulation(); renderAssurance(); loadNotes();
+  loadState(); renderOverview(); renderNextAction(); renderAssets(); renderTraffic(); renderMap(); renderGroups(); renderRules(); renderSimulation(); renderAssurance(); loadNotes();
   byId("rule-source").innerHTML = groupOptions(); byId("rule-destination").innerHTML = groupOptions();
   byId("rule-source").value = "Supervisory"; byId("rule-destination").value = "Control";
   document.querySelectorAll(".tabs button, [data-open]").forEach((button) => button.addEventListener("click", () => showView(button.dataset.view || button.dataset.open)));
+  byId("explore-toggle").addEventListener("click", () => {
+    state.explore = !state.explore;
+    if (state.explore) state.unlocked = views.length - 1;
+    byId("workbench-views").hidden = !state.explore;
+    byId("explore-toggle").textContent = state.explore ? "Return to guided" : "Explore freely";
+    byId("explore-toggle").setAttribute("aria-expanded", String(state.explore));
+    if (!state.explore) showView("overview");
+    else showView(state.view);
+  });
   byId("open-manifest").addEventListener("click", () => {
     state.manifestOpen = true; state.unlocked = Math.max(state.unlocked, 3);
     byId("asset-filter").value = "all";
-    renderOverview(); renderAssets(); renderGroups(); renderMap();
+    renderOverview(); renderNextAction(); renderAssets(); renderGroups(); renderMap();
   });
   byId("asset-search").addEventListener("input", renderAssets);
   byId("asset-filter").addEventListener("change", renderAssets);
@@ -272,7 +286,7 @@
   }));
   byId("operation-filter").addEventListener("change", (event) => { state.operationFilter = event.target.value; renderMap(); });
   byId("open-segmentation").addEventListener("click", () => {
-    if (!state.manifestOpen) { showView("assets"); return; }
+    if (!state.manifestOpen) { showView("assets"); byId("open-manifest").focus(); return; }
     unlock("segmentation");
   });
   byId("rule-form").addEventListener("submit", (event) => {

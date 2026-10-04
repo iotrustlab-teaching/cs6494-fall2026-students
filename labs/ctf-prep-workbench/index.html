@@ -9,9 +9,9 @@
 <body>
   <header class="topbar">
     <div class="brand"><span class="eyebrow">CS 6494 / FICTIONAL UTILITY</span><h1>Riverbend Water Utility</h1><p>Discover the system · map authority · test controls</p></div>
-    <div class="header-status"><b>Frozen evidence</b><span>3 packet-observed endpoints</span><span>Synthetic · offline</span></div>
+    <div class="header-status"><b>SYNTHETIC / AUTHORED</b><span>No captured replay or live connection</span><button type="button" id="explore-toggle" class="explore-toggle" aria-expanded="false" aria-controls="workbench-views">Explore freely</button></div>
   </header>
-  <nav class="tabs" aria-label="Workbench views">
+  <nav id="workbench-views" class="tabs" aria-label="Workbench views" hidden>
     <button type="button" data-view="overview" class="active">Overview</button>
     <button type="button" data-view="assets">Assets</button>
     <button type="button" data-view="communications">Communications</button>
@@ -22,11 +22,10 @@
   <main>
     <section id="view-overview" class="view active">
       <div class="section-head"><div><span class="eyebrow">DISCOVER / MONDAY</span><h2>What utility did we inherit?</h2></div><span class="provenance-tag">Cyber Vision-inspired teaching workflow · not Cisco Cyber Vision</span></div>
-      <div class="focus-task"><span class="eyebrow">FIRST QUESTION</span><h3>Which devices are actually visible in the traffic?</h3><p>Find the observed endpoints before accepting names or roles from the site record.</p><button type="button" class="primary-action" data-open="assets">Inspect observed assets →</button></div>
-      <div class="metrics compact">
-        <div><strong id="metric-observed">3</strong><span>packet endpoints</span></div>
-        <div><strong id="metric-leads">6</strong><span>unverified site leads</span></div>
-        <div><strong id="metric-writes">1</strong><span>observed write</span></div>
+      <div class="focus-task"><span class="eyebrow">FIRST QUESTION</span><h3>Which devices are actually visible in the traffic?</h3><p>Follow only what the packets establish. Names and operational roles come later from the site record.</p><button type="button" class="primary-action" data-open="assets">Inspect observed assets →</button></div>
+      <div class="overview-evidence">
+        <section class="overview-map" aria-label="Observed communications map"><h3>Observed communications</h3><div id="overview-flows"></div></section>
+        <aside class="overview-finding"><span class="eyebrow">WHAT WE CAN SAY NOW</span><p><strong id="metric-observed">3</strong> packet endpoints communicate over two Modbus/TCP paths. The trace contains <strong id="metric-writes">1</strong> write request.</p><p><strong id="metric-leads">6</strong> additional site-record leads are not visible in these packets. A network response does not establish actuation or physical outcome.</p></aside>
       </div>
       <details class="disclosure"><summary>Evidence sources</summary><div class="evidence-row"><b>Packet trace</b><span>10 Modbus/TCP packets, TShark-decoded</span><em>Observed</em></div><div class="evidence-row"><b>Site record</b><span>Names, roles, process areas and six additional leads</span><em>Supplied</em></div><div class="evidence-row"><b>Controller + process</b><span>Authored exercise context; not yet opened</span><em>Withheld</em></div></details>
       <details id="site-layout" class="disclosure" hidden><summary>Site layout from supplied record</summary><div class="surface-head"><small id="map-status">Site layout withheld</small></div><div id="utility-chain" class="utility-chain"></div><p class="surface-note">The packet capture does not locate endpoints in the physical process.</p></details>
