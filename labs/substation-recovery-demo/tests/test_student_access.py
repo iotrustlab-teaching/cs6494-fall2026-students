@@ -11,7 +11,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 
-from access import AccessDenied, StudentAccessManager, append_roster, create_roster  # noqa: E402
+from access import AccessDenied, DraftConflict, StudentAccessManager, append_roster, create_roster  # noqa: E402
 from compiler import InterlockCompiler  # noqa: E402
 
 
@@ -69,6 +69,47 @@ class StudentAccessTests(unittest.TestCase):
         self.assertIsNone(self.manager.resolve("unrelated-token"))
         self.manager.logout(token)
         self.assertIsNone(self.manager.resolve(token))
+
+    def test_team_code_supports_multiple_active_browser_sessions(self) -> None:
+        sessions = [
+            self.manager.login(self.codes["Team Alpha"], f"127.0.0.{index}")[0]
+            for index in range(1, 7)
+        ]
+        for token in sessions:
+            self.assertEqual(self.manager.resolve(token).identity.student_id, "team-alpha")
+
+    def test_submission_draft_persists_across_restart(self) -> None:
+        _token, lab = self.manager.login(self.codes["Team Alpha"], "127.0.0.1")
+        draft = {
+            "version": 1,
+            "fields": {"student-name": "Ada", "property-prohibited": "Do not energize S3."},
+            "capturedTests": {},
+            "repair": None,
+            "updatedAt": "2026-10-05T18:00:00.000Z",
+        }
+        saved = lab.save_submission(draft, 0)
+        self.assertEqual(saved["revision"], 1)
+
+        self.manager.close()
+        self.manager = StudentAccessManager(self.roster, self.compiler, self.root / "students")
+        _new_token, restored = self.manager.login(self.codes["Team Alpha"], "127.0.0.2")
+        payload = restored.submission_payload()
+
+        self.assertEqual(payload["revision"], 1)
+        self.assertEqual(payload["draft"]["fields"]["student-name"], "Ada")
+
+    def test_submission_draft_rejects_stale_browser_revision(self) -> None:
+        _token, lab = self.manager.login(self.codes["Team Alpha"], "127.0.0.1")
+        draft = {
+            "version": 1,
+            "fields": {},
+            "capturedTests": {},
+            "repair": None,
+            "updatedAt": "2026-10-05T18:00:00.000Z",
+        }
+        lab.save_submission(draft, 0)
+        with self.assertRaisesRegex(DraftConflict, "another browser"):
+            lab.save_submission(draft, 0)
 
     def test_append_preserves_existing_invitations_and_adds_access(self) -> None:
         original_payload = json.loads(self.roster.read_text(encoding="utf-8"))

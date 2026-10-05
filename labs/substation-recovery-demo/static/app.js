@@ -27,6 +27,36 @@ const PRESET_LABELS = {
   repaired: 'Repair: resulting topology'
 };
 
+const REFERENCE_PRESET = 'repaired';
+
+const SUBMISSION_VERSION = 1;
+const SUBMISSION_STEPS = {
+  property: ['property-prohibited', 'property-service', 'property-source', 'property-boundary'],
+  counterexample: ['counter-initial', 'counter-request', 'counter-decision', 'counter-effect', 'counter-omission'],
+  repair: ['repair-explanation'],
+  tests: [
+    'test-prohibited-expected', 'test-prohibited-status', 'test-prohibited-observed', 'test-prohibited-reference',
+    'test-legitimate-expected', 'test-legitimate-status', 'test-legitimate-observed', 'test-legitimate-reference'
+  ],
+  stress: ['stress-assumption', 'stress-evidence', 'stress-recheck', 'stress-positive'],
+  transfer: [
+    'transfer-context', 'transfer-property', 'transfer-missing', 'transfer-enforcement', 'transfer-assumption',
+    'claim-assumptions', 'claim-evidence', 'claim-supports', 'claim-limits'
+  ]
+};
+const SUBMISSION_PAGE_ORDER = [...Object.keys(SUBMISSION_STEPS), 'review'];
+const SUBMISSION_PAGE_TITLES = {
+  property: 'Property and boundary',
+  counterexample: 'Counterexample',
+  repair: 'Repair',
+  tests: 'Two tests',
+  stress: 'Assumption stress test',
+  transfer: 'Transfer and bounded claim',
+  review: 'Review and submit'
+};
+const SUBMISSION_IDENTITY_FIELDS = ['student-name', 'student-unid'];
+const SUBMISSION_FIELD_IDS = SUBMISSION_IDENTITY_FIELDS.concat(...Object.values(SUBMISSION_STEPS));
+
 const app = {
   snapshot: null,
   events: [],
@@ -40,7 +70,16 @@ const app = {
   connected: false,
   dirtySource: false,
   activePreset: 'vulnerable',
+  referenceRevealed: false,
   session: null,
+  submission: { version: SUBMISSION_VERSION, fields: {}, capturedTests: {}, repair: null, updatedAt: null },
+  submissionRevision: 0,
+  submissionSyncTimer: null,
+  submissionSyncInFlight: false,
+  submissionSyncPending: false,
+  submissionSyncConflict: false,
+  submissionSaveMessage: 'Draft not yet saved',
+  submissionPage: 'property',
   booted: false,
   polling: false
 };
@@ -58,6 +97,7 @@ async function api(path, options = {}) {
     if (response.status === 401 && path !== '/api/session/login') showLogin('Your session ended. Enter your access code to reconnect.');
     const error = new Error(payload.error || `HTTP ${response.status}`);
     error.payload = payload;
+    error.status = response.status;
     throw error;
   }
   return payload;
@@ -74,6 +114,7 @@ function setConnection(connected, detail) {
 
 function mergeSnapshot(snapshot, initial = false) {
   app.snapshot = snapshot;
+  captureCompletedTest(snapshot.lastTest);
   const existing = new Set(app.events.map(event => event.seq));
   for (const event of snapshot.events || []) {
     if (!existing.has(event.seq)) app.events.push(event);
@@ -296,6 +337,7 @@ function renderTimeline() {
 
 function renderTestSteps() {
   const test = TESTS[$('trace-select').value] || TESTS.upstream_counterexample;
+  $('jump-request-event').disabled = Boolean(app.snapshot && app.snapshot.activeTest);
   $('trace-purpose').textContent = test.purpose;
   const list = $('sequence-list');
   list.replaceChildren();
@@ -337,6 +379,7 @@ function render() {
   renderTimeline();
   renderTestSteps();
   renderSourceMeta();
+  renderSubmission();
   updateDraftPreview();
 }
 
@@ -412,6 +455,26 @@ function loadPreset(name) {
   simpleDiff(app.presets[name], app.presets[name]);
 }
 
+function addPresetOption(name) {
+  if (!app.presets[name] || $('source-preset').querySelector(`option[value="${name}"]`)) return;
+  const option = document.createElement('option');
+  option.value = name;
+  option.textContent = PRESET_LABELS[name] || name;
+  $('source-preset').append(option);
+}
+
+function revealReference() {
+  const confirmed = window.confirm(
+    'Reveal the reference build only after you have committed to a repair and two tests. Continue?'
+  );
+  if (!confirmed) return;
+  app.referenceRevealed = true;
+  addPresetOption(REFERENCE_PRESET);
+  loadPreset(REFERENCE_PRESET);
+  $('reference-reveal').open = false;
+  $('compile-feedback').textContent = 'Reference source loaded but not active. Compile it before running the regression tests.';
+}
+
 async function sendCommand() {
   const action = $('request-action').value;
   const device = $('request-device').value;
@@ -434,6 +497,7 @@ async function sendCommand() {
 
 async function runRegression() {
   const testId = $('trace-select').value;
+  $('jump-request-event').disabled = true;
   $('request-feedback').className = 'feedback';
   $('request-feedback').textContent = `Starting ${TESTS[testId].label}...`;
   try {
@@ -443,6 +507,7 @@ async function runRegression() {
     app.followLive = true;
     $('request-feedback').textContent = `${result.testRunId} started against ${result.buildId}.`;
   } catch (error) {
+    $('jump-request-event').disabled = false;
     $('request-feedback').className = 'feedback error';
     $('request-feedback').textContent = error.message;
   }
@@ -496,6 +561,527 @@ function exportEvidence() {
   URL.revokeObjectURL(url);
 }
 
+function submissionStorageKey() {
+  const studentId = app.session && app.session.student ? app.session.student.studentId : 'preview';
+  return `cs6494-hw3-submission:${studentId}`;
+}
+
+function fieldLabel(id) {
+  const label = document.querySelector(`label[for="${id}"]`);
+  return label ? label.textContent.trim() : id;
+}
+
+function collectSubmissionFields() {
+  for (const id of SUBMISSION_FIELD_IDS) {
+    const field = $(id);
+    if (field) app.submission.fields[id] = field.value.trim();
+  }
+}
+
+function populateSubmissionFields() {
+  for (const id of SUBMISSION_FIELD_IDS) {
+    const field = $(id);
+    const value = app.submission.fields[id];
+    if (field && typeof value === 'string') field.value = value;
+  }
+}
+
+function submissionTime(draft) {
+  const value = draft && draft.updatedAt ? Date.parse(draft.updatedAt) : 0;
+  return Number.isFinite(value) ? value : 0;
+}
+
+async function loadSubmissionDraft() {
+  const empty = { version: SUBMISSION_VERSION, fields: {}, capturedTests: {}, repair: null, updatedAt: null };
+  let local = null;
+  try {
+    const saved = JSON.parse(localStorage.getItem(submissionStorageKey()) || 'null');
+    local = saved && saved.version === SUBMISSION_VERSION ? { ...empty, ...saved } : null;
+  } catch (_error) {
+    local = null;
+  }
+  let remote = null;
+  try {
+    const payload = await api('/api/submission');
+    app.submissionRevision = Number(payload.revision) || 0;
+    remote = payload.draft && payload.draft.version === SUBMISSION_VERSION
+      ? { ...empty, ...payload.draft }
+      : null;
+  } catch (_error) {
+    app.submissionSaveMessage = 'Server backup unavailable; saved in this browser';
+  }
+  app.submission = remote && submissionTime(remote) >= submissionTime(local) ? remote : (local || remote || empty);
+  if (!app.submission.fields || typeof app.submission.fields !== 'object') app.submission.fields = {};
+  if (!app.submission.capturedTests || typeof app.submission.capturedTests !== 'object') app.submission.capturedTests = {};
+  if (!app.submission.fields['student-name'] && app.session && app.session.student) {
+    app.submission.fields['student-name'] = app.session.student.label;
+  }
+  if (!app.submission.fields['test-prohibited-status']) app.submission.fields['test-prohibited-status'] = 'PROPOSED';
+  if (!app.submission.fields['test-legitimate-status']) app.submission.fields['test-legitimate-status'] = 'PROPOSED';
+  populateSubmissionFields();
+  if (app.submission.updatedAt) {
+    app.submissionSaveMessage = `Restored draft saved ${new Date(app.submission.updatedAt).toLocaleString([], { dateStyle: 'short', timeStyle: 'short' })}`;
+  }
+  if (local && submissionTime(local) > submissionTime(remote)) queueSubmissionSync();
+}
+
+function saveSubmissionDraft() {
+  collectSubmissionFields();
+  app.submission.updatedAt = new Date().toISOString();
+  try {
+    localStorage.setItem(submissionStorageKey(), JSON.stringify(app.submission));
+    app.submissionSaveMessage = `Saved in browser ${new Date(app.submission.updatedAt).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}; syncing`;
+    queueSubmissionSync();
+  } catch (_error) {
+    app.submissionSaveMessage = 'Local save unavailable; trying private workspace';
+    queueSubmissionSync();
+  }
+  renderSubmission();
+}
+
+function queueSubmissionSync(delay = 600) {
+  if (!app.session || app.submissionSyncConflict) return;
+  app.submissionSyncPending = true;
+  if (app.submissionSyncTimer) window.clearTimeout(app.submissionSyncTimer);
+  app.submissionSyncTimer = window.setTimeout(syncSubmissionDraft, delay);
+}
+
+async function syncSubmissionDraft() {
+  if (!app.session || app.submissionSyncConflict) return false;
+  if (app.submissionSyncInFlight) {
+    app.submissionSyncPending = true;
+    return false;
+  }
+  if (app.submissionSyncTimer) window.clearTimeout(app.submissionSyncTimer);
+  app.submissionSyncTimer = null;
+  app.submissionSyncInFlight = true;
+  app.submissionSyncPending = false;
+  const draft = JSON.parse(JSON.stringify(app.submission));
+  try {
+    const result = await api('/api/submission', {
+      method: 'POST',
+      body: JSON.stringify({ draft, baseRevision: app.submissionRevision })
+    });
+    app.submissionRevision = result.revision;
+    app.submissionSaveMessage = `Saved to private workspace ${new Date(result.updatedAtUnixMs).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}`;
+    return true;
+  } catch (error) {
+    if (error.status === 409 && Number.isInteger(error.payload && error.payload.currentRevision)) {
+      app.submissionSyncConflict = true;
+      app.submissionSaveMessage = 'Another browser changed this draft. Stop editing and reload before continuing.';
+    } else if (error.status === 409) {
+      app.submissionSaveMessage = `Private workspace rejected this draft: ${error.message}`;
+    } else {
+      app.submissionSaveMessage = 'Saved in this browser; private workspace backup will retry';
+      window.setTimeout(() => queueSubmissionSync(0), 3000);
+    }
+    return false;
+  } finally {
+    app.submissionSyncInFlight = false;
+    if (app.submissionSyncPending && !app.submissionSyncConflict) queueSubmissionSync(0);
+    renderSubmission();
+  }
+}
+
+async function saveForLater() {
+  saveSubmissionDraft();
+  const saved = await syncSubmissionDraft();
+  const feedback = $('submission-feedback');
+  feedback.className = saved ? 'feedback good' : 'feedback error';
+  feedback.textContent = saved
+    ? 'Saved to your private workspace. You may close this browser and return with the same access code.'
+    : app.submissionSaveMessage;
+}
+
+function captureCompletedTest(result) {
+  if (!result || !result.testRunId || !app.session) return;
+  const existing = app.submission.capturedTests[result.testId];
+  if (existing && existing.testRunId === result.testRunId) return;
+  const record = {
+    testRunId: result.testRunId,
+    testId: result.testId,
+    status: result.status,
+    passed: Boolean(result.passed),
+    detail: result.detail,
+    buildId: result.buildId,
+    runId: result.runId,
+    durationMs: result.durationMs,
+    completedUnixMs: result.completedUnixMs || Date.now(),
+    sourceSha256: app.snapshot && app.snapshot.build && app.snapshot.build.buildId === result.buildId
+      ? app.snapshot.build.sourceSha256
+      : null
+  };
+  app.submission.capturedTests[result.testId] = record;
+  const prefix = result.testId === 'upstream_counterexample'
+    ? 'test-prohibited'
+    : result.testId === 'legitimate_restore'
+      ? 'test-legitimate'
+      : null;
+  if (prefix) {
+    app.submission.fields[`${prefix}-status`] = 'TESTED';
+    app.submission.fields[`${prefix}-observed`] = `${result.status.toUpperCase()}: ${result.detail}`;
+    app.submission.fields[`${prefix}-reference`] = `${result.testRunId}; run ${result.runId}; build ${result.buildId}`;
+    populateSubmissionFields();
+  }
+  saveSubmissionDraft();
+}
+
+function captureActiveRepair() {
+  const feedback = $('submission-feedback');
+  if (!app.snapshot || app.dirtySource) {
+    feedback.className = 'feedback error';
+    feedback.textContent = 'Compile the current Structured Text successfully before capturing it as your repair.';
+    setTab('controller');
+    return;
+  }
+  app.submission.repair = {
+    buildId: app.snapshot.build.buildId,
+    sourceSha256: app.snapshot.build.sourceSha256,
+    source: $('st-source').value,
+    capturedAt: new Date().toISOString()
+  };
+  saveSubmissionDraft();
+  feedback.className = 'feedback good';
+  feedback.textContent = `Captured ${app.submission.repair.buildId}. Run both required regressions against this build.`;
+}
+
+function renderCapturedRuns() {
+  const holder = $('captured-runs');
+  holder.replaceChildren();
+  const records = Object.values(app.submission.capturedTests).sort((a, b) => a.completedUnixMs - b.completedUnixMs);
+  if (!records.length) {
+    holder.textContent = 'No completed regression runs captured yet.';
+    return;
+  }
+  for (const record of records) {
+    const row = document.createElement('div');
+    row.className = 'captured-run';
+    const text = document.createElement('span');
+    const label = TESTS[record.testId] ? TESTS[record.testId].label : record.testId;
+    text.textContent = `${label} | ${record.testRunId} | ${record.buildId}`;
+    const status = document.createElement('span');
+    status.className = `tag ${record.passed ? 'allow' : 'deny'}`;
+    status.textContent = record.status;
+    row.append(text, status);
+    holder.append(row);
+  }
+}
+
+function stepIsComplete(step) {
+  const fieldsComplete = SUBMISSION_STEPS[step].every(id => String(app.submission.fields[id] || '').trim());
+  if (step === 'repair') return fieldsComplete && Boolean(app.submission.repair);
+  if (step === 'tests' && fieldsComplete) {
+    const bindings = [
+      ['test-prohibited-status', 'upstream_counterexample'],
+      ['test-legitimate-status', 'legitimate_restore']
+    ];
+    return bindings.every(([statusField, testId]) => {
+      if (app.submission.fields[statusField] !== 'TESTED') return true;
+      const record = app.submission.capturedTests[testId];
+      return Boolean(record && app.submission.repair && record.buildId === app.submission.repair.buildId);
+    });
+  }
+  return fieldsComplete;
+}
+
+function renderBuilderReview() {
+  const list = $('builder-review-list');
+  if (!list) return;
+  list.replaceChildren();
+  Object.keys(SUBMISSION_STEPS).forEach((step, index) => {
+    const done = stepIsComplete(step);
+    const item = document.createElement('li');
+    item.className = done ? 'complete' : '';
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.className = 'review-link';
+    const number = document.createElement('span');
+    number.className = 'review-number';
+    number.textContent = String(index + 1);
+    const title = document.createElement('strong');
+    title.textContent = SUBMISSION_PAGE_TITLES[step];
+    const state = document.createElement('span');
+    state.className = 'review-state';
+    state.textContent = done ? 'Complete' : 'Needs attention';
+    button.append(number, title, state);
+    button.addEventListener('click', () => setSubmissionPage(step));
+    item.append(button);
+    list.append(item);
+  });
+}
+
+function renderSubmissionPage() {
+  if (!$('submission-form')) return;
+  const page = SUBMISSION_PAGE_ORDER.includes(app.submissionPage) ? app.submissionPage : 'property';
+  const pageIndex = SUBMISSION_PAGE_ORDER.indexOf(page);
+  const review = page === 'review';
+
+  document.querySelectorAll('.builder-step').forEach(step => {
+    const active = step.dataset.step === page;
+    step.classList.toggle('active', active);
+    step.open = active;
+  });
+  $('builder-identity').hidden = page !== 'property';
+  $('builder-review-page').hidden = !review;
+  document.querySelectorAll('[data-builder-page]').forEach(button => {
+    const target = button.dataset.builderPage;
+    const complete = target === 'review'
+      ? Object.keys(SUBMISSION_STEPS).every(stepIsComplete)
+      : stepIsComplete(target);
+    button.classList.toggle('active', target === page);
+    button.classList.toggle('complete', complete);
+    if (target === page) button.setAttribute('aria-current', 'step');
+    else button.removeAttribute('aria-current');
+  });
+
+  $('builder-back').disabled = pageIndex === 0;
+  $('builder-next').hidden = review;
+  $('builder-next').textContent = page === 'transfer' ? 'Review submission' : 'Continue';
+  $('builder-page-title').textContent = SUBMISSION_PAGE_TITLES[page];
+  $('builder-page-count').textContent = review ? 'Final review' : `Checkpoint ${pageIndex + 1} of 6`;
+  $('builder-navigation-label').textContent = review ? 'Review and submit' : `Checkpoint ${pageIndex + 1} of 6`;
+  renderBuilderReview();
+}
+
+function setSubmissionPage(page, { scroll = true } = {}) {
+  if (!SUBMISSION_PAGE_ORDER.includes(page)) return;
+  collectSubmissionFields();
+  app.submissionPage = page;
+  renderSubmissionPage();
+  if (scroll) $('hw3-builder').scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+function openSubmissionBuilder(page = app.submissionPage) {
+  $('hw3-builder').open = true;
+  document.body.classList.add('submission-mode');
+  setSubmissionPage(page, { scroll: false });
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function closeSubmissionBuilder(tab = null) {
+  collectSubmissionFields();
+  saveSubmissionDraft();
+  document.body.classList.remove('submission-mode');
+  $('hw3-builder').open = false;
+  if (tab) {
+    setTab(tab);
+    const target = tab === 'controller' ? $('panel-controller') : document.querySelector('.scenario-toolbar');
+    target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+}
+
+function moveSubmissionPage(delta) {
+  const current = SUBMISSION_PAGE_ORDER.indexOf(app.submissionPage);
+  const next = Math.max(0, Math.min(SUBMISSION_PAGE_ORDER.length - 1, current + delta));
+  setSubmissionPage(SUBMISSION_PAGE_ORDER[next]);
+}
+
+function renderSubmission() {
+  if (!$('submission-form')) return;
+  collectSubmissionFields();
+  let complete = 0;
+  document.querySelectorAll('.builder-step').forEach(step => {
+    const done = stepIsComplete(step.dataset.step);
+    if (done) complete += 1;
+    step.classList.toggle('complete', done);
+    step.querySelector('.step-state').textContent = done ? 'Complete' : 'Incomplete';
+  });
+  $('builder-progress').value = complete;
+  $('builder-progress-label').textContent = `${complete} of 6 checkpoints complete`;
+  $('autosave-status').textContent = app.submissionSaveMessage;
+  if (app.submission.repair) {
+    $('repair-capture-title').textContent = `Captured ${app.submission.repair.buildId}`;
+    $('repair-capture-detail').textContent = `Source SHA-256 ${app.submission.repair.sourceSha256}`;
+  } else {
+    $('repair-capture-title').textContent = 'No controller build captured';
+    $('repair-capture-detail').textContent = 'Compile your repair, then capture the active build.';
+  }
+  renderCapturedRuns();
+  renderSubmissionPage();
+}
+
+function validateSubmission() {
+  collectSubmissionFields();
+  const issues = [];
+  for (const id of SUBMISSION_FIELD_IDS) {
+    if (!String(app.submission.fields[id] || '').trim()) issues.push({ field: id, message: `${fieldLabel(id)} is blank` });
+  }
+  if (!app.submission.repair) issues.push({ field: 'capture-repair', message: 'No compiled repair build is captured' });
+
+  const requiredTests = [
+    ['test-prohibited-status', 'upstream_counterexample', 'prohibited-transition'],
+    ['test-legitimate-status', 'legitimate_restore', 'legitimate-service']
+  ];
+  for (const [statusField, testId, label] of requiredTests) {
+    if (app.submission.fields[statusField] !== 'TESTED') continue;
+    const record = app.submission.capturedTests[testId];
+    if (!record) {
+      issues.push({ field: statusField, message: `${label} evidence is labeled TESTED without a captured run` });
+    } else if (app.submission.repair && record.buildId !== app.submission.repair.buildId) {
+      issues.push({ field: statusField, message: `${label} ran against ${record.buildId}, not the captured repair ${app.submission.repair.buildId}` });
+    }
+  }
+  return issues;
+}
+
+function appendReportSection(report, title, rows) {
+  const section = document.createElement('section');
+  const heading = document.createElement('h2');
+  heading.textContent = title;
+  const list = document.createElement('dl');
+  for (const [label, value] of rows) {
+    const dt = document.createElement('dt');
+    dt.textContent = label;
+    const dd = document.createElement('dd');
+    dd.textContent = value || 'Not provided';
+    list.append(dt, dd);
+  }
+  section.append(heading, list);
+  report.append(section);
+}
+
+function appendReportTests(report) {
+  const section = document.createElement('section');
+  const heading = document.createElement('h2');
+  heading.textContent = '4. Regression evidence';
+  const table = document.createElement('table');
+  const head = document.createElement('thead');
+  const headerRow = document.createElement('tr');
+  ['Test', 'Expected', 'Status', 'Observed or proposed', 'Evidence reference'].forEach(label => {
+    const cell = document.createElement('th');
+    cell.textContent = label;
+    headerRow.append(cell);
+  });
+  head.append(headerRow);
+  const body = document.createElement('tbody');
+  const rows = [
+    ['Prohibited transition', 'test-prohibited-expected', 'test-prohibited-status', 'test-prohibited-observed', 'test-prohibited-reference'],
+    ['Legitimate restoration', 'test-legitimate-expected', 'test-legitimate-status', 'test-legitimate-observed', 'test-legitimate-reference']
+  ];
+  for (const [label, expected, status, observed, reference] of rows) {
+    const row = document.createElement('tr');
+    [label, app.submission.fields[expected], app.submission.fields[status], app.submission.fields[observed], app.submission.fields[reference]].forEach(value => {
+      const cell = document.createElement('td');
+      cell.textContent = value || 'Not provided';
+      row.append(cell);
+    });
+    body.append(row);
+  }
+  table.append(head, body);
+  section.append(heading, table);
+  report.append(section);
+}
+
+function buildSubmissionReport() {
+  collectSubmissionFields();
+  const fields = app.submission.fields;
+  const report = $('submission-report');
+  report.replaceChildren();
+  report.setAttribute('aria-hidden', 'false');
+
+  const heading = document.createElement('header');
+  const title = document.createElement('h1');
+  title.textContent = 'HW3: From Requirement to Defensible Guardrail';
+  const meta = document.createElement('p');
+  meta.textContent = `${fields['student-name']} | ${fields['student-unid']} | Generated ${new Date().toLocaleString()}`;
+  heading.append(title, meta);
+  report.append(heading);
+
+  appendReportSection(report, '1. Property and boundary', [
+    ['Prohibited outcome', fields['property-prohibited']],
+    ['Useful operation', fields['property-service']],
+    ['Requirement source', fields['property-source']],
+    ['Enforcement boundary', fields['property-boundary']]
+  ]);
+  appendReportSection(report, '2. Counterexample', [
+    ['Initial state', fields['counter-initial']],
+    ['Request', fields['counter-request']],
+    ['Controller decision', fields['counter-decision']],
+    ['First prohibited effect', fields['counter-effect']],
+    ['Omitted dependency', fields['counter-omission']]
+  ]);
+  appendReportSection(report, '3. Repair', [
+    ['Rationale', fields['repair-explanation']],
+    ['Captured build', app.submission.repair ? app.submission.repair.buildId : 'Not captured'],
+    ['Source SHA-256', app.submission.repair ? app.submission.repair.sourceSha256 : 'Not captured']
+  ]);
+  appendReportTests(report);
+  appendReportSection(report, '5. Assumption stress test', [
+    ['Expired assumption', fields['stress-assumption']],
+    ['Evidence no longer sufficient', fields['stress-evidence']],
+    ['Recheck location', fields['stress-recheck']],
+    ['Positive-service regression', fields['stress-positive']]
+  ]);
+  appendReportSection(report, '6. Transfer and bounded claim', [
+    ['Utility fragment', fields['transfer-context']],
+    ['Property', fields['transfer-property']],
+    ['Missing evidence', fields['transfer-missing']],
+    ['Likely enforcement point', fields['transfer-enforcement']],
+    ['First assumption to test', fields['transfer-assumption']],
+    ['Under assumptions', fields['claim-assumptions']],
+    ['Evidence', fields['claim-evidence']],
+    ['Supports the claim that', fields['claim-supports']],
+    ['Does not establish', fields['claim-limits']]
+  ]);
+
+  const appendix = document.createElement('section');
+  appendix.className = 'report-appendix';
+  const appendixHeading = document.createElement('h2');
+  appendixHeading.textContent = 'Evidence appendix';
+  const buildMeta = document.createElement('p');
+  buildMeta.textContent = app.submission.repair
+    ? `Captured build ${app.submission.repair.buildId}; source SHA-256 ${app.submission.repair.sourceSha256}.`
+    : 'No compiled build captured.';
+  const code = document.createElement('pre');
+  code.textContent = app.submission.repair ? app.submission.repair.source : 'No Structured Text captured.';
+  appendix.append(appendixHeading, buildMeta, code);
+  const records = Object.values(app.submission.capturedTests);
+  if (records.length) {
+    const runHeading = document.createElement('h3');
+    runHeading.textContent = 'Captured run manifest';
+    const runList = document.createElement('ul');
+    for (const record of records) {
+      const item = document.createElement('li');
+      item.textContent = `${record.testId}: ${record.status}; ${record.testRunId}; run ${record.runId}; build ${record.buildId}`;
+      runList.append(item);
+    }
+    appendix.append(runHeading, runList);
+  }
+  report.append(appendix);
+}
+
+function reviewSubmission(printAfterReview = false) {
+  saveSubmissionDraft();
+  const issues = validateSubmission();
+  const feedback = $('submission-feedback');
+  if (issues.length) {
+    feedback.className = 'feedback error';
+    feedback.textContent = `${issues.length} item${issues.length === 1 ? '' : 's'} need attention: ${issues.slice(0, 3).map(issue => issue.message).join('; ')}${issues.length > 3 ? '; ...' : ''}`;
+    const target = $(issues[0].field);
+    if (target) {
+      const step = target.closest('.builder-step');
+      openSubmissionBuilder(step ? step.dataset.step : 'property');
+      window.setTimeout(() => target.focus(), 250);
+    }
+    return;
+  }
+  buildSubmissionReport();
+  const failedTests = Object.values(app.submission.capturedTests).filter(record => record.status === 'failed');
+  feedback.className = failedTests.length ? 'feedback' : 'feedback good';
+  feedback.textContent = failedTests.length
+    ? `Submission is structurally complete, but ${failedTests.length} captured regression${failedTests.length === 1 ? '' : 's'} failed. The PDF will preserve that result for grading.`
+    : 'Submission is complete and internally consistent. Use the browser dialog to save one PDF for Canvas.';
+  if (!printAfterReview) return;
+  const originalTitle = document.title;
+  const safeUnid = app.submission.fields['student-unid'].replace(/[^A-Za-z0-9_-]/g, '');
+  document.title = `HW3_${safeUnid}`;
+  window.addEventListener('afterprint', () => {
+    document.title = originalTitle;
+    $('submission-report').setAttribute('aria-hidden', 'true');
+  }, { once: true });
+  window.print();
+}
+
 function togglePlayback() {
   if (app.playing) {
     app.playing = false;
@@ -540,6 +1126,7 @@ async function poll() {
 async function initializeLab() {
   if (app.booted) return;
   app.booted = true;
+  await loadSubmissionDraft();
   Object.entries(TESTS).forEach(([id, test]) => {
     const option = document.createElement('option');
     option.value = id;
@@ -551,16 +1138,17 @@ async function initializeLab() {
   const presets = await api('/api/presets');
   for (const preset of presets.presets) {
     app.presets[preset.id] = preset.source;
-    const option = document.createElement('option');
-    option.value = preset.id;
-    option.textContent = PRESET_LABELS[preset.id] || preset.id;
-    $('source-preset').append(option);
+    if (preset.id !== REFERENCE_PRESET) addPresetOption(preset.id);
   }
 
   const snapshot = await api('/api/state');
   mergeSnapshot(snapshot, true);
   const workspace = presets.workspace || {};
   app.activePreset = workspace.activePreset || 'vulnerable';
+  if (app.activePreset === REFERENCE_PRESET) {
+    app.referenceRevealed = true;
+    addPresetOption(REFERENCE_PRESET);
+  }
   app.dirtySource = false;
   $('source-preset').value = app.activePreset;
   $('st-source').value = workspace.activeSource || app.presets[app.activePreset];
@@ -601,6 +1189,7 @@ async function initializeLab() {
     $('st-source').value = current.replace(/END_FUNCTION\s*$/i, 'CloseInterlock := ;\nEND_FUNCTION');
     $('st-source').dispatchEvent(new Event('input'));
   });
+  $('load-reference').addEventListener('click', revealReference);
   $('previous-event').addEventListener('click', () => selectEvent(Math.max(0, app.selectedEvent - 1)));
   $('next-event').addEventListener('click', () => {
     if (app.selectedEvent >= app.events.length - 1) followLive();
@@ -610,13 +1199,49 @@ async function initializeLab() {
   $('reset-events').addEventListener('click', resetRun);
   $('scrubber').addEventListener('input', event => selectEvent(Number(event.target.value)));
   $('export-evidence').addEventListener('click', exportEvidence);
+  $('capture-repair').addEventListener('click', captureActiveRepair);
+  $('review-submission').addEventListener('click', () => reviewSubmission(false));
+  $('print-submission').addEventListener('click', () => reviewSubmission(true));
+  $('save-submission-later').addEventListener('click', saveForLater);
+  $('open-submission').addEventListener('click', () => openSubmissionBuilder());
+  $('close-builder').addEventListener('click', () => closeSubmissionBuilder());
+  $('open-controller-workspace').addEventListener('click', () => closeSubmissionBuilder('controller'));
+  $('open-test-runner').addEventListener('click', () => closeSubmissionBuilder('requests'));
+  $('builder-back').addEventListener('click', () => moveSubmissionPage(-1));
+  $('builder-next').addEventListener('click', () => moveSubmissionPage(1));
+  document.querySelectorAll('[data-builder-page]').forEach(button => {
+    button.addEventListener('click', () => setSubmissionPage(button.dataset.builderPage));
+  });
+  document.querySelectorAll('.builder-step > summary').forEach(summary => {
+    summary.addEventListener('click', event => event.preventDefault());
+  });
+  $('hw3-builder').addEventListener('toggle', () => {
+    document.body.classList.toggle('submission-mode', $('hw3-builder').open);
+    if ($('hw3-builder').open) renderSubmissionPage();
+  });
+  $('submission-form').querySelectorAll('input, textarea, select').forEach(field => {
+    field.addEventListener('input', saveSubmissionDraft);
+    field.addEventListener('change', saveSubmissionDraft);
+  });
   $('sign-out').addEventListener('click', logout);
+  window.addEventListener('pagehide', () => {
+    if (!app.session || !app.submissionSyncPending || app.submissionSyncConflict) return;
+    fetch(`${LAB_BASE}/api/submission`, {
+      method: 'POST',
+      cache: 'no-store',
+      keepalive: true,
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ draft: app.submission, baseRevision: app.submissionRevision })
+    }).catch(() => {});
+  });
+  renderSubmission();
   poll();
 }
 
 function showLogin(message = '') {
   app.polling = false;
   app.session = null;
+  document.body.classList.remove('submission-mode');
   $('lab-shell').hidden = true;
   $('access-gate').hidden = false;
   $('access-feedback').textContent = message;

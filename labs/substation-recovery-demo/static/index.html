@@ -36,6 +36,7 @@
         <span class="mode-badge" id="execution-badge">CONNECTING</span>
         <span class="mode-badge secondary" id="requester-badge">MANUAL</span>
         <span class="mode-badge secondary" id="student-badge">PRIVATE SESSION</span>
+        <button class="sign-out" id="open-submission" type="button">HW3 submission</button>
         <button class="sign-out" id="sign-out" type="button">Sign out</button>
       </div>
     </div>
@@ -235,8 +236,9 @@
               <input class="source-id" id="source-id" value="st-vulnerable-fixture" readonly>
             </div>
           </div>
-          <label class="control-label" for="st-source">FB_CloseInterlock.st</label>
+          <label class="control-label" for="st-source">CloseInterlock.st</label>
           <textarea id="st-source" spellcheck="false"></textarea>
+          <p class="term-lookup">Before editing, use the supplied FDS excerpt on pages 174-175 to identify what <code>CloseInterlock</code> decides and what <code>TripLatched</code> represents. Do not infer either contract from its name alone.</p>
           <p class="source-warning">Compilation uses the bundled matiec IEC 61131-3 compiler. The resulting native function runs in a bounded child process.</p>
           <div class="button-row">
             <button class="button primary" id="compile-draft" type="button">Compile and activate</button>
@@ -244,6 +246,11 @@
             <button class="button danger" id="compile-error" type="button">Insert syntax error</button>
           </div>
           <div class="feedback" id="compile-feedback" role="status">Loading the active build.</div>
+          <details class="reference-reveal" id="reference-reveal">
+            <summary>Instructor reveal: reference build</summary>
+            <p>Open only after you have written a repair and specified one prohibited-transition test and one legitimate-service test.</p>
+            <button class="button" id="load-reference" type="button">Reveal and load reference build</button>
+          </details>
           <h3 class="section-title section-spaced-small">Change from vulnerable source</h3>
           <div class="diff" id="source-diff" aria-label="Source comparison"></div>
         </section>
@@ -283,8 +290,229 @@
       </div>
       <div class="timeline-track" id="timeline-track"></div>
     </section>
+
+    <details class="submission-builder" id="hw3-builder">
+      <summary>
+        <span>
+          <strong>Finish HW3 submission</strong>
+          <small>Build one evidence-backed PDF for Canvas</small>
+        </span>
+        <span class="builder-progress-label" id="builder-progress-label">0 of 6 checkpoints complete</span>
+      </summary>
+      <div class="builder-body">
+        <div class="builder-intro">
+          <div>
+            <p class="builder-page-count" id="builder-page-count">Checkpoint 1 of 6</p>
+            <h2 id="builder-page-title">Property and boundary</h2>
+            <p>Complete one focused checkpoint at a time. Your draft is backed up to this private workspace; use one editing browser per access code.</p>
+          </div>
+          <div class="builder-intro-actions">
+            <progress id="builder-progress" max="6" value="0">0 of 6</progress>
+            <button class="button" id="close-builder" type="button">Return to lab</button>
+          </div>
+        </div>
+
+        <nav class="builder-stepper" id="builder-stepper" aria-label="HW3 checkpoints">
+          <button type="button" data-builder-page="property"><span>1</span><strong>Property</strong></button>
+          <button type="button" data-builder-page="counterexample"><span>2</span><strong>Counterexample</strong></button>
+          <button type="button" data-builder-page="repair"><span>3</span><strong>Repair</strong></button>
+          <button type="button" data-builder-page="tests"><span>4</span><strong>Tests</strong></button>
+          <button type="button" data-builder-page="stress"><span>5</span><strong>Stress</strong></button>
+          <button type="button" data-builder-page="transfer"><span>6</span><strong>Transfer</strong></button>
+          <button type="button" data-builder-page="review"><span>7</span><strong>Review</strong></button>
+        </nav>
+
+        <form id="submission-form" novalidate>
+          <div class="identity-grid" id="builder-identity">
+            <div class="field">
+              <label class="control-label" for="student-name">Name</label>
+              <input id="student-name" name="student-name" autocomplete="name" required>
+            </div>
+            <div class="field">
+              <label class="control-label" for="student-unid">uNID</label>
+              <input id="student-unid" name="student-unid" autocomplete="username" placeholder="u1234567" required>
+            </div>
+          </div>
+
+          <details class="builder-step" data-step="property" open>
+            <summary><span class="step-number">1</span><span>Property and boundary</span><span class="step-state">Incomplete</span></summary>
+            <div class="step-body">
+              <p class="step-question">What must remain safe, what useful operation must remain possible, and where will you enforce it?</p>
+              <div class="answer-contract"><strong>Answer format</strong><span>Four short entries. Use one sentence for each property and boundary; cite the source as <code>FDS-DA-###, p. ###</code> plus a short paraphrase.</span></div>
+              <div class="source-document">
+                <div>
+                  <strong>Supplied source document</strong>
+                  <span>Riverbend Substation Functional Design Specification, excerpt pages 173-176 of 412</span>
+                </div>
+                <a class="button" href="docs/riverbend_substation_fds_excerpt.pdf" target="_blank" rel="noopener">Open functional specification</a>
+              </div>
+              <label for="property-prohibited">Prohibited outcome</label>
+              <textarea id="property-prohibited" rows="2" placeholder="One sentence: [source or path] must never [prohibited physical result]." required></textarea>
+              <label for="property-service">Useful operation that must remain possible</label>
+              <textarea id="property-service" rows="2" placeholder="One sentence: when [safe condition], the controller must still permit [useful service]." required></textarea>
+              <label for="property-source">Source of the operating requirement</label>
+              <textarea id="property-source" rows="2" placeholder="FDS-DA-___, p. ___: short paraphrase of the requirement." required></textarea>
+              <label for="property-boundary">Enforcement boundary</label>
+              <textarea id="property-boundary" rows="2" placeholder="One sentence: [component] checks [state/evidence] immediately before [decision or actuation]." required></textarea>
+            </div>
+          </details>
+
+          <details class="builder-step" data-step="counterexample">
+            <summary><span class="step-number">2</span><span>Counterexample</span><span class="step-state">Incomplete</span></summary>
+            <div class="step-body">
+              <p class="step-question">Identify the state and request that expose the starter controller's unsafe inference.</p>
+              <div class="answer-contract"><strong>Answer format</strong><span>Use a compact state tuple, one exact command, one <code>ALLOW</code>/<code>DENY</code> decision with reason, one first physical effect, and one sentence naming the omitted dependency.</span></div>
+              <div class="form-grid">
+                <div><label for="counter-initial">Initial state</label><textarea id="counter-initial" rows="2" placeholder="B0=___; S1=___; S2=___; S3=___; OOS=___; current=___; trip=___" required></textarea></div>
+                <div><label for="counter-request">Request</label><textarea id="counter-request" rows="2" placeholder="Exact operation, for example: CLOSE [device]" required></textarea></div>
+                <div><label for="counter-decision">Controller decision</label><textarea id="counter-decision" rows="2" placeholder="ALLOW or DENY — because [condition evaluated by the active build]." required></textarea></div>
+                <div><label for="counter-effect">First prohibited effect</label><textarea id="counter-effect" rows="2" placeholder="First device/process consequence. Do not substitute the later protection response." required></textarea></div>
+              </div>
+              <label for="counter-omission">Which state dependency did the starter controller omit?</label>
+              <textarea id="counter-omission" rows="2" placeholder="One sentence naming the topology or state relationship the starter controller never evaluated." required></textarea>
+            </div>
+          </details>
+
+          <details class="builder-step" data-step="repair">
+            <summary><span class="step-number">3</span><span>Repair</span><span class="step-state">Incomplete</span></summary>
+            <div class="step-body">
+              <p class="step-question">Explain why your repair enforces the property instead of blocking only the observed request.</p>
+              <div class="answer-contract"><strong>Answer format</strong><span>Write 3-5 sentences covering the state used, the resulting state computed, the deny condition, and why healthy restoration remains possible. The captured build supplies code and provenance.</span></div>
+              <label for="repair-explanation">Repair rationale</label>
+              <textarea id="repair-explanation" rows="4" placeholder="Explain the transition your logic evaluates, when it denies a close, how TripLatched constrains it, and why this is not a deny-all repair." required></textarea>
+              <div class="lab-return-row">
+                <button class="button" id="open-controller-workspace" type="button">Open controller workspace</button>
+                <span>Edit and compile the Structured Text in the lab, then return here to capture that active build.</span>
+              </div>
+              <div class="capture-row">
+                <div>
+                  <strong id="repair-capture-title">No controller build captured</strong>
+                  <span id="repair-capture-detail">Compile your repair, then capture the active build.</span>
+                </div>
+                <button class="button" id="capture-repair" type="button">Capture active repair</button>
+              </div>
+            </div>
+          </details>
+
+          <details class="builder-step" data-step="tests">
+            <summary><span class="step-number">4</span><span>Two tests</span><span class="step-state">Incomplete</span></summary>
+            <div class="step-body">
+              <p class="step-question">Show that the prohibited transition is blocked and legitimate restoration still succeeds.</p>
+              <div class="answer-contract"><strong>Answer format</strong><span>For each test: predict the decision and physical result in one sentence; record the observed decision, position, process/protection result in 2-3 sentences; cite <code>run …; build …; event(s) …</code>.</span></div>
+              <div class="lab-return-row">
+                <button class="button" id="open-test-runner" type="button">Open regression runner</button>
+                <span>Run both required tests against the captured repair, then return to confirm the evidence bindings.</span>
+              </div>
+              <div class="captured-runs" id="captured-runs">No completed regression runs captured yet.</div>
+              <div class="test-entry">
+                <h3>Prohibited transition</h3>
+                <div class="form-grid">
+                  <div><label for="test-prohibited-expected">Expected result</label><textarea id="test-prohibited-expected" rows="2" placeholder="One sentence: decision + actual position + process/protection outcome." required></textarea></div>
+                  <div><label for="test-prohibited-status">Evidence status</label><select id="test-prohibited-status"><option value="PROPOSED">PROPOSED</option><option value="REPLAYED">REPLAYED</option><option value="TESTED">TESTED</option></select></div>
+                </div>
+                <label for="test-prohibited-observed">Observed or proposed result</label>
+                <textarea id="test-prohibited-observed" rows="2" placeholder="2-3 sentences: controller decision, actual movement, and process/protection evidence." required></textarea>
+                <label for="test-prohibited-reference">Evidence reference</label>
+                <input id="test-prohibited-reference" placeholder="run …; build …; event(s) …" required>
+              </div>
+              <div class="test-entry">
+                <h3>Legitimate restoration</h3>
+                <div class="form-grid">
+                  <div><label for="test-legitimate-expected">Expected result</label><textarea id="test-legitimate-expected" rows="2" placeholder="One sentence: permitted sequence + healthy service + isolation/trip outcome." required></textarea></div>
+                  <div><label for="test-legitimate-status">Evidence status</label><select id="test-legitimate-status"><option value="PROPOSED">PROPOSED</option><option value="REPLAYED">REPLAYED</option><option value="TESTED">TESTED</option></select></div>
+                </div>
+                <label for="test-legitimate-observed">Observed or proposed result</label>
+                <textarea id="test-legitimate-observed" rows="2" placeholder="2-3 sentences: decisions, final positions, sustained service, and trip state." required></textarea>
+                <label for="test-legitimate-reference">Evidence reference</label>
+                <input id="test-legitimate-reference" placeholder="run …; build …; event(s) …" required>
+              </div>
+            </div>
+          </details>
+
+          <details class="builder-step" data-step="stress">
+            <summary><span class="step-number">5</span><span>Assumption stress test</span><span class="step-state">Incomplete</span></summary>
+            <div class="step-body">
+              <p class="step-question">The last safe position report is stale and physical state changes before the controller acts. What breaks?</p>
+              <div class="answer-contract"><strong>Answer format</strong><span>Give 1-2 sentences per field: one expired assumption, the evidence it invalidates, the final recheck boundary, and the positive-service regression that must still pass.</span></div>
+              <label for="stress-assumption">Expired assumption</label>
+              <textarea id="stress-assumption" rows="2" placeholder="The earlier claim assumed that …" required></textarea>
+              <label for="stress-evidence">Evidence that can no longer support the earlier conclusion</label>
+              <textarea id="stress-evidence" rows="2" placeholder="Name the stale field/report and the conclusion it no longer supports." required></textarea>
+              <label for="stress-recheck">Where freshness, versioning, or rechecking belongs</label>
+              <textarea id="stress-recheck" rows="2" placeholder="Name the component and decision moment where stale or mismatched state must fail closed." required></textarea>
+              <label for="stress-positive">Positive-service test that must still pass</label>
+              <textarea id="stress-positive" rows="2" placeholder="Name the legitimate sequence and the service/isolation result it must preserve." required></textarea>
+            </div>
+          </details>
+
+          <details class="builder-step" data-step="transfer">
+            <summary><span class="step-number">6</span><span>Transfer and bounded claim</span><span class="step-state">Incomplete</span></summary>
+            <div class="step-body">
+              <p class="step-question">Apply the reasoning method to this unfamiliar utility fragment, then state only what your evidence establishes.</p>
+              <div class="answer-contract"><strong>Answer format</strong><span>Use a short context label, two property sentences (safety and service), 2-4 missing evidence items, one enforcement sentence, one testable assumption, then complete the four bounded-claim clauses.</span></div>
+              <div class="source-document">
+                <div>
+                  <strong>Campus District Energy - Station 4 operating fragment</strong>
+                  <span>Supply pump P0 feeds branches V1-V3. V3 is declared out of service for maintenance, but its branch valve may retain its last position. A START P0 request must not pressurize any branch declared out of service. After V3 is isolated, the controller must still permit service to V1 and V2. Valve reports include timestamps, but the current adapter does not reject stale reports.</span>
+                </div>
+              </div>
+              <label for="transfer-context">Utility fragment or context</label>
+              <input id="transfer-context" placeholder="Short identifier, for example: [utility family] — [station/process]" required>
+              <label for="transfer-property">Safety or service property</label>
+              <textarea id="transfer-property" rows="2" placeholder="Sentence 1: prohibited outcome. Sentence 2: useful operation that must remain possible." required></textarea>
+              <label for="transfer-missing">Missing evidence</label>
+              <textarea id="transfer-missing" rows="2" placeholder="List 2-4 evidence items and briefly state why they matter." required></textarea>
+              <label for="transfer-enforcement">Likely enforcement point</label>
+              <textarea id="transfer-enforcement" rows="2" placeholder="One sentence naming the final decision boundary and what it must recheck." required></textarea>
+              <label for="transfer-assumption">First assumption you would test</label>
+              <textarea id="transfer-assumption" rows="2" placeholder="One testable sentence beginning with whether …" required></textarea>
+              <h3 class="section-title section-spaced">Revised bounded claim</h3>
+              <div class="claim-grid">
+                <label for="claim-assumptions">Under assumptions</label><textarea id="claim-assumptions" rows="2" placeholder="List only the assumptions your claim relies on." required></textarea>
+                <label for="claim-evidence">Evidence</label><textarea id="claim-evidence" rows="2" placeholder="Name the specific supplied or captured evidence." required></textarea>
+                <label for="claim-supports">Supports the claim that</label><textarea id="claim-supports" rows="2" placeholder="State the narrow conclusion supported by that evidence." required></textarea>
+                <label for="claim-limits">It does not establish</label><textarea id="claim-limits" rows="2" placeholder="State at least one important limit or untested condition." required></textarea>
+              </div>
+            </div>
+          </details>
+
+          <section class="builder-review-page" id="builder-review-page" hidden>
+            <div class="review-heading">
+              <div>
+                <p class="builder-page-count">Final review</p>
+                <h2>Submission readiness</h2>
+                <p>Resolve any incomplete checkpoint, review the assembled report, then create one PDF for Canvas.</p>
+              </div>
+            </div>
+            <ol class="review-checklist" id="builder-review-list"></ol>
+            <div class="builder-actions" id="builder-actions">
+              <button class="button" id="review-submission" type="button">Assemble report</button>
+              <button class="button primary" id="print-submission" type="button">Create submission PDF</button>
+            </div>
+          </section>
+
+          <div class="feedback builder-feedback" id="submission-feedback" role="status"></div>
+
+          <div class="builder-save-row">
+            <div>
+              <strong id="autosave-status">Draft not yet saved</strong>
+              <span>Backed up under this access code. Canvas remains the final submission record.</span>
+            </div>
+            <button class="button" id="save-submission-later" type="button">Save for later</button>
+          </div>
+
+          <div class="builder-navigation" aria-label="Submission checkpoint navigation">
+            <button class="button" id="builder-back" type="button">Back</button>
+            <span id="builder-navigation-label">Checkpoint 1 of 6</span>
+            <button class="button primary" id="builder-next" type="button">Continue</button>
+          </div>
+        </form>
+      </div>
+    </details>
   </main>
   </div>
+
+  <article class="submission-report" id="submission-report" aria-hidden="true"></article>
 
   <script src="app.js"></script>
 </body>

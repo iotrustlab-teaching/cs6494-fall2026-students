@@ -12,7 +12,7 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from urllib.parse import parse_qs, urlparse
 
-from access import AccessDenied, StudentAccessManager, StudentLab, create_roster
+from access import AccessDenied, DraftConflict, StudentAccessManager, StudentLab, create_roster
 from compiler import CompileError, InterlockCompiler, PresetLibrary
 from openplc_runtime import DockerOpenPLCRuntimePool
 from simulator import SCENARIOS
@@ -139,6 +139,9 @@ class LiveRequestHandler(BaseHTTPRequestHandler):
                 },
             )
             return
+        if parsed.path == "/api/submission":
+            self._json(HTTPStatus.OK, lab.submission_payload())
+            return
         if parsed.path == "/api/evidence":
             self._json(HTTPStatus.OK, lab.snapshot())
             return
@@ -198,6 +201,10 @@ class LiveRequestHandler(BaseHTTPRequestHandler):
                 result["student"] = lab.public_identity()
                 self._json(HTTPStatus.OK, result)
                 return
+            if parsed.path == "/api/submission":
+                result = lab.save_submission(payload.get("draft"), payload.get("baseRevision"))
+                self._json(HTTPStatus.OK, result)
+                return
             if parsed.path == "/api/commands":
                 result = lab.simulator.submit_command(
                     action=str(payload.get("action", "")),
@@ -246,6 +253,11 @@ class LiveRequestHandler(BaseHTTPRequestHandler):
             )
         except AccessDenied as exc:
             self._json(HTTPStatus.UNAUTHORIZED, {"error": str(exc)})
+        except DraftConflict as exc:
+            self._json(
+                HTTPStatus.CONFLICT,
+                {"error": str(exc), "currentRevision": exc.current_revision},
+            )
         except (ValueError, RuntimeError) as exc:
             self._json(HTTPStatus.CONFLICT, {"error": str(exc)})
         except Exception as exc:

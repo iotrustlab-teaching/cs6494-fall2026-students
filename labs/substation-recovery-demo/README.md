@@ -5,6 +5,23 @@ without preventing legitimate service restoration. The one-line diagram,
 breaker feedback, circuit measurements, protection response, mission checks,
 and correlated event timeline come from a live backend simulation.
 
+The activity is the coached technical core of **HW3: From Requirement to
+Defensible Guardrail**. The individual submission is a compact evidence
+portfolio, not a separate programming project. Use **HW3 submission** in the
+top bar to enter a focused, full-page workflow. It presents the property,
+counterexample, repair, tests, assumption stress test, and bounded claim one
+checkpoint at a time. The builder saves locally and to the authenticated private
+workspace, captures completed regression metadata, checks evidence labels
+against the captured runs, and produces one print-ready PDF for Canvas.
+[HW3_WORKING_SHEET.md](HW3_WORKING_SHEET.md) is the non-browser fallback.
+
+Checkpoint 1 supplies a four-page fictional functional-design-specification
+excerpt, numbered as pages 173-176 of a 412-page internal manual. Students cite
+its requirement IDs rather than treating the interface text as the operating
+authority. The document is visibly marked as an authored course artifact and
+does not reproduce a real utility's internal material. Rebuild it with
+`python3 docs/build_functional_spec.py`.
+
 ```text
 browser request
   -> authenticated student workspace
@@ -30,8 +47,35 @@ For a hosted class session, open the URL supplied by course staff and enter your
 assigned access code. Each code opens an isolated simulator, evidence stream,
 controller source workspace, and OpenPLC runtime.
 
-Do not share access codes or use the exercise interface against any system other
-than the assigned course environment.
+The hosted assignment is browser-only. Students do not clone this repository,
+open a terminal, install Python or Node packages, run Docker, invoke a compiler,
+or obtain a SPHERE shell. Compilation, OpenPLC execution, the electrical model,
+regression tests, and evidence capture all run in the staff-managed SPHERE
+environment. Written work is saved both in the browser and in the private
+workspace associated with the access code. The PDF is saved explicitly for
+Canvas.
+
+The complete reference repair is hidden from the starting-source menu. Students
+first commit to a repair and two tests; the instructor can then use the explicit
+reference reveal for comparison. The repository still contains the reference
+source for reproducibility, so this is a learning-sequence control rather than
+a secrecy boundary.
+
+Do not share access codes outside the assigned student or team, and do not use
+the exercise interface against any system other than the assigned course
+environment. One code represents one shared controller, evidence stream, and
+written draft. A team should use one designated editing browser at a time.
+
+The submission builder stores its draft in the current browser and backs it up
+under the authenticated access code. Choose **Save for later** before leaving;
+the same access code restores the draft on another browser or device. It does
+not upload the final report. Choose **Create submission PDF**, use the browser's
+**Save as PDF** destination, and submit `HW3_<uNID>.pdf` to Canvas. Canvas
+remains the submission record.
+
+If the hosted service is unavailable during an assigned work period, course
+staff should pause or reschedule the activity. The local instructor fallback
+below is not a student setup requirement.
 
 ## Local instructor fallback
 
@@ -82,13 +126,15 @@ error handling. It writes generated evidence under ignored `runtime/evidence/`.
 
 ```text
 static/               browser workspace
+static/docs/          supplied student-facing source documents
+docs/                 reproducible artifact builders
 st/                   vulnerable, faulty, deny-all, and repaired ST variants
 simulator.py          breaker, circuit, protection, tests, and event evidence
 compiler.py           bounded local MatIEC compilation
 openplc_*.py          pinned OpenPLC wrapper and Modbus decision handshake
 access.py             private codes, sessions, and per-student workspaces
+deploy/               staff-only Linux/SPHERE deployment packet
 tests/                deterministic behavior, isolation, and runtime tests
 ```
 
 MatIEC licensing and corresponding-source information are in `toolchain/`.
-Hosting and deployment operations remain in the staff repository.
