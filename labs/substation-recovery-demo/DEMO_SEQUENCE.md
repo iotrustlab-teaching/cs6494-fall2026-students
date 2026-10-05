@@ -41,8 +41,12 @@ which different event proves that the prohibited branch was energized?
 1. Load **Faulty patch: deny every close**, compile, and run
    **Legitimate healthy restoration**.
 2. Observe that avoiding the fault is insufficient when S1 and S2 remain unserved.
-3. Load **Repair: resulting topology**, compile, and run both
-   **Upstream-close counterexample** and **Legitimate healthy restoration**.
+3. Write or propose a repair before opening the instructor reveal. Specify one
+   prohibited-transition test and one legitimate-service test.
+4. Compile the student repair and run both tests. Record the result as
+   **tested**, **replayed**, or **proposed** accurately.
+5. Only after students commit, open **Instructor reveal: reference build** and
+   load **Repair: resulting topology** for comparison.
 
 The mission strip reports safety, protection, required service, and sustained
 service separately. A good repair must satisfy all four.
@@ -61,3 +65,17 @@ provided by trusted runtime state?
 Open **Evidence**, select the decisive event, and export the run. A defensible
 claim should bind the request, controller build and source hash, decision,
 reported position, electrical measurement, protection state, and mission result.
+
+## HW3 checkpoints
+
+- **Repair:** Complete steps 1-4 and record the property, counterexample,
+  control, negative test, positive-service test, and bounded claim in
+  [HW3_WORKING_SHEET.md](HW3_WORKING_SHEET.md).
+- **Assumption stress test:** Revisit the claim when the position report may be
+  stale. Identify the failed inference and where rechecking belongs.
+- **Transfer:** Apply the same argument structure to an unfamiliar,
+  protocol-neutral utility fragment. Do not reuse the substation answer.
+
+CTF1 uses unfamiliar water-treatment, water-distribution, and hydro/power
+utility families under a common evidence contract. This activity teaches the
+reasoning grammar without disclosing those scenario instances.

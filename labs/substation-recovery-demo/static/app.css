@@ -559,6 +559,25 @@ select { min-height: 38px; padding: 7px 34px 7px 10px; }
 .feedback.error { color: #7d151d; background: var(--red-soft); border-color: #dca0a4; }
 .feedback.good { color: #075b4f; background: var(--teal-soft); border-color: #87c6ba; }
 
+.reference-reveal {
+  margin-top: 12px;
+  border-top: 1px solid var(--line);
+  padding-top: 10px;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.reference-reveal summary {
+  cursor: pointer;
+  color: var(--ink);
+  font-weight: 700;
+}
+
+.reference-reveal p {
+  line-height: 1.45;
+  margin: 8px 0 10px;
+}
+
 .sequence-list,
 .event-list {
   margin: 12px 0 0;

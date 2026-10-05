@@ -5,6 +5,12 @@ without preventing legitimate service restoration. The one-line diagram,
 breaker feedback, circuit measurements, protection response, mission checks,
 and correlated event timeline come from a live backend simulation.
 
+The activity is the coached technical core of **HW3: From Requirement to
+Defensible Guardrail**. The individual submission is a compact evidence
+portfolio, not a separate programming project. Use
+[HW3_WORKING_SHEET.md](HW3_WORKING_SHEET.md) to accumulate the property,
+counterexample, repair, tests, assumption stress test, and bounded claim.
+
 ```text
 browser request
   -> authenticated student workspace
@@ -29,6 +35,12 @@ beats are described in [DEMO_SEQUENCE.md](DEMO_SEQUENCE.md):
 For a hosted class session, open the URL supplied by course staff and enter your
 assigned access code. Each code opens an isolated simulator, evidence stream,
 controller source workspace, and OpenPLC runtime.
+
+The complete reference repair is hidden from the starting-source menu. Students
+first commit to a repair and two tests; the instructor can then use the explicit
+reference reveal for comparison. The repository still contains the reference
+source for reproducibility, so this is a learning-sequence control rather than
+a secrecy boundary.
 
 Do not share access codes or use the exercise interface against any system other
 than the assigned course environment.

@@ -27,6 +27,8 @@ const PRESET_LABELS = {
   repaired: 'Repair: resulting topology'
 };
 
+const REFERENCE_PRESET = 'repaired';
+
 const app = {
   snapshot: null,
   events: [],
@@ -40,6 +42,7 @@ const app = {
   connected: false,
   dirtySource: false,
   activePreset: 'vulnerable',
+  referenceRevealed: false,
   session: null,
   booted: false,
   polling: false
@@ -412,6 +415,26 @@ function loadPreset(name) {
   simpleDiff(app.presets[name], app.presets[name]);
 }
 
+function addPresetOption(name) {
+  if (!app.presets[name] || $('source-preset').querySelector(`option[value="${name}"]`)) return;
+  const option = document.createElement('option');
+  option.value = name;
+  option.textContent = PRESET_LABELS[name] || name;
+  $('source-preset').append(option);
+}
+
+function revealReference() {
+  const confirmed = window.confirm(
+    'Reveal the reference build only after you have committed to a repair and two tests. Continue?'
+  );
+  if (!confirmed) return;
+  app.referenceRevealed = true;
+  addPresetOption(REFERENCE_PRESET);
+  loadPreset(REFERENCE_PRESET);
+  $('reference-reveal').open = false;
+  $('compile-feedback').textContent = 'Reference source loaded but not active. Compile it before running the regression tests.';
+}
+
 async function sendCommand() {
   const action = $('request-action').value;
   const device = $('request-device').value;
@@ -551,16 +574,17 @@ async function initializeLab() {
   const presets = await api('/api/presets');
   for (const preset of presets.presets) {
     app.presets[preset.id] = preset.source;
-    const option = document.createElement('option');
-    option.value = preset.id;
-    option.textContent = PRESET_LABELS[preset.id] || preset.id;
-    $('source-preset').append(option);
+    if (preset.id !== REFERENCE_PRESET) addPresetOption(preset.id);
   }
 
   const snapshot = await api('/api/state');
   mergeSnapshot(snapshot, true);
   const workspace = presets.workspace || {};
   app.activePreset = workspace.activePreset || 'vulnerable';
+  if (app.activePreset === REFERENCE_PRESET) {
+    app.referenceRevealed = true;
+    addPresetOption(REFERENCE_PRESET);
+  }
   app.dirtySource = false;
   $('source-preset').value = app.activePreset;
   $('st-source').value = workspace.activeSource || app.presets[app.activePreset];
@@ -601,6 +625,7 @@ async function initializeLab() {
     $('st-source').value = current.replace(/END_FUNCTION\s*$/i, 'CloseInterlock := ;\nEND_FUNCTION');
     $('st-source').dispatchEvent(new Event('input'));
   });
+  $('load-reference').addEventListener('click', revealReference);
   $('previous-event').addEventListener('click', () => selectEvent(Math.max(0, app.selectedEvent - 1)));
   $('next-event').addEventListener('click', () => {
     if (app.selectedEvent >= app.events.length - 1) followLive();
