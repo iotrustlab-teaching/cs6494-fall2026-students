@@ -288,8 +288,167 @@
       </div>
       <div class="timeline-track" id="timeline-track"></div>
     </section>
+
+    <details class="submission-builder" id="hw3-builder">
+      <summary>
+        <span>
+          <strong>Finish HW3 submission</strong>
+          <small>Build one evidence-backed PDF for Canvas</small>
+        </span>
+        <span class="builder-progress-label" id="builder-progress-label">0 of 6 checkpoints complete</span>
+      </summary>
+      <div class="builder-body">
+        <div class="builder-intro">
+          <div>
+            <h2>HW3 Submission Builder</h2>
+            <p>Answer each checkpoint in your own words. This browser saves your draft locally and binds captured test runs to the final report.</p>
+          </div>
+          <progress id="builder-progress" max="6" value="0">0 of 6</progress>
+        </div>
+
+        <form id="submission-form" novalidate>
+          <div class="identity-grid">
+            <div class="field">
+              <label class="control-label" for="student-name">Name</label>
+              <input id="student-name" name="student-name" autocomplete="name" required>
+            </div>
+            <div class="field">
+              <label class="control-label" for="student-unid">uNID</label>
+              <input id="student-unid" name="student-unid" autocomplete="username" placeholder="u1234567" required>
+            </div>
+          </div>
+
+          <details class="builder-step" data-step="property" open>
+            <summary><span class="step-number">1</span><span>Property and boundary</span><span class="step-state">Incomplete</span></summary>
+            <div class="step-body">
+              <p class="step-question">What must remain safe, what useful operation must remain possible, and where will you enforce it?</p>
+              <label for="property-prohibited">Prohibited outcome</label>
+              <textarea id="property-prohibited" rows="2" required></textarea>
+              <label for="property-service">Useful operation that must remain possible</label>
+              <textarea id="property-service" rows="2" required></textarea>
+              <label for="property-source">Source of the operating requirement</label>
+              <textarea id="property-source" rows="2" required></textarea>
+              <label for="property-boundary">Enforcement boundary</label>
+              <textarea id="property-boundary" rows="2" required></textarea>
+            </div>
+          </details>
+
+          <details class="builder-step" data-step="counterexample">
+            <summary><span class="step-number">2</span><span>Counterexample</span><span class="step-state">Incomplete</span></summary>
+            <div class="step-body">
+              <p class="step-question">Identify the state and request that expose the starter controller's unsafe inference.</p>
+              <div class="form-grid">
+                <div><label for="counter-initial">Initial state</label><textarea id="counter-initial" rows="2" required></textarea></div>
+                <div><label for="counter-request">Request</label><textarea id="counter-request" rows="2" required></textarea></div>
+                <div><label for="counter-decision">Controller decision</label><textarea id="counter-decision" rows="2" required></textarea></div>
+                <div><label for="counter-effect">First prohibited effect</label><textarea id="counter-effect" rows="2" required></textarea></div>
+              </div>
+              <label for="counter-omission">Which state dependency did the starter controller omit?</label>
+              <textarea id="counter-omission" rows="2" required></textarea>
+            </div>
+          </details>
+
+          <details class="builder-step" data-step="repair">
+            <summary><span class="step-number">3</span><span>Repair</span><span class="step-state">Incomplete</span></summary>
+            <div class="step-body">
+              <p class="step-question">Explain why your repair enforces the property instead of blocking only the observed request.</p>
+              <label for="repair-explanation">Repair rationale</label>
+              <textarea id="repair-explanation" rows="4" required></textarea>
+              <div class="capture-row">
+                <div>
+                  <strong id="repair-capture-title">No controller build captured</strong>
+                  <span id="repair-capture-detail">Compile your repair, then capture the active build.</span>
+                </div>
+                <button class="button" id="capture-repair" type="button">Capture active repair</button>
+              </div>
+            </div>
+          </details>
+
+          <details class="builder-step" data-step="tests">
+            <summary><span class="step-number">4</span><span>Two tests</span><span class="step-state">Incomplete</span></summary>
+            <div class="step-body">
+              <p class="step-question">Show that the prohibited transition is blocked and legitimate restoration still succeeds.</p>
+              <div class="captured-runs" id="captured-runs">No completed regression runs captured yet.</div>
+              <div class="test-entry">
+                <h3>Prohibited transition</h3>
+                <div class="form-grid">
+                  <div><label for="test-prohibited-expected">Expected result</label><textarea id="test-prohibited-expected" rows="2" required></textarea></div>
+                  <div><label for="test-prohibited-status">Evidence status</label><select id="test-prohibited-status"><option value="PROPOSED">PROPOSED</option><option value="REPLAYED">REPLAYED</option><option value="TESTED">TESTED</option></select></div>
+                </div>
+                <label for="test-prohibited-observed">Observed or proposed result</label>
+                <textarea id="test-prohibited-observed" rows="2" required></textarea>
+                <label for="test-prohibited-reference">Evidence reference</label>
+                <input id="test-prohibited-reference" placeholder="Run, build, event, or supplied artifact" required>
+              </div>
+              <div class="test-entry">
+                <h3>Legitimate restoration</h3>
+                <div class="form-grid">
+                  <div><label for="test-legitimate-expected">Expected result</label><textarea id="test-legitimate-expected" rows="2" required></textarea></div>
+                  <div><label for="test-legitimate-status">Evidence status</label><select id="test-legitimate-status"><option value="PROPOSED">PROPOSED</option><option value="REPLAYED">REPLAYED</option><option value="TESTED">TESTED</option></select></div>
+                </div>
+                <label for="test-legitimate-observed">Observed or proposed result</label>
+                <textarea id="test-legitimate-observed" rows="2" required></textarea>
+                <label for="test-legitimate-reference">Evidence reference</label>
+                <input id="test-legitimate-reference" placeholder="Run, build, event, or supplied artifact" required>
+              </div>
+            </div>
+          </details>
+
+          <details class="builder-step" data-step="stress">
+            <summary><span class="step-number">5</span><span>Assumption stress test</span><span class="step-state">Incomplete</span></summary>
+            <div class="step-body">
+              <p class="step-question">The last safe position report is stale and physical state changes before the controller acts. What breaks?</p>
+              <label for="stress-assumption">Expired assumption</label>
+              <textarea id="stress-assumption" rows="2" required></textarea>
+              <label for="stress-evidence">Evidence that can no longer support the earlier conclusion</label>
+              <textarea id="stress-evidence" rows="2" required></textarea>
+              <label for="stress-recheck">Where freshness, versioning, or rechecking belongs</label>
+              <textarea id="stress-recheck" rows="2" required></textarea>
+              <label for="stress-positive">Positive-service test that must still pass</label>
+              <textarea id="stress-positive" rows="2" required></textarea>
+            </div>
+          </details>
+
+          <details class="builder-step" data-step="transfer">
+            <summary><span class="step-number">6</span><span>Transfer and bounded claim</span><span class="step-state">Incomplete</span></summary>
+            <div class="step-body">
+              <p class="step-question">Apply the reasoning method to the unfamiliar utility fragment supplied in class, then state only what your evidence establishes.</p>
+              <label for="transfer-context">Utility fragment or context</label>
+              <input id="transfer-context" required>
+              <label for="transfer-property">Safety or service property</label>
+              <textarea id="transfer-property" rows="2" required></textarea>
+              <label for="transfer-missing">Missing evidence</label>
+              <textarea id="transfer-missing" rows="2" required></textarea>
+              <label for="transfer-enforcement">Likely enforcement point</label>
+              <textarea id="transfer-enforcement" rows="2" required></textarea>
+              <label for="transfer-assumption">First assumption you would test</label>
+              <textarea id="transfer-assumption" rows="2" required></textarea>
+              <h3 class="section-title section-spaced">Revised bounded claim</h3>
+              <div class="claim-grid">
+                <label for="claim-assumptions">Under assumptions</label><textarea id="claim-assumptions" rows="2" required></textarea>
+                <label for="claim-evidence">Evidence</label><textarea id="claim-evidence" rows="2" required></textarea>
+                <label for="claim-supports">Supports the claim that</label><textarea id="claim-supports" rows="2" required></textarea>
+                <label for="claim-limits">It does not establish</label><textarea id="claim-limits" rows="2" required></textarea>
+              </div>
+            </div>
+          </details>
+
+          <div class="builder-actions">
+            <div>
+              <strong id="autosave-status">Draft not yet saved</strong>
+              <span>Saved only in this browser. Canvas is the submission record.</span>
+            </div>
+            <button class="button" id="review-submission" type="button">Review submission</button>
+            <button class="button primary" id="print-submission" type="button">Create submission PDF</button>
+          </div>
+          <div class="feedback" id="submission-feedback" role="status">Complete the six checkpoints, review the report, then choose Create submission PDF.</div>
+        </form>
+      </div>
+    </details>
   </main>
   </div>
+
+  <article class="submission-report" id="submission-report" aria-hidden="true"></article>
 
   <script src="app.js"></script>
 </body>

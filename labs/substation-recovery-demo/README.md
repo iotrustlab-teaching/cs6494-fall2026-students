@@ -7,9 +7,12 @@ and correlated event timeline come from a live backend simulation.
 
 The activity is the coached technical core of **HW3: From Requirement to
 Defensible Guardrail**. The individual submission is a compact evidence
-portfolio, not a separate programming project. Use
-[HW3_WORKING_SHEET.md](HW3_WORKING_SHEET.md) to accumulate the property,
-counterexample, repair, tests, assumption stress test, and bounded claim.
+portfolio, not a separate programming project. Use **Finish HW3 submission**
+at the bottom of the browser activity to accumulate the property,
+counterexample, repair, tests, assumption stress test, and bounded claim. The
+builder saves locally, captures completed regression metadata, checks evidence
+labels against the captured runs, and produces one print-ready PDF for Canvas.
+[HW3_WORKING_SHEET.md](HW3_WORKING_SHEET.md) is the non-browser fallback.
 
 ```text
 browser request
@@ -44,6 +47,12 @@ a secrecy boundary.
 
 Do not share access codes or use the exercise interface against any system other
 than the assigned course environment.
+
+The submission builder stores its draft in the current browser under the
+authenticated student identity. It does not upload the report. Before leaving
+the lab computer, choose **Create submission PDF**, use the browser's **Save as
+PDF** destination, and submit `HW3_<uNID>.pdf` to Canvas. Canvas remains the
+submission record.
 
 ## Local instructor fallback
 

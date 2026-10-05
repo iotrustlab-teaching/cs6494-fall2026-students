@@ -60,17 +60,20 @@ out-of-service mask rather than a hardcoded branch name.
 **Closing question:** What assumptions are encoded in the repair, and which are
 provided by trusted runtime state?
 
-## Optional evidence handoff
+## Submission handoff
 
-Open **Evidence**, select the decisive event, and export the run. A defensible
-claim should bind the request, controller build and source hash, decision,
-reported position, electrical measurement, protection state, and mission result.
+Open **Finish HW3 submission** after the regression work. Capture the active
+compiled repair and complete the six guided checkpoints. Completed regressions
+are attached to the draft automatically; a `TESTED` label is rejected if its
+run used a different build from the captured repair. Choose **Create submission
+PDF** and save `HW3_<uNID>.pdf` for Canvas. The raw JSON export remains optional.
 
 ## HW3 checkpoints
 
 - **Repair:** Complete steps 1-4 and record the property, counterexample,
-  control, negative test, positive-service test, and bounded claim in
-  [HW3_WORKING_SHEET.md](HW3_WORKING_SHEET.md).
+  control, negative test, positive-service test, and bounded claim in the
+  browser submission builder. Use
+  [HW3_WORKING_SHEET.md](HW3_WORKING_SHEET.md) only as a fallback.
 - **Assumption stress test:** Revisit the claim when the position report may be
   stale. Identify the failed inference and where rechecking belongs.
 - **Transfer:** Apply the same argument structure to an unfamiliar,

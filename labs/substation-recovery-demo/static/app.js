@@ -29,6 +29,24 @@ const PRESET_LABELS = {
 
 const REFERENCE_PRESET = 'repaired';
 
+const SUBMISSION_VERSION = 1;
+const SUBMISSION_STEPS = {
+  property: ['property-prohibited', 'property-service', 'property-source', 'property-boundary'],
+  counterexample: ['counter-initial', 'counter-request', 'counter-decision', 'counter-effect', 'counter-omission'],
+  repair: ['repair-explanation'],
+  tests: [
+    'test-prohibited-expected', 'test-prohibited-status', 'test-prohibited-observed', 'test-prohibited-reference',
+    'test-legitimate-expected', 'test-legitimate-status', 'test-legitimate-observed', 'test-legitimate-reference'
+  ],
+  stress: ['stress-assumption', 'stress-evidence', 'stress-recheck', 'stress-positive'],
+  transfer: [
+    'transfer-context', 'transfer-property', 'transfer-missing', 'transfer-enforcement', 'transfer-assumption',
+    'claim-assumptions', 'claim-evidence', 'claim-supports', 'claim-limits'
+  ]
+};
+const SUBMISSION_IDENTITY_FIELDS = ['student-name', 'student-unid'];
+const SUBMISSION_FIELD_IDS = SUBMISSION_IDENTITY_FIELDS.concat(...Object.values(SUBMISSION_STEPS));
+
 const app = {
   snapshot: null,
   events: [],
@@ -44,6 +62,7 @@ const app = {
   activePreset: 'vulnerable',
   referenceRevealed: false,
   session: null,
+  submission: { version: SUBMISSION_VERSION, fields: {}, capturedTests: {}, repair: null, updatedAt: null },
   booted: false,
   polling: false
 };
@@ -77,6 +96,7 @@ function setConnection(connected, detail) {
 
 function mergeSnapshot(snapshot, initial = false) {
   app.snapshot = snapshot;
+  captureCompletedTest(snapshot.lastTest);
   const existing = new Set(app.events.map(event => event.seq));
   for (const event of snapshot.events || []) {
     if (!existing.has(event.seq)) app.events.push(event);
@@ -340,6 +360,7 @@ function render() {
   renderTimeline();
   renderTestSteps();
   renderSourceMeta();
+  renderSubmission();
   updateDraftPreview();
 }
 
@@ -519,6 +540,360 @@ function exportEvidence() {
   URL.revokeObjectURL(url);
 }
 
+function submissionStorageKey() {
+  const studentId = app.session && app.session.student ? app.session.student.studentId : 'preview';
+  return `cs6494-hw3-submission:${studentId}`;
+}
+
+function fieldLabel(id) {
+  const label = document.querySelector(`label[for="${id}"]`);
+  return label ? label.textContent.trim() : id;
+}
+
+function collectSubmissionFields() {
+  for (const id of SUBMISSION_FIELD_IDS) {
+    const field = $(id);
+    if (field) app.submission.fields[id] = field.value.trim();
+  }
+}
+
+function populateSubmissionFields() {
+  for (const id of SUBMISSION_FIELD_IDS) {
+    const field = $(id);
+    const value = app.submission.fields[id];
+    if (field && typeof value === 'string') field.value = value;
+  }
+}
+
+function loadSubmissionDraft() {
+  const empty = { version: SUBMISSION_VERSION, fields: {}, capturedTests: {}, repair: null, updatedAt: null };
+  try {
+    const saved = JSON.parse(localStorage.getItem(submissionStorageKey()) || 'null');
+    app.submission = saved && saved.version === SUBMISSION_VERSION ? { ...empty, ...saved } : empty;
+  } catch (_error) {
+    app.submission = empty;
+  }
+  if (!app.submission.fields || typeof app.submission.fields !== 'object') app.submission.fields = {};
+  if (!app.submission.capturedTests || typeof app.submission.capturedTests !== 'object') app.submission.capturedTests = {};
+  if (!app.submission.fields['student-name'] && app.session && app.session.student) {
+    app.submission.fields['student-name'] = app.session.student.label;
+  }
+  if (!app.submission.fields['test-prohibited-status']) app.submission.fields['test-prohibited-status'] = 'PROPOSED';
+  if (!app.submission.fields['test-legitimate-status']) app.submission.fields['test-legitimate-status'] = 'PROPOSED';
+  populateSubmissionFields();
+}
+
+function saveSubmissionDraft() {
+  collectSubmissionFields();
+  app.submission.updatedAt = new Date().toISOString();
+  try {
+    localStorage.setItem(submissionStorageKey(), JSON.stringify(app.submission));
+    $('autosave-status').textContent = `Draft saved ${new Date(app.submission.updatedAt).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}`;
+  } catch (_error) {
+    $('autosave-status').textContent = 'Local save unavailable';
+  }
+  renderSubmission();
+}
+
+function captureCompletedTest(result) {
+  if (!result || !result.testRunId || !app.session) return;
+  const existing = app.submission.capturedTests[result.testId];
+  if (existing && existing.testRunId === result.testRunId) return;
+  const record = {
+    testRunId: result.testRunId,
+    testId: result.testId,
+    status: result.status,
+    passed: Boolean(result.passed),
+    detail: result.detail,
+    buildId: result.buildId,
+    runId: result.runId,
+    durationMs: result.durationMs,
+    completedUnixMs: result.completedUnixMs || Date.now(),
+    sourceSha256: app.snapshot && app.snapshot.build && app.snapshot.build.buildId === result.buildId
+      ? app.snapshot.build.sourceSha256
+      : null
+  };
+  app.submission.capturedTests[result.testId] = record;
+  const prefix = result.testId === 'upstream_counterexample'
+    ? 'test-prohibited'
+    : result.testId === 'legitimate_restore'
+      ? 'test-legitimate'
+      : null;
+  if (prefix) {
+    app.submission.fields[`${prefix}-status`] = 'TESTED';
+    app.submission.fields[`${prefix}-observed`] = `${result.status.toUpperCase()}: ${result.detail}`;
+    app.submission.fields[`${prefix}-reference`] = `${result.testRunId}; run ${result.runId}; build ${result.buildId}`;
+    populateSubmissionFields();
+  }
+  saveSubmissionDraft();
+}
+
+function captureActiveRepair() {
+  const feedback = $('submission-feedback');
+  if (!app.snapshot || app.dirtySource) {
+    feedback.className = 'feedback error';
+    feedback.textContent = 'Compile the current Structured Text successfully before capturing it as your repair.';
+    setTab('controller');
+    return;
+  }
+  app.submission.repair = {
+    buildId: app.snapshot.build.buildId,
+    sourceSha256: app.snapshot.build.sourceSha256,
+    source: $('st-source').value,
+    capturedAt: new Date().toISOString()
+  };
+  saveSubmissionDraft();
+  feedback.className = 'feedback good';
+  feedback.textContent = `Captured ${app.submission.repair.buildId}. Run both required regressions against this build.`;
+}
+
+function renderCapturedRuns() {
+  const holder = $('captured-runs');
+  holder.replaceChildren();
+  const records = Object.values(app.submission.capturedTests).sort((a, b) => a.completedUnixMs - b.completedUnixMs);
+  if (!records.length) {
+    holder.textContent = 'No completed regression runs captured yet.';
+    return;
+  }
+  for (const record of records) {
+    const row = document.createElement('div');
+    row.className = 'captured-run';
+    const text = document.createElement('span');
+    const label = TESTS[record.testId] ? TESTS[record.testId].label : record.testId;
+    text.textContent = `${label} | ${record.testRunId} | ${record.buildId}`;
+    const status = document.createElement('span');
+    status.className = `tag ${record.passed ? 'allow' : 'deny'}`;
+    status.textContent = record.status;
+    row.append(text, status);
+    holder.append(row);
+  }
+}
+
+function stepIsComplete(step) {
+  const fieldsComplete = SUBMISSION_STEPS[step].every(id => String(app.submission.fields[id] || '').trim());
+  if (step === 'repair') return fieldsComplete && Boolean(app.submission.repair);
+  if (step === 'tests' && fieldsComplete) {
+    const bindings = [
+      ['test-prohibited-status', 'upstream_counterexample'],
+      ['test-legitimate-status', 'legitimate_restore']
+    ];
+    return bindings.every(([statusField, testId]) => {
+      if (app.submission.fields[statusField] !== 'TESTED') return true;
+      const record = app.submission.capturedTests[testId];
+      return Boolean(record && app.submission.repair && record.buildId === app.submission.repair.buildId);
+    });
+  }
+  return fieldsComplete;
+}
+
+function renderSubmission() {
+  if (!$('submission-form')) return;
+  collectSubmissionFields();
+  let complete = 0;
+  document.querySelectorAll('.builder-step').forEach(step => {
+    const done = stepIsComplete(step.dataset.step);
+    if (done) complete += 1;
+    step.classList.toggle('complete', done);
+    step.querySelector('.step-state').textContent = done ? 'Complete' : 'Incomplete';
+  });
+  $('builder-progress').value = complete;
+  $('builder-progress-label').textContent = `${complete} of 6 checkpoints complete`;
+  if (app.submission.updatedAt) {
+    $('autosave-status').textContent = `Draft saved ${new Date(app.submission.updatedAt).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}`;
+  }
+  if (app.submission.repair) {
+    $('repair-capture-title').textContent = `Captured ${app.submission.repair.buildId}`;
+    $('repair-capture-detail').textContent = `Source SHA-256 ${app.submission.repair.sourceSha256}`;
+  } else {
+    $('repair-capture-title').textContent = 'No controller build captured';
+    $('repair-capture-detail').textContent = 'Compile your repair, then capture the active build.';
+  }
+  renderCapturedRuns();
+}
+
+function validateSubmission() {
+  collectSubmissionFields();
+  const issues = [];
+  for (const id of SUBMISSION_FIELD_IDS) {
+    if (!String(app.submission.fields[id] || '').trim()) issues.push({ field: id, message: `${fieldLabel(id)} is blank` });
+  }
+  if (!app.submission.repair) issues.push({ field: 'capture-repair', message: 'No compiled repair build is captured' });
+
+  const requiredTests = [
+    ['test-prohibited-status', 'upstream_counterexample', 'prohibited-transition'],
+    ['test-legitimate-status', 'legitimate_restore', 'legitimate-service']
+  ];
+  for (const [statusField, testId, label] of requiredTests) {
+    if (app.submission.fields[statusField] !== 'TESTED') continue;
+    const record = app.submission.capturedTests[testId];
+    if (!record) {
+      issues.push({ field: statusField, message: `${label} evidence is labeled TESTED without a captured run` });
+    } else if (app.submission.repair && record.buildId !== app.submission.repair.buildId) {
+      issues.push({ field: statusField, message: `${label} ran against ${record.buildId}, not the captured repair ${app.submission.repair.buildId}` });
+    }
+  }
+  return issues;
+}
+
+function appendReportSection(report, title, rows) {
+  const section = document.createElement('section');
+  const heading = document.createElement('h2');
+  heading.textContent = title;
+  const list = document.createElement('dl');
+  for (const [label, value] of rows) {
+    const dt = document.createElement('dt');
+    dt.textContent = label;
+    const dd = document.createElement('dd');
+    dd.textContent = value || 'Not provided';
+    list.append(dt, dd);
+  }
+  section.append(heading, list);
+  report.append(section);
+}
+
+function appendReportTests(report) {
+  const section = document.createElement('section');
+  const heading = document.createElement('h2');
+  heading.textContent = '4. Regression evidence';
+  const table = document.createElement('table');
+  const head = document.createElement('thead');
+  const headerRow = document.createElement('tr');
+  ['Test', 'Expected', 'Status', 'Observed or proposed', 'Evidence reference'].forEach(label => {
+    const cell = document.createElement('th');
+    cell.textContent = label;
+    headerRow.append(cell);
+  });
+  head.append(headerRow);
+  const body = document.createElement('tbody');
+  const rows = [
+    ['Prohibited transition', 'test-prohibited-expected', 'test-prohibited-status', 'test-prohibited-observed', 'test-prohibited-reference'],
+    ['Legitimate restoration', 'test-legitimate-expected', 'test-legitimate-status', 'test-legitimate-observed', 'test-legitimate-reference']
+  ];
+  for (const [label, expected, status, observed, reference] of rows) {
+    const row = document.createElement('tr');
+    [label, app.submission.fields[expected], app.submission.fields[status], app.submission.fields[observed], app.submission.fields[reference]].forEach(value => {
+      const cell = document.createElement('td');
+      cell.textContent = value || 'Not provided';
+      row.append(cell);
+    });
+    body.append(row);
+  }
+  table.append(head, body);
+  section.append(heading, table);
+  report.append(section);
+}
+
+function buildSubmissionReport() {
+  collectSubmissionFields();
+  const fields = app.submission.fields;
+  const report = $('submission-report');
+  report.replaceChildren();
+  report.setAttribute('aria-hidden', 'false');
+
+  const heading = document.createElement('header');
+  const title = document.createElement('h1');
+  title.textContent = 'HW3: From Requirement to Defensible Guardrail';
+  const meta = document.createElement('p');
+  meta.textContent = `${fields['student-name']} | ${fields['student-unid']} | Generated ${new Date().toLocaleString()}`;
+  heading.append(title, meta);
+  report.append(heading);
+
+  appendReportSection(report, '1. Property and boundary', [
+    ['Prohibited outcome', fields['property-prohibited']],
+    ['Useful operation', fields['property-service']],
+    ['Requirement source', fields['property-source']],
+    ['Enforcement boundary', fields['property-boundary']]
+  ]);
+  appendReportSection(report, '2. Counterexample', [
+    ['Initial state', fields['counter-initial']],
+    ['Request', fields['counter-request']],
+    ['Controller decision', fields['counter-decision']],
+    ['First prohibited effect', fields['counter-effect']],
+    ['Omitted dependency', fields['counter-omission']]
+  ]);
+  appendReportSection(report, '3. Repair', [
+    ['Rationale', fields['repair-explanation']],
+    ['Captured build', app.submission.repair ? app.submission.repair.buildId : 'Not captured'],
+    ['Source SHA-256', app.submission.repair ? app.submission.repair.sourceSha256 : 'Not captured']
+  ]);
+  appendReportTests(report);
+  appendReportSection(report, '5. Assumption stress test', [
+    ['Expired assumption', fields['stress-assumption']],
+    ['Evidence no longer sufficient', fields['stress-evidence']],
+    ['Recheck location', fields['stress-recheck']],
+    ['Positive-service regression', fields['stress-positive']]
+  ]);
+  appendReportSection(report, '6. Transfer and bounded claim', [
+    ['Utility fragment', fields['transfer-context']],
+    ['Property', fields['transfer-property']],
+    ['Missing evidence', fields['transfer-missing']],
+    ['Likely enforcement point', fields['transfer-enforcement']],
+    ['First assumption to test', fields['transfer-assumption']],
+    ['Under assumptions', fields['claim-assumptions']],
+    ['Evidence', fields['claim-evidence']],
+    ['Supports the claim that', fields['claim-supports']],
+    ['Does not establish', fields['claim-limits']]
+  ]);
+
+  const appendix = document.createElement('section');
+  appendix.className = 'report-appendix';
+  const appendixHeading = document.createElement('h2');
+  appendixHeading.textContent = 'Evidence appendix';
+  const buildMeta = document.createElement('p');
+  buildMeta.textContent = app.submission.repair
+    ? `Captured build ${app.submission.repair.buildId}; source SHA-256 ${app.submission.repair.sourceSha256}.`
+    : 'No compiled build captured.';
+  const code = document.createElement('pre');
+  code.textContent = app.submission.repair ? app.submission.repair.source : 'No Structured Text captured.';
+  appendix.append(appendixHeading, buildMeta, code);
+  const records = Object.values(app.submission.capturedTests);
+  if (records.length) {
+    const runHeading = document.createElement('h3');
+    runHeading.textContent = 'Captured run manifest';
+    const runList = document.createElement('ul');
+    for (const record of records) {
+      const item = document.createElement('li');
+      item.textContent = `${record.testId}: ${record.status}; ${record.testRunId}; run ${record.runId}; build ${record.buildId}`;
+      runList.append(item);
+    }
+    appendix.append(runHeading, runList);
+  }
+  report.append(appendix);
+}
+
+function reviewSubmission(printAfterReview = false) {
+  saveSubmissionDraft();
+  const issues = validateSubmission();
+  const feedback = $('submission-feedback');
+  if (issues.length) {
+    feedback.className = 'feedback error';
+    feedback.textContent = `${issues.length} item${issues.length === 1 ? '' : 's'} need attention: ${issues.slice(0, 3).map(issue => issue.message).join('; ')}${issues.length > 3 ? '; ...' : ''}`;
+    $('hw3-builder').open = true;
+    const target = $(issues[0].field);
+    if (target) {
+      const step = target.closest('.builder-step');
+      if (step) step.open = true;
+      target.focus();
+    }
+    return;
+  }
+  buildSubmissionReport();
+  const failedTests = Object.values(app.submission.capturedTests).filter(record => record.status === 'failed');
+  feedback.className = failedTests.length ? 'feedback' : 'feedback good';
+  feedback.textContent = failedTests.length
+    ? `Submission is structurally complete, but ${failedTests.length} captured regression${failedTests.length === 1 ? '' : 's'} failed. The PDF will preserve that result for grading.`
+    : 'Submission is complete and internally consistent. Use the browser dialog to save one PDF for Canvas.';
+  if (!printAfterReview) return;
+  const originalTitle = document.title;
+  const safeUnid = app.submission.fields['student-unid'].replace(/[^A-Za-z0-9_-]/g, '');
+  document.title = `HW3_${safeUnid}`;
+  window.addEventListener('afterprint', () => {
+    document.title = originalTitle;
+    $('submission-report').setAttribute('aria-hidden', 'true');
+  }, { once: true });
+  window.print();
+}
+
 function togglePlayback() {
   if (app.playing) {
     app.playing = false;
@@ -563,6 +938,7 @@ async function poll() {
 async function initializeLab() {
   if (app.booted) return;
   app.booted = true;
+  loadSubmissionDraft();
   Object.entries(TESTS).forEach(([id, test]) => {
     const option = document.createElement('option');
     option.value = id;
@@ -635,7 +1011,15 @@ async function initializeLab() {
   $('reset-events').addEventListener('click', resetRun);
   $('scrubber').addEventListener('input', event => selectEvent(Number(event.target.value)));
   $('export-evidence').addEventListener('click', exportEvidence);
+  $('capture-repair').addEventListener('click', captureActiveRepair);
+  $('review-submission').addEventListener('click', () => reviewSubmission(false));
+  $('print-submission').addEventListener('click', () => reviewSubmission(true));
+  $('submission-form').querySelectorAll('input, textarea, select').forEach(field => {
+    field.addEventListener('input', saveSubmissionDraft);
+    field.addEventListener('change', saveSubmissionDraft);
+  });
   $('sign-out').addEventListener('click', logout);
+  renderSubmission();
   poll();
 }
 

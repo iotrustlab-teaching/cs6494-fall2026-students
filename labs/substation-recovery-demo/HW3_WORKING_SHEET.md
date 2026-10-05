@@ -1,8 +1,13 @@
 # HW3 working sheet: From requirement to defensible guardrail
 
-This sheet accumulates the short individual HW3 argument during the coached
-class activities. Work with a partner or trio during class, but write your own
+The in-browser **Finish HW3 submission** builder is the primary workflow. This
+sheet is the printable/offline fallback when the hosted lab or browser storage
+is unavailable. Work with a partner or trio during class, but write your own
 answers. Canvas remains authoritative for the deadline and submission settings.
+
+Submit one file named `HW3_<uNID>.pdf`. The narrative should remain compact;
+controller source and captured-run identifiers may appear in an evidence
+appendix. Label each result `TESTED`, `REPLAYED`, or `PROPOSED` accurately.
 
 ## Checkpoint A: Repair
 
