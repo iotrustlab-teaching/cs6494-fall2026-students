@@ -872,6 +872,21 @@ body.submission-mode .submission-builder > summary { display: none; }
 
 .submission-builder textarea { resize: vertical; }
 
+.source-document {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin: 14px 0;
+  padding: 12px;
+  background: #eef6f9;
+  border-left: 3px solid var(--blue);
+}
+.source-document div { display: grid; gap: 3px; }
+.source-document strong { font-size: 13px; }
+.source-document span { color: var(--muted); font-size: 12px; line-height: 1.4; }
+.source-document .button { flex: 0 0 auto; text-decoration: none; }
+
 .builder-step { display: none; border: 1px solid var(--line); border-radius: 5px; }
 .builder-step.active { display: block; }
 .builder-step:last-of-type { border-bottom: 1px solid var(--line); }
@@ -1056,6 +1071,8 @@ body.submission-mode .submission-builder > summary { display: none; }
   .builder-stepper button { min-height: 58px; }
   .builder-stepper button strong { font-size: 10px; }
   .lab-return-row { align-items: flex-start; flex-direction: column; }
+  .source-document { align-items: stretch; flex-direction: column; }
+  .source-document .button { text-align: center; }
   .builder-navigation { grid-template-columns: 1fr 1fr; }
   .builder-navigation span { grid-column: 1 / -1; grid-row: 1; }
   .builder-navigation #builder-back { grid-column: 1; }

@@ -9,11 +9,16 @@ permission from actual breaker position and electrical consequence.
 **Question:** Are two disconnected configurations equivalent because both report
 zero volts and zero current?
 
-1. Open **Controller ST** and load **Vulnerable: present current only**.
-2. Compile and activate it.
-3. In **Requests**, select **Upstream-close counterexample**.
-4. Before running, note that B0 is open, S3 is positioned closed, and current is zero.
-5. Predict whether `CLOSE B0` will be permitted.
+1. Open **HW3 submission**, stay on **Property**, and open the supplied
+   functional-specification excerpt.
+2. Locate FDS-DA-401, FDS-DA-402, and FDS-DA-410; distinguish the safety
+   property from the service requirement.
+3. Return to the lab. Open **Controller ST** and load **Vulnerable: present
+   current only**.
+4. Compile and activate it.
+5. In **Requests**, select **Upstream-close counterexample**.
+6. Before running, note that B0 is open, S3 is positioned closed, and current is zero.
+7. Predict whether `CLOSE B0` will be permitted.
 
 The key distinction is topology. Present current describes the disconnected
 state, not what the requested transition will energize.

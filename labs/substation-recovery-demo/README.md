@@ -15,6 +15,13 @@ metadata, checks evidence labels against the captured runs, and produces one
 print-ready PDF for Canvas.
 [HW3_WORKING_SHEET.md](HW3_WORKING_SHEET.md) is the non-browser fallback.
 
+Checkpoint 1 supplies a four-page fictional functional-design-specification
+excerpt, numbered as pages 173-176 of a 412-page internal manual. Students cite
+its requirement IDs rather than treating the interface text as the operating
+authority. The document is visibly marked as an authored course artifact and
+does not reproduce a real utility's internal material. Rebuild it with
+`python3 docs/build_functional_spec.py`.
+
 ```text
 browser request
   -> authenticated student workspace
@@ -115,6 +122,8 @@ error handling. It writes generated evidence under ignored `runtime/evidence/`.
 
 ```text
 static/               browser workspace
+static/docs/          supplied student-facing source documents
+docs/                 reproducible artifact builders
 st/                   vulnerable, faulty, deny-all, and repaired ST variants
 simulator.py          breaker, circuit, protection, tests, and event evidence
 compiler.py           bounded local MatIEC compilation

@@ -38,6 +38,15 @@ class UIContractTests(unittest.TestCase):
         self.assertIn("#submission-report .report-appendix", stylesheet)
         self.assertIn("body.submission-mode .workspace > :not(#hw3-builder)", stylesheet)
 
+    def test_supplied_functional_spec_is_packaged_and_linked(self) -> None:
+        html = (ROOT / "static" / "index.html").read_text(encoding="utf-8")
+        pdf = ROOT / "static" / "docs" / "riverbend_substation_fds_excerpt.pdf"
+
+        self.assertIn('href="docs/riverbend_substation_fds_excerpt.pdf"', html)
+        self.assertTrue(pdf.is_file())
+        self.assertGreater(pdf.stat().st_size, 10_000)
+        self.assertTrue(pdf.read_bytes().startswith(b"%PDF-"))
+
 
 if __name__ == "__main__":
     unittest.main()

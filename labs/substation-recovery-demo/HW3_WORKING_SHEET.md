@@ -11,6 +11,11 @@ appendix. Label each result `TESTED`, `REPLAYED`, or `PROPOSED` accurately.
 
 ## Checkpoint A: Repair
 
+Use the supplied `riverbend_substation_fds_excerpt.pdf` as the operating-source
+artifact. Cite the applicable requirement ID and page. Treat its fictional
+document metadata as provenance for this exercise, not as evidence about a real
+utility.
+
 ### 1. Property and boundary
 
 - Prohibited outcome:
