@@ -44,6 +44,16 @@ const SUBMISSION_STEPS = {
     'claim-assumptions', 'claim-evidence', 'claim-supports', 'claim-limits'
   ]
 };
+const SUBMISSION_PAGE_ORDER = [...Object.keys(SUBMISSION_STEPS), 'review'];
+const SUBMISSION_PAGE_TITLES = {
+  property: 'Property and boundary',
+  counterexample: 'Counterexample',
+  repair: 'Repair',
+  tests: 'Two tests',
+  stress: 'Assumption stress test',
+  transfer: 'Transfer and bounded claim',
+  review: 'Review and submit'
+};
 const SUBMISSION_IDENTITY_FIELDS = ['student-name', 'student-unid'];
 const SUBMISSION_FIELD_IDS = SUBMISSION_IDENTITY_FIELDS.concat(...Object.values(SUBMISSION_STEPS));
 
@@ -63,6 +73,7 @@ const app = {
   referenceRevealed: false,
   session: null,
   submission: { version: SUBMISSION_VERSION, fields: {}, capturedTests: {}, repair: null, updatedAt: null },
+  submissionPage: 'property',
   booted: false,
   polling: false
 };
@@ -319,6 +330,7 @@ function renderTimeline() {
 
 function renderTestSteps() {
   const test = TESTS[$('trace-select').value] || TESTS.upstream_counterexample;
+  $('jump-request-event').disabled = Boolean(app.snapshot && app.snapshot.activeTest);
   $('trace-purpose').textContent = test.purpose;
   const list = $('sequence-list');
   list.replaceChildren();
@@ -478,6 +490,7 @@ async function sendCommand() {
 
 async function runRegression() {
   const testId = $('trace-select').value;
+  $('jump-request-event').disabled = true;
   $('request-feedback').className = 'feedback';
   $('request-feedback').textContent = `Starting ${TESTS[testId].label}...`;
   try {
@@ -487,6 +500,7 @@ async function runRegression() {
     app.followLive = true;
     $('request-feedback').textContent = `${result.testRunId} started against ${result.buildId}.`;
   } catch (error) {
+    $('jump-request-event').disabled = false;
     $('request-feedback').className = 'feedback error';
     $('request-feedback').textContent = error.message;
   }
@@ -686,6 +700,98 @@ function stepIsComplete(step) {
   return fieldsComplete;
 }
 
+function renderBuilderReview() {
+  const list = $('builder-review-list');
+  if (!list) return;
+  list.replaceChildren();
+  Object.keys(SUBMISSION_STEPS).forEach((step, index) => {
+    const done = stepIsComplete(step);
+    const item = document.createElement('li');
+    item.className = done ? 'complete' : '';
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.className = 'review-link';
+    const number = document.createElement('span');
+    number.className = 'review-number';
+    number.textContent = String(index + 1);
+    const title = document.createElement('strong');
+    title.textContent = SUBMISSION_PAGE_TITLES[step];
+    const state = document.createElement('span');
+    state.className = 'review-state';
+    state.textContent = done ? 'Complete' : 'Needs attention';
+    button.append(number, title, state);
+    button.addEventListener('click', () => setSubmissionPage(step));
+    item.append(button);
+    list.append(item);
+  });
+}
+
+function renderSubmissionPage() {
+  if (!$('submission-form')) return;
+  const page = SUBMISSION_PAGE_ORDER.includes(app.submissionPage) ? app.submissionPage : 'property';
+  const pageIndex = SUBMISSION_PAGE_ORDER.indexOf(page);
+  const review = page === 'review';
+
+  document.querySelectorAll('.builder-step').forEach(step => {
+    const active = step.dataset.step === page;
+    step.classList.toggle('active', active);
+    step.open = active;
+  });
+  $('builder-identity').hidden = page !== 'property';
+  $('builder-review-page').hidden = !review;
+  document.querySelectorAll('[data-builder-page]').forEach(button => {
+    const target = button.dataset.builderPage;
+    const complete = target === 'review'
+      ? Object.keys(SUBMISSION_STEPS).every(stepIsComplete)
+      : stepIsComplete(target);
+    button.classList.toggle('active', target === page);
+    button.classList.toggle('complete', complete);
+    if (target === page) button.setAttribute('aria-current', 'step');
+    else button.removeAttribute('aria-current');
+  });
+
+  $('builder-back').disabled = pageIndex === 0;
+  $('builder-next').hidden = review;
+  $('builder-next').textContent = page === 'transfer' ? 'Review submission' : 'Continue';
+  $('builder-page-title').textContent = SUBMISSION_PAGE_TITLES[page];
+  $('builder-page-count').textContent = review ? 'Final review' : `Checkpoint ${pageIndex + 1} of 6`;
+  $('builder-navigation-label').textContent = review ? 'Review and submit' : `Checkpoint ${pageIndex + 1} of 6`;
+  renderBuilderReview();
+}
+
+function setSubmissionPage(page, { scroll = true } = {}) {
+  if (!SUBMISSION_PAGE_ORDER.includes(page)) return;
+  collectSubmissionFields();
+  app.submissionPage = page;
+  renderSubmissionPage();
+  if (scroll) $('hw3-builder').scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+function openSubmissionBuilder(page = app.submissionPage) {
+  $('hw3-builder').open = true;
+  document.body.classList.add('submission-mode');
+  setSubmissionPage(page, { scroll: false });
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function closeSubmissionBuilder(tab = null) {
+  collectSubmissionFields();
+  saveSubmissionDraft();
+  document.body.classList.remove('submission-mode');
+  $('hw3-builder').open = false;
+  if (tab) {
+    setTab(tab);
+    const target = tab === 'controller' ? $('panel-controller') : document.querySelector('.scenario-toolbar');
+    target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+}
+
+function moveSubmissionPage(delta) {
+  const current = SUBMISSION_PAGE_ORDER.indexOf(app.submissionPage);
+  const next = Math.max(0, Math.min(SUBMISSION_PAGE_ORDER.length - 1, current + delta));
+  setSubmissionPage(SUBMISSION_PAGE_ORDER[next]);
+}
+
 function renderSubmission() {
   if (!$('submission-form')) return;
   collectSubmissionFields();
@@ -709,6 +815,7 @@ function renderSubmission() {
     $('repair-capture-detail').textContent = 'Compile your repair, then capture the active build.';
   }
   renderCapturedRuns();
+  renderSubmissionPage();
 }
 
 function validateSubmission() {
@@ -868,12 +975,11 @@ function reviewSubmission(printAfterReview = false) {
   if (issues.length) {
     feedback.className = 'feedback error';
     feedback.textContent = `${issues.length} item${issues.length === 1 ? '' : 's'} need attention: ${issues.slice(0, 3).map(issue => issue.message).join('; ')}${issues.length > 3 ? '; ...' : ''}`;
-    $('hw3-builder').open = true;
     const target = $(issues[0].field);
     if (target) {
       const step = target.closest('.builder-step');
-      if (step) step.open = true;
-      target.focus();
+      openSubmissionBuilder(step ? step.dataset.step : 'property');
+      window.setTimeout(() => target.focus(), 250);
     }
     return;
   }
@@ -1014,6 +1120,22 @@ async function initializeLab() {
   $('capture-repair').addEventListener('click', captureActiveRepair);
   $('review-submission').addEventListener('click', () => reviewSubmission(false));
   $('print-submission').addEventListener('click', () => reviewSubmission(true));
+  $('open-submission').addEventListener('click', () => openSubmissionBuilder());
+  $('close-builder').addEventListener('click', () => closeSubmissionBuilder());
+  $('open-controller-workspace').addEventListener('click', () => closeSubmissionBuilder('controller'));
+  $('open-test-runner').addEventListener('click', () => closeSubmissionBuilder('requests'));
+  $('builder-back').addEventListener('click', () => moveSubmissionPage(-1));
+  $('builder-next').addEventListener('click', () => moveSubmissionPage(1));
+  document.querySelectorAll('[data-builder-page]').forEach(button => {
+    button.addEventListener('click', () => setSubmissionPage(button.dataset.builderPage));
+  });
+  document.querySelectorAll('.builder-step > summary').forEach(summary => {
+    summary.addEventListener('click', event => event.preventDefault());
+  });
+  $('hw3-builder').addEventListener('toggle', () => {
+    document.body.classList.toggle('submission-mode', $('hw3-builder').open);
+    if ($('hw3-builder').open) renderSubmissionPage();
+  });
   $('submission-form').querySelectorAll('input, textarea, select').forEach(field => {
     field.addEventListener('input', saveSubmissionDraft);
     field.addEventListener('change', saveSubmissionDraft);
@@ -1026,6 +1148,7 @@ async function initializeLab() {
 function showLogin(message = '') {
   app.polling = false;
   app.session = null;
+  document.body.classList.remove('submission-mode');
   $('lab-shell').hidden = true;
   $('access-gate').hidden = false;
   $('access-feedback').textContent = message;

@@ -36,6 +36,7 @@
         <span class="mode-badge" id="execution-badge">CONNECTING</span>
         <span class="mode-badge secondary" id="requester-badge">MANUAL</span>
         <span class="mode-badge secondary" id="student-badge">PRIVATE SESSION</span>
+        <button class="sign-out" id="open-submission" type="button">HW3 submission</button>
         <button class="sign-out" id="sign-out" type="button">Sign out</button>
       </div>
     </div>
@@ -300,14 +301,28 @@
       <div class="builder-body">
         <div class="builder-intro">
           <div>
-            <h2>HW3 Submission Builder</h2>
-            <p>Answer each checkpoint in your own words. This browser saves your draft locally and binds captured test runs to the final report.</p>
+            <p class="builder-page-count" id="builder-page-count">Checkpoint 1 of 6</p>
+            <h2 id="builder-page-title">Property and boundary</h2>
+            <p>Complete one focused checkpoint at a time. Your draft is saved in this browser and captured runs stay bound to their compiled build.</p>
           </div>
-          <progress id="builder-progress" max="6" value="0">0 of 6</progress>
+          <div class="builder-intro-actions">
+            <progress id="builder-progress" max="6" value="0">0 of 6</progress>
+            <button class="button" id="close-builder" type="button">Return to lab</button>
+          </div>
         </div>
 
+        <nav class="builder-stepper" id="builder-stepper" aria-label="HW3 checkpoints">
+          <button type="button" data-builder-page="property"><span>1</span><strong>Property</strong></button>
+          <button type="button" data-builder-page="counterexample"><span>2</span><strong>Counterexample</strong></button>
+          <button type="button" data-builder-page="repair"><span>3</span><strong>Repair</strong></button>
+          <button type="button" data-builder-page="tests"><span>4</span><strong>Tests</strong></button>
+          <button type="button" data-builder-page="stress"><span>5</span><strong>Stress</strong></button>
+          <button type="button" data-builder-page="transfer"><span>6</span><strong>Transfer</strong></button>
+          <button type="button" data-builder-page="review"><span>7</span><strong>Review</strong></button>
+        </nav>
+
         <form id="submission-form" novalidate>
-          <div class="identity-grid">
+          <div class="identity-grid" id="builder-identity">
             <div class="field">
               <label class="control-label" for="student-name">Name</label>
               <input id="student-name" name="student-name" autocomplete="name" required>
@@ -354,6 +369,10 @@
               <p class="step-question">Explain why your repair enforces the property instead of blocking only the observed request.</p>
               <label for="repair-explanation">Repair rationale</label>
               <textarea id="repair-explanation" rows="4" required></textarea>
+              <div class="lab-return-row">
+                <button class="button" id="open-controller-workspace" type="button">Open controller workspace</button>
+                <span>Edit and compile the Structured Text in the lab, then return here to capture that active build.</span>
+              </div>
               <div class="capture-row">
                 <div>
                   <strong id="repair-capture-title">No controller build captured</strong>
@@ -368,6 +387,10 @@
             <summary><span class="step-number">4</span><span>Two tests</span><span class="step-state">Incomplete</span></summary>
             <div class="step-body">
               <p class="step-question">Show that the prohibited transition is blocked and legitimate restoration still succeeds.</p>
+              <div class="lab-return-row">
+                <button class="button" id="open-test-runner" type="button">Open regression runner</button>
+                <span>Run both required tests against the captured repair, then return to confirm the evidence bindings.</span>
+              </div>
               <div class="captured-runs" id="captured-runs">No completed regression runs captured yet.</div>
               <div class="test-entry">
                 <h3>Prohibited transition</h3>
@@ -433,15 +456,32 @@
             </div>
           </details>
 
-          <div class="builder-actions">
-            <div>
-              <strong id="autosave-status">Draft not yet saved</strong>
-              <span>Saved only in this browser. Canvas is the submission record.</span>
+          <section class="builder-review-page" id="builder-review-page" hidden>
+            <div class="review-heading">
+              <div>
+                <p class="builder-page-count">Final review</p>
+                <h2>Submission readiness</h2>
+                <p>Resolve any incomplete checkpoint, review the assembled report, then create one PDF for Canvas.</p>
+              </div>
             </div>
-            <button class="button" id="review-submission" type="button">Review submission</button>
-            <button class="button primary" id="print-submission" type="button">Create submission PDF</button>
+            <ol class="review-checklist" id="builder-review-list"></ol>
+            <div class="builder-actions" id="builder-actions">
+              <div>
+                <strong id="autosave-status">Draft not yet saved</strong>
+                <span>Saved only in this browser. Canvas is the submission record.</span>
+              </div>
+              <button class="button" id="review-submission" type="button">Assemble report</button>
+              <button class="button primary" id="print-submission" type="button">Create submission PDF</button>
+            </div>
+          </section>
+
+          <div class="feedback builder-feedback" id="submission-feedback" role="status"></div>
+
+          <div class="builder-navigation" aria-label="Submission checkpoint navigation">
+            <button class="button" id="builder-back" type="button">Back</button>
+            <span id="builder-navigation-label">Checkpoint 1 of 6</span>
+            <button class="button primary" id="builder-next" type="button">Continue</button>
           </div>
-          <div class="feedback" id="submission-feedback" role="status">Complete the six checkpoints, review the report, then choose Create submission PDF.</div>
         </form>
       </div>
     </details>

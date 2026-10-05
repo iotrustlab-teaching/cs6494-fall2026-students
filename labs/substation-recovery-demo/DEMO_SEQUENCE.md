@@ -62,11 +62,13 @@ provided by trusted runtime state?
 
 ## Submission handoff
 
-Open **Finish HW3 submission** after the regression work. Capture the active
-compiled repair and complete the six guided checkpoints. Completed regressions
-are attached to the draft automatically; a `TESTED` label is rejected if its
-run used a different build from the captured repair. Choose **Create submission
-PDF** and save `HW3_<uNID>.pdf` for Canvas. The raw JSON export remains optional.
+Open **HW3 submission** in the top bar after the regression work. The lab moves
+into a full-page workflow that presents one of the six guided checkpoints at a
+time. Capture the active compiled repair and continue through Review. Completed
+regressions are attached to the draft automatically; a `TESTED` label is
+rejected if its run used a different build from the captured repair. Choose
+**Create submission PDF** and save `HW3_<uNID>.pdf` for Canvas. The raw JSON
+export remains optional.
 
 ## HW3 checkpoints
 

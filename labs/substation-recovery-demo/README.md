@@ -7,11 +7,12 @@ and correlated event timeline come from a live backend simulation.
 
 The activity is the coached technical core of **HW3: From Requirement to
 Defensible Guardrail**. The individual submission is a compact evidence
-portfolio, not a separate programming project. Use **Finish HW3 submission**
-at the bottom of the browser activity to accumulate the property,
-counterexample, repair, tests, assumption stress test, and bounded claim. The
-builder saves locally, captures completed regression metadata, checks evidence
-labels against the captured runs, and produces one print-ready PDF for Canvas.
+portfolio, not a separate programming project. Use **HW3 submission** in the
+top bar to enter a focused, full-page workflow. It presents the property,
+counterexample, repair, tests, assumption stress test, and bounded claim one
+checkpoint at a time. The builder saves locally, captures completed regression
+metadata, checks evidence labels against the captured runs, and produces one
+print-ready PDF for Canvas.
 [HW3_WORKING_SHEET.md](HW3_WORKING_SHEET.md) is the non-browser fallback.
 
 ```text
@@ -119,8 +120,8 @@ simulator.py          breaker, circuit, protection, tests, and event evidence
 compiler.py           bounded local MatIEC compilation
 openplc_*.py          pinned OpenPLC wrapper and Modbus decision handshake
 access.py             private codes, sessions, and per-student workspaces
+deploy/               staff-only Linux/SPHERE deployment packet
 tests/                deterministic behavior, isolation, and runtime tests
 ```
 
 MatIEC licensing and corresponding-source information are in `toolchain/`.
-Hosting and deployment operations remain in the staff repository.
