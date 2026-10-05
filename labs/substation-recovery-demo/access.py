@@ -19,12 +19,20 @@ from simulator import SubstationSimulator
 
 CODE_ALPHABET = "ACDEFGHJKLMNPQRTUVWXYZ234679"
 SESSION_TTL_SECONDS = 12 * 60 * 60
-MAX_TOKENS_PER_STUDENT = 3
+MAX_TOKENS_PER_STUDENT = 8
 WORKSPACE_VERSION = 1
+SUBMISSION_VERSION = 1
+SUBMISSION_MAX_BYTES = 24_000
 
 
 class AccessDenied(RuntimeError):
     pass
+
+
+class DraftConflict(RuntimeError):
+    def __init__(self, current_revision: int) -> None:
+        super().__init__("submission draft changed in another browser; reload before editing")
+        self.current_revision = current_revision
 
 
 @dataclass(frozen=True)
@@ -229,6 +237,7 @@ class StudentLab:
         self.compiler = compiler
         self.workspace_dir = workspace_root / identity.student_id
         self.workspace_file = self.workspace_dir / "workspace.json"
+        self.submission_file = self.workspace_dir / "submission.json"
         self._lock = threading.RLock()
         build = self._load_build()
         self.simulator = SubstationSimulator(build, run_prefix=identity.student_id)
@@ -272,6 +281,39 @@ class StudentLab:
             "activePreset": build.manifest.get("preset"),
         }
 
+    def submission_payload(self) -> dict[str, Any]:
+        with self._lock:
+            record = self._load_submission_record()
+            return {
+                "draft": record.get("draft"),
+                "revision": int(record.get("revision", 0)),
+                "updatedAtUnixMs": record.get("updatedAtUnixMs"),
+            }
+
+    def save_submission(self, draft: Any, base_revision: Any) -> dict[str, Any]:
+        if not isinstance(base_revision, int) or isinstance(base_revision, bool) or base_revision < 0:
+            raise ValueError("baseRevision must be a non-negative integer")
+        validated = self._validate_submission(draft)
+        with self._lock:
+            current = self._load_submission_record()
+            current_revision = int(current.get("revision", 0))
+            if base_revision != current_revision:
+                raise DraftConflict(current_revision)
+            updated_at = int(time.time() * 1000)
+            record = {
+                "version": SUBMISSION_VERSION,
+                "studentId": self.identity.student_id,
+                "revision": current_revision + 1,
+                "updatedAtUnixMs": updated_at,
+                "draft": validated,
+            }
+            _atomic_write(self.submission_file, json.dumps(record, indent=2) + "\n")
+            return {
+                "draft": validated,
+                "revision": record["revision"],
+                "updatedAtUnixMs": updated_at,
+            }
+
     def _load_build(self) -> ControllerBuild:
         if self.workspace_file.exists():
             try:
@@ -292,6 +334,56 @@ class StudentLab:
             "updatedAtUnixMs": int(time.time() * 1000),
         }
         _atomic_write(self.workspace_file, json.dumps(payload, indent=2) + "\n")
+
+    def _load_submission_record(self) -> dict[str, Any]:
+        if not self.submission_file.exists():
+            return {"version": SUBMISSION_VERSION, "revision": 0, "draft": None}
+        try:
+            payload = json.loads(self.submission_file.read_text(encoding="utf-8"))
+            if (
+                payload.get("version") != SUBMISSION_VERSION
+                or payload.get("studentId") != self.identity.student_id
+                or not isinstance(payload.get("revision"), int)
+            ):
+                raise ValueError("invalid submission record")
+            if payload.get("draft") is not None:
+                payload["draft"] = self._validate_submission(payload["draft"])
+            return payload
+        except (OSError, ValueError, json.JSONDecodeError):
+            return {"version": SUBMISSION_VERSION, "revision": 0, "draft": None}
+
+    @staticmethod
+    def _validate_submission(draft: Any) -> dict[str, Any]:
+        if not isinstance(draft, dict) or draft.get("version") != SUBMISSION_VERSION:
+            raise ValueError("unsupported submission draft")
+        if set(draft) - {"version", "fields", "capturedTests", "repair", "updatedAt"}:
+            raise ValueError("submission draft contains unsupported fields")
+        fields = draft.get("fields")
+        captured = draft.get("capturedTests")
+        repair = draft.get("repair")
+        updated_at = draft.get("updatedAt")
+        if not isinstance(fields, dict) or len(fields) > 64:
+            raise ValueError("submission fields are invalid")
+        if any(
+            not isinstance(key, str)
+            or not isinstance(value, str)
+            or len(key) > 80
+            or len(value) > 5_000
+            for key, value in fields.items()
+        ):
+            raise ValueError("submission field value is invalid")
+        if not isinstance(captured, dict) or len(captured) > 8:
+            raise ValueError("captured test records are invalid")
+        if any(not isinstance(key, str) or not isinstance(value, dict) for key, value in captured.items()):
+            raise ValueError("captured test record is invalid")
+        if repair is not None and not isinstance(repair, dict):
+            raise ValueError("captured repair is invalid")
+        if updated_at is not None and not isinstance(updated_at, str):
+            raise ValueError("submission timestamp is invalid")
+        encoded = json.dumps(draft, separators=(",", ":"), ensure_ascii=True)
+        if len(encoded.encode("utf-8")) > SUBMISSION_MAX_BYTES:
+            raise ValueError("submission draft is too large")
+        return json.loads(encoded)
 
 
 class StudentAccessManager:
@@ -351,6 +443,11 @@ class StudentAccessManager:
             now = time.time()
             self._sessions[token_hash] = SessionRecord(token_hash, student_id, now, now)
             student_tokens = self._student_tokens[student_id]
+            for existing_hash in list(student_tokens):
+                existing = self._sessions.get(existing_hash)
+                if not existing or now - existing.last_seen > SESSION_TTL_SECONDS:
+                    self._sessions.pop(existing_hash, None)
+                    student_tokens.remove(existing_hash)
             student_tokens.append(token_hash)
             while len(student_tokens) > MAX_TOKENS_PER_STUDENT:
                 self._sessions.pop(student_tokens.popleft(), None)

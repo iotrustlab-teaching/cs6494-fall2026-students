@@ -650,6 +650,17 @@ select { min-height: 38px; padding: 7px 34px 7px 10px; }
   font-size: 11px;
 }
 
+.term-lookup {
+  margin: 8px 0;
+  padding: 8px 10px;
+  color: #384950;
+  background: #f8f4e8;
+  border-left: 3px solid var(--amber);
+  font-size: 11px;
+  line-height: 1.45;
+}
+.term-lookup code { font-weight: 800; }
+
 .diff {
   max-height: 190px;
   margin-top: 10px;
@@ -923,9 +934,24 @@ body.submission-mode .submission-builder > summary { display: none; }
 .step-body .form-grid label,
 .claim-grid label { display: block; margin: 11px 0 5px; color: var(--muted); font-size: 12px; font-weight: 750; }
 .step-question { margin: 0 0 12px; color: #314147; font-size: 13px; font-weight: 650; }
+.answer-contract {
+  display: grid;
+  grid-template-columns: 92px 1fr;
+  gap: 10px;
+  margin: 0 0 14px;
+  padding: 9px 11px;
+  color: #3c4b51;
+  background: #f8f4e8;
+  border-left: 3px solid var(--amber);
+  font-size: 11px;
+  line-height: 1.45;
+}
+.answer-contract strong { color: #6b4d00; text-transform: uppercase; }
+.answer-contract code { font-weight: 750; }
 
 .capture-row,
 .builder-actions,
+.builder-save-row,
 .captured-run {
   display: flex;
   align-items: center;
@@ -935,9 +961,11 @@ body.submission-mode .submission-builder > summary { display: none; }
 
 .capture-row { margin-top: 12px; padding: 10px 0; border-top: 1px solid #e3e8ea; }
 .capture-row strong,
-.builder-actions strong { display: block; font-size: 12px; }
+.builder-actions strong,
+.builder-save-row strong { display: block; font-size: 12px; }
 .capture-row span,
-.builder-actions span { display: block; margin-top: 2px; color: var(--muted); font-size: 11px; overflow-wrap: anywhere; }
+.builder-actions span,
+.builder-save-row span { display: block; margin-top: 2px; color: var(--muted); font-size: 11px; overflow-wrap: anywhere; }
 
 .captured-runs { margin-bottom: 14px; color: var(--muted); font-size: 12px; }
 .captured-run { padding: 7px 0; border-bottom: 1px solid #e3e8ea; }
@@ -1000,6 +1028,8 @@ body.submission-mode .submission-builder > summary { display: none; }
 
 .builder-actions { padding: 16px 0 2px; flex-wrap: wrap; }
 .builder-actions > div { flex: 1 1 280px; }
+.builder-save-row { margin-top: 14px; padding: 12px 0; border-top: 1px solid var(--line); flex-wrap: wrap; }
+.builder-save-row > div { flex: 1 1 280px; }
 .builder-feedback { margin-top: 14px; }
 .builder-feedback:empty { display: none; }
 

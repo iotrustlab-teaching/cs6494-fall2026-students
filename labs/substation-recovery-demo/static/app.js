@@ -73,6 +73,12 @@ const app = {
   referenceRevealed: false,
   session: null,
   submission: { version: SUBMISSION_VERSION, fields: {}, capturedTests: {}, repair: null, updatedAt: null },
+  submissionRevision: 0,
+  submissionSyncTimer: null,
+  submissionSyncInFlight: false,
+  submissionSyncPending: false,
+  submissionSyncConflict: false,
+  submissionSaveMessage: 'Draft not yet saved',
   submissionPage: 'property',
   booted: false,
   polling: false
@@ -91,6 +97,7 @@ async function api(path, options = {}) {
     if (response.status === 401 && path !== '/api/session/login') showLogin('Your session ended. Enter your access code to reconnect.');
     const error = new Error(payload.error || `HTTP ${response.status}`);
     error.payload = payload;
+    error.status = response.status;
     throw error;
   }
   return payload;
@@ -579,14 +586,31 @@ function populateSubmissionFields() {
   }
 }
 
-function loadSubmissionDraft() {
+function submissionTime(draft) {
+  const value = draft && draft.updatedAt ? Date.parse(draft.updatedAt) : 0;
+  return Number.isFinite(value) ? value : 0;
+}
+
+async function loadSubmissionDraft() {
   const empty = { version: SUBMISSION_VERSION, fields: {}, capturedTests: {}, repair: null, updatedAt: null };
+  let local = null;
   try {
     const saved = JSON.parse(localStorage.getItem(submissionStorageKey()) || 'null');
-    app.submission = saved && saved.version === SUBMISSION_VERSION ? { ...empty, ...saved } : empty;
+    local = saved && saved.version === SUBMISSION_VERSION ? { ...empty, ...saved } : null;
   } catch (_error) {
-    app.submission = empty;
+    local = null;
   }
+  let remote = null;
+  try {
+    const payload = await api('/api/submission');
+    app.submissionRevision = Number(payload.revision) || 0;
+    remote = payload.draft && payload.draft.version === SUBMISSION_VERSION
+      ? { ...empty, ...payload.draft }
+      : null;
+  } catch (_error) {
+    app.submissionSaveMessage = 'Server backup unavailable; saved in this browser';
+  }
+  app.submission = remote && submissionTime(remote) >= submissionTime(local) ? remote : (local || remote || empty);
   if (!app.submission.fields || typeof app.submission.fields !== 'object') app.submission.fields = {};
   if (!app.submission.capturedTests || typeof app.submission.capturedTests !== 'object') app.submission.capturedTests = {};
   if (!app.submission.fields['student-name'] && app.session && app.session.student) {
@@ -595,6 +619,10 @@ function loadSubmissionDraft() {
   if (!app.submission.fields['test-prohibited-status']) app.submission.fields['test-prohibited-status'] = 'PROPOSED';
   if (!app.submission.fields['test-legitimate-status']) app.submission.fields['test-legitimate-status'] = 'PROPOSED';
   populateSubmissionFields();
+  if (app.submission.updatedAt) {
+    app.submissionSaveMessage = `Restored draft saved ${new Date(app.submission.updatedAt).toLocaleString([], { dateStyle: 'short', timeStyle: 'short' })}`;
+  }
+  if (local && submissionTime(local) > submissionTime(remote)) queueSubmissionSync();
 }
 
 function saveSubmissionDraft() {
@@ -602,11 +630,67 @@ function saveSubmissionDraft() {
   app.submission.updatedAt = new Date().toISOString();
   try {
     localStorage.setItem(submissionStorageKey(), JSON.stringify(app.submission));
-    $('autosave-status').textContent = `Draft saved ${new Date(app.submission.updatedAt).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}`;
+    app.submissionSaveMessage = `Saved in browser ${new Date(app.submission.updatedAt).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}; syncing`;
+    queueSubmissionSync();
   } catch (_error) {
-    $('autosave-status').textContent = 'Local save unavailable';
+    app.submissionSaveMessage = 'Local save unavailable; trying private workspace';
+    queueSubmissionSync();
   }
   renderSubmission();
+}
+
+function queueSubmissionSync(delay = 600) {
+  if (!app.session || app.submissionSyncConflict) return;
+  app.submissionSyncPending = true;
+  if (app.submissionSyncTimer) window.clearTimeout(app.submissionSyncTimer);
+  app.submissionSyncTimer = window.setTimeout(syncSubmissionDraft, delay);
+}
+
+async function syncSubmissionDraft() {
+  if (!app.session || app.submissionSyncConflict) return false;
+  if (app.submissionSyncInFlight) {
+    app.submissionSyncPending = true;
+    return false;
+  }
+  if (app.submissionSyncTimer) window.clearTimeout(app.submissionSyncTimer);
+  app.submissionSyncTimer = null;
+  app.submissionSyncInFlight = true;
+  app.submissionSyncPending = false;
+  const draft = JSON.parse(JSON.stringify(app.submission));
+  try {
+    const result = await api('/api/submission', {
+      method: 'POST',
+      body: JSON.stringify({ draft, baseRevision: app.submissionRevision })
+    });
+    app.submissionRevision = result.revision;
+    app.submissionSaveMessage = `Saved to private workspace ${new Date(result.updatedAtUnixMs).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}`;
+    return true;
+  } catch (error) {
+    if (error.status === 409 && Number.isInteger(error.payload && error.payload.currentRevision)) {
+      app.submissionSyncConflict = true;
+      app.submissionSaveMessage = 'Another browser changed this draft. Stop editing and reload before continuing.';
+    } else if (error.status === 409) {
+      app.submissionSaveMessage = `Private workspace rejected this draft: ${error.message}`;
+    } else {
+      app.submissionSaveMessage = 'Saved in this browser; private workspace backup will retry';
+      window.setTimeout(() => queueSubmissionSync(0), 3000);
+    }
+    return false;
+  } finally {
+    app.submissionSyncInFlight = false;
+    if (app.submissionSyncPending && !app.submissionSyncConflict) queueSubmissionSync(0);
+    renderSubmission();
+  }
+}
+
+async function saveForLater() {
+  saveSubmissionDraft();
+  const saved = await syncSubmissionDraft();
+  const feedback = $('submission-feedback');
+  feedback.className = saved ? 'feedback good' : 'feedback error';
+  feedback.textContent = saved
+    ? 'Saved to your private workspace. You may close this browser and return with the same access code.'
+    : app.submissionSaveMessage;
 }
 
 function captureCompletedTest(result) {
@@ -804,9 +888,7 @@ function renderSubmission() {
   });
   $('builder-progress').value = complete;
   $('builder-progress-label').textContent = `${complete} of 6 checkpoints complete`;
-  if (app.submission.updatedAt) {
-    $('autosave-status').textContent = `Draft saved ${new Date(app.submission.updatedAt).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}`;
-  }
+  $('autosave-status').textContent = app.submissionSaveMessage;
   if (app.submission.repair) {
     $('repair-capture-title').textContent = `Captured ${app.submission.repair.buildId}`;
     $('repair-capture-detail').textContent = `Source SHA-256 ${app.submission.repair.sourceSha256}`;
@@ -1044,7 +1126,7 @@ async function poll() {
 async function initializeLab() {
   if (app.booted) return;
   app.booted = true;
-  loadSubmissionDraft();
+  await loadSubmissionDraft();
   Object.entries(TESTS).forEach(([id, test]) => {
     const option = document.createElement('option');
     option.value = id;
@@ -1120,6 +1202,7 @@ async function initializeLab() {
   $('capture-repair').addEventListener('click', captureActiveRepair);
   $('review-submission').addEventListener('click', () => reviewSubmission(false));
   $('print-submission').addEventListener('click', () => reviewSubmission(true));
+  $('save-submission-later').addEventListener('click', saveForLater);
   $('open-submission').addEventListener('click', () => openSubmissionBuilder());
   $('close-builder').addEventListener('click', () => closeSubmissionBuilder());
   $('open-controller-workspace').addEventListener('click', () => closeSubmissionBuilder('controller'));
@@ -1141,6 +1224,16 @@ async function initializeLab() {
     field.addEventListener('change', saveSubmissionDraft);
   });
   $('sign-out').addEventListener('click', logout);
+  window.addEventListener('pagehide', () => {
+    if (!app.session || !app.submissionSyncPending || app.submissionSyncConflict) return;
+    fetch(`${LAB_BASE}/api/submission`, {
+      method: 'POST',
+      cache: 'no-store',
+      keepalive: true,
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ draft: app.submission, baseRevision: app.submissionRevision })
+    }).catch(() => {});
+  });
   renderSubmission();
   poll();
 }
