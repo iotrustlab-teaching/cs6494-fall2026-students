@@ -39,6 +39,13 @@ For a hosted class session, open the URL supplied by course staff and enter your
 assigned access code. Each code opens an isolated simulator, evidence stream,
 controller source workspace, and OpenPLC runtime.
 
+The hosted assignment is browser-only. Students do not clone this repository,
+open a terminal, install Python or Node packages, run Docker, invoke a compiler,
+or obtain a SPHERE shell. Compilation, OpenPLC execution, the electrical model,
+regression tests, and evidence capture all run in the staff-managed SPHERE
+environment. The browser keeps only the student's autosaved draft and the PDF
+they explicitly save for Canvas.
+
 The complete reference repair is hidden from the starting-source menu. Students
 first commit to a repair and two tests; the instructor can then use the explicit
 reference reveal for comparison. The repository still contains the reference
@@ -53,6 +60,10 @@ authenticated student identity. It does not upload the report. Before leaving
 the lab computer, choose **Create submission PDF**, use the browser's **Save as
 PDF** destination, and submit `HW3_<uNID>.pdf` to Canvas. Canvas remains the
 submission record.
+
+If the hosted service is unavailable during an assigned work period, course
+staff should pause or reschedule the activity. The local instructor fallback
+below is not a student setup requirement.
 
 ## Local instructor fallback
 
