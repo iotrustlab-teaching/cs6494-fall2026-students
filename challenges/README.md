@@ -3,10 +3,10 @@
 Two team-based security challenges. Both are graded, and both assess individual contribution
 alongside the team result.
 
-| | Week | Weight |
+| | Dates | Weight |
 |---|---|---|
-| Critical-infrastructure security challenge | 7 (Oct 5–9) | 10% |
-| Autonomous-system security challenge | 14 (Nov 30–Dec 4) | 10% |
+| CTF1: Operation Alpine Shield (critical infrastructure) | Take 1: Wed Oct 21; Take 2: Mon Oct 26, 2026 | 10% |
+| Autonomous-system security challenge | Nov 30–Dec 4, 2026 (Week 14) | 10% |
 
 Handouts, evidence packets, and submission templates appear here before each challenge opens.
 Scenarios, roles, scoring, and access procedures are announced in Canvas.
