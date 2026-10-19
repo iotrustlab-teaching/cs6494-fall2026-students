@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self'; connect-src 'none'; base-uri 'none'; form-action 'none'">
+  <title>CS 6494 | CPS Evidence Toolbox</title>
+  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="visual.css">
+  <script src="app.js" defer></script>
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand"><span class="brand-mark">CS 6494</span><span>CPS Evidence Toolbox</span></div>
+    <span class="mode">CLASSROOM PRACTICE</span>
+  </header>
+  <main>
+    <div class="heading">
+      <div>
+        <p class="eyebrow">MONDAY PRACTICE | 30 MINUTES</p>
+        <h1>Trace one claim across a control system</h1>
+        <p class="intro">Choose a role, inspect its evidence, try one bounded tool, and hand a cited claim to a teammate.</p>
+      </div>
+      <button id="export" class="quiet" type="button" title="Download your local notes">Download notes</button>
+    </div>
+
+    <section class="source-band" aria-label="Evidence boundary">
+      <strong id="source-label">SYNTHETIC / AUTHORED</strong>
+      <span id="source-description">This self-contained case uses invented packets, code, and process records. It is not a live utility or CTF incident.</span>
+    </section>
+
+    <div class="selectors">
+      <label for="implementation">Evidence path
+        <select id="implementation">
+          <option value="fixture">Fictional transfer skid | self-contained</option>
+          <option value="hw3">HW3 OpenPLC | your live workspace</option>
+          <option value="rockwell" disabled>Rockwell reference | awaiting staff release</option>
+        </select>
+      </label>
+      <div class="role-group" role="group" aria-label="Choose your role">
+        <button type="button" data-role="network">Network</button>
+        <button type="button" data-role="program">Program</button>
+        <button type="button" data-role="operator">Operator</button>
+        <button type="button" data-role="integrator">Integrator</button>
+      </div>
+    </div>
+
+    <div class="workspace">
+      <section class="main-pane" aria-labelledby="question">
+        <div class="section-head"><span id="role-count">01 / 04</span><span id="case-badge">FICTIONAL TRANSFER SKID</span></div>
+        <h2 id="question"></h2>
+        <p id="instruction" class="instruction"></p>
+        <div id="artifact" class="artifact"></div>
+        <div id="tool" class="tool"></div>
+      </section>
+      <aside class="handoff" aria-labelledby="handoff-heading">
+        <h2 id="handoff-heading">Your handoff</h2>
+        <p class="minor">Keep a fact, its source, and its limit together. Notes stay in this browser until you download them.</p>
+        <label for="fact">What did you establish?</label>
+        <textarea id="fact" rows="3" placeholder="One bounded observation or test result"></textarea>
+        <label for="citation">Where is it shown?</label>
+        <input id="citation" type="text" placeholder="Packet, event, build, run, or document ID">
+        <label for="limit">What does it not prove?</label>
+        <textarea id="limit" rows="3" placeholder="Missing or stale evidence; another layer to test"></textarea>
+        <p id="saved" class="saved" role="status" aria-live="polite"></p>
+        <button id="copy" class="primary" type="button">Copy role handoff</button>
+        <div class="handoff-bottom">
+          <button id="previous" class="quiet" type="button">Previous role</button>
+          <button id="next" class="quiet" type="button">Next role</button>
+        </div>
+      </aside>
+    </div>
+
+    <section class="finish" aria-labelledby="finish-heading">
+      <h2 id="finish-heading">Team synthesis</h2>
+      <p>Compare the four handoffs. Can a protocol reply, a program path, and an operator display jointly establish an actual device state and useful service? Name the missing link before making a claim.</p>
+      <div class="claim-grid">
+        <label for="team-claim">Bounded claim<textarea id="team-claim" rows="2" placeholder="We can support... only for... under..."></textarea></label>
+        <label for="next-test">Next discriminating test<textarea id="next-test" rows="2" placeholder="We would check... against..."></textarea></label>
+      </div>
+      <p class="minor">Practice only. This page does not submit HW3 or a CTF answer. Use the live Canvas assignment for required submissions and deadlines.</p>
+    </section>
+  </main>
+  <footer>Request &rarr; network admission &rarr; controller decision &rarr; device feedback &rarr; service</footer>
+</body>
+</html>

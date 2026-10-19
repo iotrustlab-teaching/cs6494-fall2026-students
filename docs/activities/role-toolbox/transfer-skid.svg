@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 150" role="img" aria-labelledby="title desc">
+  <title id="title">Fictional transfer skid process path</title>
+  <desc id="desc">A source vessel feeds valve V4, pump P4, and a service outlet; state reports are separate from the process path.</desc>
+  <rect width="720" height="150" fill="#f3f7f5"/>
+  <path d="M82 80H642" stroke="#257a8a" stroke-width="12" fill="none"/>
+  <path d="M66 37h66v85H66z" fill="#e5f1f2" stroke="#28516c" stroke-width="3"/>
+  <path d="M68 81h62v39H68z" fill="#85c4cf"/>
+  <path d="M262 60l25 20-25 20zm50 0l-25 20 25 20z" fill="#f8faf8" stroke="#28516c" stroke-width="3"/>
+  <circle cx="460" cy="80" r="35" fill="#fff" stroke="#0d695e" stroke-width="4"/>
+  <path d="M446 61l31 19-31 19z" fill="#0d695e"/>
+  <path d="M642 60h32v40h-32z" fill="#e5f1f2" stroke="#28516c" stroke-width="3"/>
+  <g font-family="Arial, sans-serif" font-weight="700" font-size="16" fill="#182d33" text-anchor="middle">
+    <text x="99" y="28">SOURCE</text><text x="287" y="35">V4</text><text x="460" y="35">P4</text><text x="658" y="35">SERVICE</text>
+  </g>
+  <text x="360" y="137" font-family="Arial, sans-serif" font-size="12" fill="#53666a" text-anchor="middle">AUTHORED TEACHING PROCESS | requested and reported states are not physical proof</text>
+</svg>
