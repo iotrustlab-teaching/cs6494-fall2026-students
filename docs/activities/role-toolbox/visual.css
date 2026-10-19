@@ -1,1 +1,72 @@
-.process-figure{display:block;width:100%;height:auto;border:1px solid #cdd9d7;margin:10px 0}
+.process-figure {
+  display: block;
+  width: 100%;
+  height: auto;
+  border: 1px solid #cdd9d7;
+  margin: 10px 0;
+}
+
+.role-picker { display: grid; gap: 6px; }
+.picker-label { color: var(--muted); font-size: 12px; font-weight: 700; }
+.first-action {
+  display: flex;
+  gap: 12px;
+  align-items: baseline;
+  padding: 10px 13px;
+  margin: 0 0 12px;
+  background: #e3f0ea;
+  border-left: 4px solid var(--teal);
+  font-size: 14px;
+  line-height: 1.45;
+}
+.first-action strong { flex: none; color: #07584e; }
+.bridge {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin-bottom: 14px;
+  border-top: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
+  padding: 10px 0;
+}
+.bridge span {
+  display: block;
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+.bridge p { margin: 3px 0 0; font-size: 13px; line-height: 1.35; }
+.bridge div:last-child { border-left: 1px solid var(--line); padding-left: 16px; }
+
+@media (max-width: 600px) {
+  .first-action { display: block; }
+  .first-action strong { display: block; margin-bottom: 3px; }
+  .bridge { gap: 10px; }
+  .bridge div:last-child { padding-left: 10px; }
+  .evidence-table { font-size: 12px; }
+}
+
+@media (max-width: 380px) {
+  .bridge { grid-template-columns: 1fr; }
+  .bridge div:last-child { border-left: 0; border-top: 1px solid var(--line); padding: 8px 0 0; }
+  .evidence-table thead { display: none; }
+  .evidence-table tbody, .evidence-table tr { display: block; }
+  .evidence-table tr { padding: 6px 0; border-bottom: 1px solid var(--line); }
+  .evidence-table td {
+    display: grid;
+    grid-template-columns: 82px minmax(0, 1fr);
+    gap: 6px;
+    padding: 3px 0;
+    border: 0;
+    overflow-wrap: anywhere;
+  }
+  .evidence-table td::before { color: var(--muted); font-weight: 750; }
+  .packet-table td:nth-child(1)::before { content: "Packet"; }
+  .packet-table td:nth-child(2)::before { content: "Route"; }
+  .packet-table td:nth-child(3)::before { content: "Operation"; }
+  .packet-table td:nth-child(4)::before { content: "Result"; }
+  .event-table td:nth-child(1)::before { content: "Time"; }
+  .event-table td:nth-child(2)::before { content: "Record"; }
+  .event-table td:nth-child(3)::before { content: "Boundary"; }
+}

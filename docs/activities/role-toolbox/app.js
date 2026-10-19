@@ -5,6 +5,52 @@ const HW3_URL = "https://hw3pilot-lgarcia.xdc.sphere-testbed.net/jupyter/substat
 const ROLES = ["network", "program", "operator", "integrator"];
 const ROLE_TITLES = {network:"Network",program:"Program",operator:"Operator",integrator:"Integrator"};
 const $ = id => document.getElementById(id);
+const BRIDGES = {
+  fixture: {
+    network: {
+      action: "Try Deny all, then Deny write to register 120. Which rule also preserves the ordinary read?",
+      today: "Invented packet rows and a local policy what-if.",
+      future: "Qualified traffic evidence and a scoped virtual firewall test, if released."
+    },
+    program: {
+      action: "Inspect each symbol in the trace finder. Identify the request input, permissive, and output.",
+      today: "Authored Structured Text; no compiled build is running here.",
+      future: "Controller source, compiled build identity, and matched runtime decisions."
+    },
+    operator: {
+      action: "Compare a 5-second and 45-second freshness limit. Does either prove V4 is open at t=30?",
+      today: "Authored process replay and a local freshness check.",
+      future: "Source-bound operator display with feedback, quality, and timestamps."
+    },
+    integrator: {
+      action: "Ask teammates for one citation each. Name the first missing link before claiming service.",
+      today: "Local, browser-only handoffs; no shared team submission.",
+      future: "A team evidence packet tied to a run manifest and tested claims."
+    }
+  },
+  hw3: {
+    network: {
+      action: "Open your personal HW3 workspace. Find a request and say whether it is an app trace or captured packet.",
+      today: "Your live HW3 run in a separate tab; this page cannot inspect its network.",
+      future: "Qualified traffic evidence and a scoped virtual firewall test, if released."
+    },
+    program: {
+      action: "Run one prohibited and one legitimate case; record their build and run IDs.",
+      today: "Compiled OpenPLC in your separate HW3 workspace.",
+      future: "Controller source, compiled build identity, and matched runtime decisions."
+    },
+    operator: {
+      action: "Compare requested state, controller decision, model position, and service result in one run.",
+      today: "HW3 software-process evidence in your separate workspace.",
+      future: "Source-bound operator display with feedback, quality, and timestamps."
+    },
+    integrator: {
+      action: "Pair the prohibited and healthy-restoration runs before writing a safety-and-service claim.",
+      today: "Local notes about your HW3 run; this page does not submit the assignment.",
+      future: "A team evidence packet tied to a run manifest and tested claims."
+    }
+  }
+};
 
 const CASES = {
   fixture: {
@@ -15,7 +61,7 @@ const CASES = {
       network: {
         question: "Which request reached the controller, and what can the reply prove?",
         instruction: "Inspect the packet references, then test one proposed network rule against both unwanted and ordinary traffic.",
-        artifact: `<h3>Packet view</h3><span class="evidence-tag">SYNTHETIC TSHARK-DECODED FIXTURE</span><table class="evidence-table"><thead><tr><th>Packet</th><th>Source → target</th><th>Operation</th><th>Visible result</th></tr></thead><tbody><tr><td>#5</td><td>192.0.2.11 → 192.0.2.20</td><td>Modbus write, register 120</td><td>Request sent</td></tr><tr><td>#6</td><td>192.0.2.20 → 192.0.2.11</td><td>Normal Modbus response</td><td>Protocol reply; no device feedback</td></tr><tr><td>#8</td><td>192.0.2.20 → 192.0.2.31</td><td>Reported state</td><td>Separate report; provenance differs</td></tr></tbody></table><p>Site-record names and roles are supplied leads, not authenticated identities from these packets.</p>`,
+        artifact: `<h3>Packet view</h3><span class="evidence-tag">SYNTHETIC TSHARK-DECODED FIXTURE</span><table class="evidence-table packet-table"><thead><tr><th>Packet</th><th>Source → target</th><th>Operation</th><th>Visible result</th></tr></thead><tbody><tr><td>#5</td><td>192.0.2.11 → 192.0.2.20</td><td>Modbus write, register 120</td><td>Request sent</td></tr><tr><td>#6</td><td>192.0.2.20 → 192.0.2.11</td><td>Normal Modbus response</td><td>Protocol reply; no device feedback</td></tr><tr><td>#8</td><td>192.0.2.20 → 192.0.2.31</td><td>Reported state</td><td>Separate report; provenance differs</td></tr></tbody></table><p>Site-record names and roles are supplied leads, not authenticated identities from these packets.</p>`,
         tool: `<h3>Network policy what-if</h3><label for="policy">Proposed first-match rule<select id="policy"><option value="none">No new rule</option><option value="deny-all">Deny all controller traffic</option><option value="deny-write">Deny write to register 120</option><option value="deny-client">Deny all traffic from 192.0.2.11</option></select></label><div id="policy-result" class="tool-output" role="status"></div>`
       },
       program: {
@@ -24,12 +70,12 @@ const CASES = {
         artifact: `<h3>Illustrative controller slice</h3><span class="evidence-tag">AUTHORED ST EXCERPT; NOT EXECUTED</span><pre><code>CloseRequest := HoldingRegister120;
 PermitClose := CloseRequest AND PresentFlow_Lps &lt; Limit_Lps;
 PumpStartOutput := PermitClose;</code></pre><div class="mini-flow"><span>Register 120</span><i>→</i><span>PermitClose</span><i>→</i><span>PumpStartOutput</span></div><p>Packet #6 does not identify the compiled build, prove <code>PermitClose</code> was true, or show a contactor changing state.</p>`,
-        tool: `<h3>Program-analysis prompt</h3><p>Find the input, permissive, and output above. What state is absent if a transition changes what the pump would feed? Record a discriminating test and the build/run identity you would require.</p>`
+        tool: `<h3>Trace a symbol</h3><label for="symbol">Select a variable<select id="symbol"><option value="request">HoldingRegister120</option><option value="condition">PresentFlow_Lps</option><option value="permit">PermitClose</option><option value="output">PumpStartOutput</option></select></label><div id="symbol-result" class="tool-output" role="status"></div><p>What topology or downstream state is absent from this condition? Record a test and the build/run identity you would require.</p>`
       },
       operator: {
         question: "What did the operator see, and was that state still fresh?",
         instruction: "Compare report time with decision time before treating displayed feedback as current plant state.",
-        artifact: `<h3>Operator and process record</h3><span class="evidence-tag">AUTHORED REPLAY</span><img class="process-figure" src="transfer-skid.svg" alt="Fictional process path: source vessel, V4 valve, P4 pump, service outlet"><table class="evidence-table"><thead><tr><th>Time</th><th>Record</th><th>Boundary</th></tr></thead><tbody><tr><td>t=00 s</td><td>Valve V4 reports OPEN</td><td>Reported state, not direct contact proof</td></tr><tr><td>t=24 s</td><td>V4 physically CLOSED in authored process model</td><td>Not yet reflected in HMI</td></tr><tr><td>t=30 s</td><td>Operator screen still shows last OPEN report</td><td>30-second-old data</td></tr></tbody></table><p>Do not infer service from a request or from a stale screen value.</p>`,
+        artifact: `<h3>Operator and process record</h3><span class="evidence-tag">AUTHORED REPLAY</span><img class="process-figure" src="transfer-skid.svg" alt="Fictional process path: source vessel, V4 valve, P4 pump, service outlet"><table class="evidence-table event-table"><thead><tr><th>Time</th><th>Record</th><th>Boundary</th></tr></thead><tbody><tr><td>t=00 s</td><td>Valve V4 reports OPEN</td><td>Reported state, not direct contact proof</td></tr><tr><td>t=24 s</td><td>V4 physically CLOSED in authored process model</td><td>Not yet reflected in HMI</td></tr><tr><td>t=30 s</td><td>Operator screen still shows last OPEN report</td><td>30-second-old data</td></tr></tbody></table><p>Do not infer service from a request or from a stale screen value.</p>`,
         tool: `<h3>Freshness check</h3><label for="max-age">Maximum acceptable report age<select id="max-age"><option value="5">5 seconds</option><option value="20">20 seconds</option><option value="45">45 seconds</option></select></label><div id="age-result" class="tool-output" role="status"></div>`
       },
       integrator: {
@@ -53,7 +99,7 @@ PumpStartOutput := PermitClose;</code></pre><div class="mini-flow"><span>Registe
   }
 };
 
-function emptyState() { return {implementation:"fixture",role:"network",notes:{fixture:{},hw3:{}},teamClaim:"",nextTest:"",policy:"none",maxAge:"5"}; }
+function emptyState() { return {implementation:"fixture",role:"network",notes:{fixture:{},hw3:{}},teamClaim:"",nextTest:"",policy:"none",maxAge:"5",symbol:"request"}; }
 function readState() {
   try {
     const parsed = JSON.parse(localStorage.getItem(STORAGE_KEY));
@@ -75,7 +121,7 @@ function renderPolicy() {
   rule.value = state.policy;
   const unwanted = state.policy === "deny-all" || state.policy === "deny-write" || state.policy === "deny-client";
   const service = state.policy === "deny-all";
-  $("policy-result").innerHTML = `<div>Write to register 120: <span class="${unwanted ? "fail" : "pass"}">${unwanted ? "BLOCKED" : "ALLOWED"}</span></div><div>Ordinary service read: <span class="${service ? "fail" : "pass"}">${service ? "BLOCKED" : "ALLOWED"}</span></div><div class="minor">Local first-match teaching model only. A network permit is not controller authorization.</div>`;
+  $("policy-result").innerHTML = `<div>Write from 192.0.2.11 to register 120: <span class="${unwanted ? "fail" : "pass"}">${unwanted ? "BLOCKED" : "ALLOWED"}</span></div><div>Ordinary read from 192.0.2.31: <span class="${service ? "fail" : "pass"}">${service ? "BLOCKED" : "ALLOWED"}</span></div><div class="minor">Local first-match teaching model only. A network permit is not controller authorization.</div>`;
   rule.onchange = () => { state.policy = rule.value; persist(); renderPolicy(); };
 }
 function renderAge() {
@@ -85,8 +131,20 @@ function renderAge() {
   $("age-result").innerHTML = `<div>Last OPEN report at t=00 s; decision at t=30 s. Age: <strong>30 s</strong>.</div><div>Under this rule: <span class="${stale ? "fail" : "warn"}">${stale ? "STALE; do not rely on it" : "WITHIN AGE LIMIT; still not physical proof"}</span></div>`;
   choice.onchange = () => { state.maxAge = choice.value; persist(); renderAge(); };
 }
+function renderSymbol() {
+  const choice = $("symbol"); if (!choice) return;
+  choice.value = state.symbol;
+  const explanations = {
+    request: "Request input: register 120 is read into CloseRequest. Its value alone does not show that the output changed.",
+    condition: "Permissive input: present flow is compared with a limit. It says nothing about the downstream path after switching.",
+    permit: "Decision: PermitClose combines request and present-flow check in this authored excerpt. No executed decision is shown.",
+    output: "Command output: PumpStartOutput receives PermitClose. A commanded output is not independent device-position feedback."
+  };
+  $("symbol-result").textContent = explanations[state.symbol];
+  choice.onchange = () => { state.symbol = choice.value; persist(); renderSymbol(); };
+}
 function render() {
-  const spec = CASES[state.implementation], role = spec.roles[state.role], note = state.notes[state.implementation][state.role] || {};
+  const spec = CASES[state.implementation], role = spec.roles[state.role], note = state.notes[state.implementation][state.role] || {}, bridge = BRIDGES[state.implementation][state.role];
   $("implementation").value = state.implementation;
   $("source-label").textContent = spec.source;
   $("source-description").textContent = spec.description;
@@ -95,13 +153,16 @@ function render() {
   $("case-badge").textContent = spec.label;
   $("question").textContent = role.question;
   $("instruction").textContent = role.instruction;
+  $("first-action").textContent = bridge.action;
+  $("today-tool").textContent = bridge.today;
+  $("future-tool").textContent = bridge.future;
   $("artifact").innerHTML = role.artifact;
   $("tool").innerHTML = role.tool;
   for (const button of document.querySelectorAll("[data-role]")) button.setAttribute("aria-pressed", String(button.dataset.role === state.role));
   $("fact").value = note.fact || ""; $("citation").value = note.citation || ""; $("limit").value = note.limit || "";
   $("team-claim").value = state.teamClaim; $("next-test").value = state.nextTest;
   $("saved").textContent = "";
-  renderPolicy(); renderAge();
+  renderPolicy(); renderAge(); renderSymbol();
 }
 function switchRole(role) { storeCurrentNote(); state.role = role; persist(); render(); }
 function handoffText() {
@@ -124,6 +185,12 @@ $("previous").onclick = () => switchRole(ROLES[(ROLES.indexOf(state.role)+ROLES.
 $("next").onclick = () => switchRole(ROLES[(ROLES.indexOf(state.role)+1)%ROLES.length]);
 $("copy").onclick = async () => {
   storeCurrentNote();
+  const missing = ["fact", "citation", "limit"].find(id => !$(id).value.trim());
+  if (missing) {
+    $("saved").textContent = "Add a fact, citation, and limit before copying.";
+    $(missing).focus();
+    return;
+  }
   try { await navigator.clipboard.writeText(handoffText()); $("saved").textContent = "Handoff copied"; }
   catch { $("saved").textContent = "Clipboard unavailable here. Download notes instead."; }
 };
