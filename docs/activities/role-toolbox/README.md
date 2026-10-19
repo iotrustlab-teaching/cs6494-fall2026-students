@@ -40,8 +40,15 @@ student Rockwell or CTF pilot access implied by this page.
 
 ## Verify
 
-Serve `docs/` locally and open `/activities/role-toolbox/`. Check both evidence
-paths, all four roles, policy and freshness choices, save/reload, copied handoff,
-JSON export, and a narrow phone viewport. The Content Security Policy blocks
-network requests from this page; only a deliberate click opens the separate
-HW3 tab.
+Run `scripts/role-toolbox-smoke.mjs` with Playwright and Chrome/Chromium
+available. The script accepts the page URL as its argument; by default it tests
+`http://127.0.0.1:8893/activities/role-toolbox/`. Set `PLAYWRIGHT_MODULE` to
+an absolute Playwright module path and `CHROME_PATH` to a browser binary if
+they are not installed in the usual locations. Run it against both a local
+`docs/` server and the published Pages URL after deployment. It checks all
+four roles, both evidence paths, policy/freshness/symbol tools, save/reload,
+handoff validation, JSON export, and 320/390/768/1440-pixel layouts.
+
+The Content Security Policy blocks network requests from this page; only a
+deliberate click opens the separate HW3 tab. The intended CTF counterparts
+shown in the interface are design targets, not released student tools.
