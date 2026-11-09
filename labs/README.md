@@ -8,6 +8,7 @@ Instructions and starter material for the scaffolded labs.
 | [HW2 — From Controller Logic to CPS Evidence](cps-tank/hw2/) | 4 | **available** |
 | Agent-guardrail exercise | 6 | not yet published |
 | [HW3 working sheet — From Requirement to Defensible Guardrail](substation-recovery-demo/HW3_WORKING_SHEET.md) | 7 | guided class activity; Canvas has submission settings |
+| [HW4 robot docking starter](robot-docking-hw4/) | — | starter available; Canvas controls assignment release and due date |
 | Reproducible SITL lab | 10 | not yet published |
 | Integrity analysis | 11 | not yet published |
 

@@ -1,0 +1,1264 @@
+{
+  "schema": "cs6494-hw4-docking-v1",
+  "kind": "fresh_model_run",
+  "model": "course-authored 1-D robot approach; no Gazebo, SITL, or hardware",
+  "identity": {
+    "model_sha256": "41512a029a90bcdaadf1b7472eca2fade36a0c496e5796f29293854bb16f43a0",
+    "reference_sha256": "832a17a7a0119874f7f364552abe2f5a9de1c16c54c452243dac958f10542c6b"
+  },
+  "runtime": {
+    "psy_taliro": "3.2.0",
+    "rtamt": "0.4.10"
+  },
+  "scenario": {
+    "cruise_speed_m_s": 1.5,
+    "braking_m_s2": 1.5
+  },
+  "policy": {
+    "brake_at_m": 0.8
+  },
+  "reset": {
+    "position_m": -3.0,
+    "velocity_m_s": 0.0
+  },
+  "integration_step_s": 0.05,
+  "sample_times_s": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7
+  ],
+  "formulae": {
+    "service": "eventually[0,5] (always[0,2] (e <= 0.5))",
+    "safety": "always[0,5] ((outside_norm > 0) or (slow_norm >= 0))"
+  },
+  "monitor": {
+    "semantics": "discrete RTAMT at 1 s; no interpolation; integration at 0.05 s",
+    "service": {
+      "formula": "eventually[0,5] (always[0,2] (e <= 0.5))",
+      "pass": true,
+      "margin_m": 0.46249999999999936,
+      "first_window_start_s": 3,
+      "requires_samples_through_s": 7
+    },
+    "safety": {
+      "formula": "always[0,5] ((outside_norm > 0) or (slow_norm >= 0))",
+      "pass": true,
+      "exercised": true,
+      "robustness_normalized": 0.24999999999999745,
+      "normalization": {
+        "outside_distance_m": 0.5,
+        "slow_speed_m_s": 0.2
+      },
+      "inside_samples_s": [
+        3,
+        4,
+        5
+      ],
+      "too_fast_samples_s": [],
+      "zero_score_note": "At zero robustness, inspect strict/inclusive predicates; Boolean result is authoritative."
+    }
+  },
+  "trace": [
+    {
+      "time": 0.0,
+      "position": -3.0,
+      "velocity": 0.0,
+      "distance": 3.0,
+      "observed_remaining": 3.0,
+      "commanded_speed": 1.5
+    },
+    {
+      "time": 0.05,
+      "position": -2.997,
+      "velocity": 0.06,
+      "distance": 2.997,
+      "observed_remaining": 2.997,
+      "commanded_speed": 1.5
+    },
+    {
+      "time": 0.1,
+      "position": -2.991,
+      "velocity": 0.12,
+      "distance": 2.991,
+      "observed_remaining": 2.991,
+      "commanded_speed": 1.5
+    },
+    {
+      "time": 0.15,
+      "position": -2.982,
+      "velocity": 0.18,
+      "distance": 2.982,
+      "observed_remaining": 2.982,
+      "commanded_speed": 1.5
+    },
+    {
+      "time": 0.2,
+      "position": -2.97,
+      "velocity": 0.24,
+      "distance": 2.97,
+      "observed_remaining": 2.97,
+      "commanded_speed": 1.5
+    },
+    {
+      "time": 0.25,
+      "position": -2.955,
+      "velocity": 0.3,
+      "distance": 2.955,
+      "observed_remaining": 2.955,
+      "commanded_speed": 1.5
+    },
+    {
+      "time": 0.3,
+      "position": -2.9370000000000003,
+      "velocity": 0.36,
+      "distance": 2.9370000000000003,
+      "observed_remaining": 2.9370000000000003,
+      "commanded_speed": 1.5
+    },
+    {
+      "time": 0.35,
+      "position": -2.9160000000000004,
+      "velocity": 0.42,
+      "distance": 2.9160000000000004,
+      "observed_remaining": 2.9160000000000004,
+      "commanded_speed": 1.5
+    },
+    {
+      "time": 0.4,
+      "position": -2.8920000000000003,
+      "velocity": 0.48,
+      "distance": 2.8920000000000003,
+      "observed_remaining": 2.8920000000000003,
+      "commanded_speed": 1.5
+    },
+    {
+      "time": 0.45,
+      "position": -2.865,
+      "velocity": 0.54,
+      "distance": 2.865,
+      "observed_remaining": 2.865,
+      "commanded_speed": 1.5
+    },
+    {
+      "time": 0.5,
+      "position": -2.8350000000000004,
+      "velocity": 0.6000000000000001,
+      "distance": 2.8350000000000004,
+      "observed_remaining": 2.8350000000000004,
+      "commanded_speed": 1.5
+    },
+    {
+      "time": 0.55,
+      "position": -2.8020000000000005,
+      "velocity": 0.6600000000000001,
+      "distance": 2.8020000000000005,
+      "observed_remaining": 2.8020000000000005,
+      "commanded_speed": 1.5
+    },
+    {
+      "time": 0.6,
+      "position": -2.7660000000000005,
+      "velocity": 0.7200000000000002,
+      "distance": 2.7660000000000005,
+      "observed_remaining": 2.7660000000000005,
+      "commanded_speed": 1.5
+    },
+    {
+      "time": 0.65,
+      "position": -2.7270000000000003,
+      "velocity": 0.7800000000000002,
+      "distance": 2.7270000000000003,
+      "observed_remaining": 2.7270000000000003,
+      "commanded_speed": 1.5
+    },
+    {
+      "time": 0.7,
+      "position": -2.6850000000000005,
+      "velocity": 0.8400000000000003,
+      "distance": 2.6850000000000005,
+      "observed_remaining": 2.6850000000000005,
+      "commanded_speed": 1.5
+    },
+    {
+      "time": 0.75,
+      "position": -2.6400000000000006,
+      "velocity": 0.9000000000000004,
+      "distance": 2.6400000000000006,
+      "observed_remaining": 2.6400000000000006,
+      "commanded_speed": 1.5
+    },
+    {
+      "time": 0.8,
+      "position": -2.5920000000000005,
+      "velocity": 0.9600000000000004,
+      "distance": 2.5920000000000005,
+      "observed_remaining": 2.5920000000000005,
+      "commanded_speed": 1.5
+    },
+    {
+      "time": 0.85,
+      "position": -2.5410000000000004,
+      "velocity": 1.0200000000000005,
+      "distance": 2.5410000000000004,
+      "observed_remaining": 2.5410000000000004,
+      "commanded_speed": 1.5
+    },
+    {
+      "time": 0.9,
+      "position": -2.4870000000000005,
+      "velocity": 1.0800000000000005,
+      "distance": 2.4870000000000005,
+      "observed_remaining": 2.4870000000000005,
+      "commanded_speed": 1.5
+    },
+    {
+      "time": 0.95,
+      "position": -2.4300000000000006,
+      "velocity": 1.1400000000000006,
+      "distance": 2.4300000000000006,
+      "observed_remaining": 2.4300000000000006,
+      "commanded_speed": 1.5
+    },
+    {
+      "time": 1.0,
+      "position": -2.3700000000000006,
+      "velocity": 1.2000000000000006,
+      "distance": 2.3700000000000006,
+      "observed_remaining": 2.3700000000000006,
+      "commanded_speed": 1.5
+    },
+    {
+      "time": 1.05,
+      "position": -2.3070000000000004,
+      "velocity": 1.2600000000000007,
+      "distance": 2.3070000000000004,
+      "observed_remaining": 2.3070000000000004,
+      "commanded_speed": 1.5
+    },
+    {
+      "time": 1.1,
+      "position": -2.2410000000000005,
+      "velocity": 1.3200000000000007,
+      "distance": 2.2410000000000005,
+      "observed_remaining": 2.2410000000000005,
+      "commanded_speed": 1.5
+    },
+    {
+      "time": 1.15,
+      "position": -2.1720000000000006,
+      "velocity": 1.3800000000000008,
+      "distance": 2.1720000000000006,
+      "observed_remaining": 2.1720000000000006,
+      "commanded_speed": 1.5
+    },
+    {
+      "time": 1.2,
+      "position": -2.1000000000000005,
+      "velocity": 1.4400000000000008,
+      "distance": 2.1000000000000005,
+      "observed_remaining": 2.1000000000000005,
+      "commanded_speed": 1.5
+    },
+    {
+      "time": 1.25,
+      "position": -2.0250000000000004,
+      "velocity": 1.5,
+      "distance": 2.0250000000000004,
+      "observed_remaining": 2.0250000000000004,
+      "commanded_speed": 1.5
+    },
+    {
+      "time": 1.3,
+      "position": -1.9500000000000004,
+      "velocity": 1.5,
+      "distance": 1.9500000000000004,
+      "observed_remaining": 1.9500000000000004,
+      "commanded_speed": 1.5
+    },
+    {
+      "time": 1.35,
+      "position": -1.8750000000000004,
+      "velocity": 1.5,
+      "distance": 1.8750000000000004,
+      "observed_remaining": 1.8750000000000004,
+      "commanded_speed": 1.5
+    },
+    {
+      "time": 1.4,
+      "position": -1.8000000000000005,
+      "velocity": 1.5,
+      "distance": 1.8000000000000005,
+      "observed_remaining": 1.8000000000000005,
+      "commanded_speed": 1.5
+    },
+    {
+      "time": 1.45,
+      "position": -1.7250000000000005,
+      "velocity": 1.5,
+      "distance": 1.7250000000000005,
+      "observed_remaining": 1.7250000000000005,
+      "commanded_speed": 1.5
+    },
+    {
+      "time": 1.5,
+      "position": -1.6500000000000006,
+      "velocity": 1.5,
+      "distance": 1.6500000000000006,
+      "observed_remaining": 1.6500000000000006,
+      "commanded_speed": 1.5
+    },
+    {
+      "time": 1.55,
+      "position": -1.5750000000000006,
+      "velocity": 1.5,
+      "distance": 1.5750000000000006,
+      "observed_remaining": 1.5750000000000006,
+      "commanded_speed": 1.5
+    },
+    {
+      "time": 1.6,
+      "position": -1.5000000000000007,
+      "velocity": 1.5,
+      "distance": 1.5000000000000007,
+      "observed_remaining": 1.5000000000000007,
+      "commanded_speed": 1.5
+    },
+    {
+      "time": 1.65,
+      "position": -1.4250000000000007,
+      "velocity": 1.5,
+      "distance": 1.4250000000000007,
+      "observed_remaining": 1.4250000000000007,
+      "commanded_speed": 1.5
+    },
+    {
+      "time": 1.7,
+      "position": -1.3500000000000008,
+      "velocity": 1.5,
+      "distance": 1.3500000000000008,
+      "observed_remaining": 1.3500000000000008,
+      "commanded_speed": 1.5
+    },
+    {
+      "time": 1.75,
+      "position": -1.2750000000000008,
+      "velocity": 1.5,
+      "distance": 1.2750000000000008,
+      "observed_remaining": 1.2750000000000008,
+      "commanded_speed": 1.5
+    },
+    {
+      "time": 1.8,
+      "position": -1.2000000000000008,
+      "velocity": 1.5,
+      "distance": 1.2000000000000008,
+      "observed_remaining": 1.2000000000000008,
+      "commanded_speed": 1.5
+    },
+    {
+      "time": 1.85,
+      "position": -1.1250000000000009,
+      "velocity": 1.5,
+      "distance": 1.1250000000000009,
+      "observed_remaining": 1.1250000000000009,
+      "commanded_speed": 1.5
+    },
+    {
+      "time": 1.9,
+      "position": -1.050000000000001,
+      "velocity": 1.5,
+      "distance": 1.050000000000001,
+      "observed_remaining": 1.050000000000001,
+      "commanded_speed": 1.5
+    },
+    {
+      "time": 1.95,
+      "position": -0.975000000000001,
+      "velocity": 1.5,
+      "distance": 0.975000000000001,
+      "observed_remaining": 0.975000000000001,
+      "commanded_speed": 1.5
+    },
+    {
+      "time": 2.0,
+      "position": -0.900000000000001,
+      "velocity": 1.5,
+      "distance": 0.900000000000001,
+      "observed_remaining": 0.900000000000001,
+      "commanded_speed": 1.5
+    },
+    {
+      "time": 2.05,
+      "position": -0.8250000000000011,
+      "velocity": 1.5,
+      "distance": 0.8250000000000011,
+      "observed_remaining": 0.8250000000000011,
+      "commanded_speed": 1.5
+    },
+    {
+      "time": 2.1,
+      "position": -0.7500000000000011,
+      "velocity": 1.5,
+      "distance": 0.7500000000000011,
+      "observed_remaining": 0.7500000000000011,
+      "commanded_speed": 0.0
+    },
+    {
+      "time": 2.15,
+      "position": -0.6787500000000011,
+      "velocity": 1.425,
+      "distance": 0.6787500000000011,
+      "observed_remaining": 0.6787500000000011,
+      "commanded_speed": 0.0
+    },
+    {
+      "time": 2.2,
+      "position": -0.6112500000000011,
+      "velocity": 1.35,
+      "distance": 0.6112500000000011,
+      "observed_remaining": 0.6112500000000011,
+      "commanded_speed": 0.0
+    },
+    {
+      "time": 2.25,
+      "position": -0.5475000000000011,
+      "velocity": 1.2750000000000001,
+      "distance": 0.5475000000000011,
+      "observed_remaining": 0.5475000000000011,
+      "commanded_speed": 0.0
+    },
+    {
+      "time": 2.3,
+      "position": -0.4875000000000011,
+      "velocity": 1.2000000000000002,
+      "distance": 0.4875000000000011,
+      "observed_remaining": 0.4875000000000011,
+      "commanded_speed": 0.0
+    },
+    {
+      "time": 2.35,
+      "position": -0.4312500000000011,
+      "velocity": 1.1250000000000002,
+      "distance": 0.4312500000000011,
+      "observed_remaining": 0.4312500000000011,
+      "commanded_speed": 0.0
+    },
+    {
+      "time": 2.4,
+      "position": -0.37875000000000103,
+      "velocity": 1.0500000000000003,
+      "distance": 0.37875000000000103,
+      "observed_remaining": 0.37875000000000103,
+      "commanded_speed": 0.0
+    },
+    {
+      "time": 2.45,
+      "position": -0.330000000000001,
+      "velocity": 0.9750000000000003,
+      "distance": 0.330000000000001,
+      "observed_remaining": 0.330000000000001,
+      "commanded_speed": 0.0
+    },
+    {
+      "time": 2.5,
+      "position": -0.285000000000001,
+      "velocity": 0.9000000000000004,
+      "distance": 0.285000000000001,
+      "observed_remaining": 0.285000000000001,
+      "commanded_speed": 0.0
+    },
+    {
+      "time": 2.55,
+      "position": -0.24375000000000097,
+      "velocity": 0.8250000000000004,
+      "distance": 0.24375000000000097,
+      "observed_remaining": 0.24375000000000097,
+      "commanded_speed": 0.0
+    },
+    {
+      "time": 2.6,
+      "position": -0.20625000000000093,
+      "velocity": 0.7500000000000004,
+      "distance": 0.20625000000000093,
+      "observed_remaining": 0.20625000000000093,
+      "commanded_speed": 0.0
+    },
+    {
+      "time": 2.65,
+      "position": -0.1725000000000009,
+      "velocity": 0.6750000000000005,
+      "distance": 0.1725000000000009,
+      "observed_remaining": 0.1725000000000009,
+      "commanded_speed": 0.0
+    },
+    {
+      "time": 2.7,
+      "position": -0.14250000000000088,
+      "velocity": 0.6000000000000005,
+      "distance": 0.14250000000000088,
+      "observed_remaining": 0.14250000000000088,
+      "commanded_speed": 0.0
+    },
+    {
+      "time": 2.75,
+      "position": -0.11625000000000085,
+      "velocity": 0.5250000000000006,
+      "distance": 0.11625000000000085,
+      "observed_remaining": 0.11625000000000085,
+      "commanded_speed": 0.0
+    },
+    {
+      "time": 2.8,
+      "position": -0.09375000000000082,
+      "velocity": 0.45000000000000057,
+      "distance": 0.09375000000000082,
+      "observed_remaining": 0.09375000000000082,
+      "commanded_speed": 0.0
+    },
+    {
+      "time": 2.85,
+      "position": -0.07500000000000079,
+      "velocity": 0.37500000000000056,
+      "distance": 0.07500000000000079,
+      "observed_remaining": 0.07500000000000079,
+      "commanded_speed": 0.0
+    },
+    {
+      "time": 2.9,
+      "position": -0.06000000000000076,
+      "velocity": 0.30000000000000054,
+      "distance": 0.06000000000000076,
+      "observed_remaining": 0.06000000000000076,
+      "commanded_speed": 0.0
+    },
+    {
+      "time": 2.95,
+      "position": -0.04875000000000074,
+      "velocity": 0.22500000000000053,
+      "distance": 0.04875000000000074,
+      "observed_remaining": 0.04875000000000074,
+      "commanded_speed": 0.0
+    },
+    {
+      "time": 3.0,
+      "position": -0.04125000000000071,
+      "velocity": 0.15000000000000052,
+      "distance": 0.04125000000000071,
+      "observed_remaining": 0.04125000000000071,
+      "commanded_speed": 0.0
+    },
+    {
+      "time": 3.05,
+      "position": -0.037500000000000686,
+      "velocity": 0.07500000000000051,
+      "distance": 0.037500000000000686,
+      "observed_remaining": 0.037500000000000686,
+      "commanded_speed": 0.0
+    },
+    {
+      "time": 3.1,
+      "position": -0.03750000000000066,
+      "velocity": 4.996003610813204e-16,
+      "distance": 0.03750000000000066,
+      "observed_remaining": 0.03750000000000066,
+      "commanded_speed": 0.0
+    },
+    {
+      "time": 3.15,
+      "position": -0.03750000000000066,
+      "velocity": 0.0,
+      "distance": 0.03750000000000066,
+      "observed_remaining": 0.03750000000000066,
+      "commanded_speed": 0.0
+    },
+    {
+      "time": 3.2,
+      "position": -0.03750000000000066,
+      "velocity": 0.0,
+      "distance": 0.03750000000000066,
+      "observed_remaining": 0.03750000000000066,
+      "commanded_speed": 0.0
+    },
+    {
+      "time": 3.25,
+      "position": -0.03750000000000066,
+      "velocity": 0.0,
+      "distance": 0.03750000000000066,
+      "observed_remaining": 0.03750000000000066,
+      "commanded_speed": 0.0
+    },
+    {
+      "time": 3.3,
+      "position": -0.03750000000000066,
+      "velocity": 0.0,
+      "distance": 0.03750000000000066,
+      "observed_remaining": 0.03750000000000066,
+      "commanded_speed": 0.0
+    },
+    {
+      "time": 3.35,
+      "position": -0.03750000000000066,
+      "velocity": 0.0,
+      "distance": 0.03750000000000066,
+      "observed_remaining": 0.03750000000000066,
+      "commanded_speed": 0.0
+    },
+    {
+      "time": 3.4,
+      "position": -0.03750000000000066,
+      "velocity": 0.0,
+      "distance": 0.03750000000000066,
+      "observed_remaining": 0.03750000000000066,
+      "commanded_speed": 0.0
+    },
+    {
+      "time": 3.45,
+      "position": -0.03750000000000066,
+      "velocity": 0.0,
+      "distance": 0.03750000000000066,
+      "observed_remaining": 0.03750000000000066,
+      "commanded_speed": 0.0
+    },
+    {
+      "time": 3.5,
+      "position": -0.03750000000000066,
+      "velocity": 0.0,
+      "distance": 0.03750000000000066,
+      "observed_remaining": 0.03750000000000066,
+      "commanded_speed": 0.0
+    },
+    {
+      "time": 3.55,
+      "position": -0.03750000000000066,
+      "velocity": 0.0,
+      "distance": 0.03750000000000066,
+      "observed_remaining": 0.03750000000000066,
+      "commanded_speed": 0.0
+    },
+    {
+      "time": 3.6,
+      "position": -0.03750000000000066,
+      "velocity": 0.0,
+      "distance": 0.03750000000000066,
+      "observed_remaining": 0.03750000000000066,
+      "commanded_speed": 0.0
+    },
+    {
+      "time": 3.65,
+      "position": -0.03750000000000066,
+      "velocity": 0.0,
+      "distance": 0.03750000000000066,
+      "observed_remaining": 0.03750000000000066,
+      "commanded_speed": 0.0
+    },
+    {
+      "time": 3.7,
+      "position": -0.03750000000000066,
+      "velocity": 0.0,
+      "distance": 0.03750000000000066,
+      "observed_remaining": 0.03750000000000066,
+      "commanded_speed": 0.0
+    },
+    {
+      "time": 3.75,
+      "position": -0.03750000000000066,
+      "velocity": 0.0,
+      "distance": 0.03750000000000066,
+      "observed_remaining": 0.03750000000000066,
+      "commanded_speed": 0.0
+    },
+    {
+      "time": 3.8,
+      "position": -0.03750000000000066,
+      "velocity": 0.0,
+      "distance": 0.03750000000000066,
+      "observed_remaining": 0.03750000000000066,
+      "commanded_speed": 0.0
+    },
+    {
+      "time": 3.85,
+      "position": -0.03750000000000066,
+      "velocity": 0.0,
+      "distance": 0.03750000000000066,
+      "observed_remaining": 0.03750000000000066,
+      "commanded_speed": 0.0
+    },
+    {
+      "time": 3.9,
+      "position": -0.03750000000000066,
+      "velocity": 0.0,
+      "distance": 0.03750000000000066,
+      "observed_remaining": 0.03750000000000066,
+      "commanded_speed": 0.0
+    },
+    {
+      "time": 3.95,
+      "position": -0.03750000000000066,
+      "velocity": 0.0,
+      "distance": 0.03750000000000066,
+      "observed_remaining": 0.03750000000000066,
+      "commanded_speed": 0.0
+    },
+    {
+      "time": 4.0,
+      "position": -0.03750000000000066,
+      "velocity": 0.0,
+      "distance": 0.03750000000000066,
+      "observed_remaining": 0.03750000000000066,
+      "commanded_speed": 0.0
+    },
+    {
+      "time": 4.05,
+      "position": -0.03750000000000066,
+      "velocity": 0.0,
+      "distance": 0.03750000000000066,
+      "observed_remaining": 0.03750000000000066,
+      "commanded_speed": 0.0
+    },
+    {
+      "time": 4.1,
+      "position": -0.03750000000000066,
+      "velocity": 0.0,
+      "distance": 0.03750000000000066,
+      "observed_remaining": 0.03750000000000066,
+      "commanded_speed": 0.0
+    },
+    {
+      "time": 4.15,
+      "position": -0.03750000000000066,
+      "velocity": 0.0,
+      "distance": 0.03750000000000066,
+      "observed_remaining": 0.03750000000000066,
+      "commanded_speed": 0.0
+    },
+    {
+      "time": 4.2,
+      "position": -0.03750000000000066,
+      "velocity": 0.0,
+      "distance": 0.03750000000000066,
+      "observed_remaining": 0.03750000000000066,
+      "commanded_speed": 0.0
+    },
+    {
+      "time": 4.25,
+      "position": -0.03750000000000066,
+      "velocity": 0.0,
+      "distance": 0.03750000000000066,
+      "observed_remaining": 0.03750000000000066,
+      "commanded_speed": 0.0
+    },
+    {
+      "time": 4.3,
+      "position": -0.03750000000000066,
+      "velocity": 0.0,
+      "distance": 0.03750000000000066,
+      "observed_remaining": 0.03750000000000066,
+      "commanded_speed": 0.0
+    },
+    {
+      "time": 4.35,
+      "position": -0.03750000000000066,
+      "velocity": 0.0,
+      "distance": 0.03750000000000066,
+      "observed_remaining": 0.03750000000000066,
+      "commanded_speed": 0.0
+    },
+    {
+      "time": 4.4,
+      "position": -0.03750000000000066,
+      "velocity": 0.0,
+      "distance": 0.03750000000000066,
+      "observed_remaining": 0.03750000000000066,
+      "commanded_speed": 0.0
+    },
+    {
+      "time": 4.45,
+      "position": -0.03750000000000066,
+      "velocity": 0.0,
+      "distance": 0.03750000000000066,
+      "observed_remaining": 0.03750000000000066,
+      "commanded_speed": 0.0
+    },
+    {
+      "time": 4.5,
+      "position": -0.03750000000000066,
+      "velocity": 0.0,
+      "distance": 0.03750000000000066,
+      "observed_remaining": 0.03750000000000066,
+      "commanded_speed": 0.0
+    },
+    {
+      "time": 4.55,
+      "position": -0.03750000000000066,
+      "velocity": 0.0,
+      "distance": 0.03750000000000066,
+      "observed_remaining": 0.03750000000000066,
+      "commanded_speed": 0.0
+    },
+    {
+      "time": 4.6,
+      "position": -0.03750000000000066,
+      "velocity": 0.0,
+      "distance": 0.03750000000000066,
+      "observed_remaining": 0.03750000000000066,
+      "commanded_speed": 0.0
+    },
+    {
+      "time": 4.65,
+      "position": -0.03750000000000066,
+      "velocity": 0.0,
+      "distance": 0.03750000000000066,
+      "observed_remaining": 0.03750000000000066,
+      "commanded_speed": 0.0
+    },
+    {
+      "time": 4.7,
+      "position": -0.03750000000000066,
+      "velocity": 0.0,
+      "distance": 0.03750000000000066,
+      "observed_remaining": 0.03750000000000066,
+      "commanded_speed": 0.0
+    },
+    {
+      "time": 4.75,
+      "position": -0.03750000000000066,
+      "velocity": 0.0,
+      "distance": 0.03750000000000066,
+      "observed_remaining": 0.03750000000000066,
+      "commanded_speed": 0.0
+    },
+    {
+      "time": 4.8,
+      "position": -0.03750000000000066,
+      "velocity": 0.0,
+      "distance": 0.03750000000000066,
+      "observed_remaining": 0.03750000000000066,
+      "commanded_speed": 0.0
+    },
+    {
+      "time": 4.85,
+      "position": -0.03750000000000066,
+      "velocity": 0.0,
+      "distance": 0.03750000000000066,
+      "observed_remaining": 0.03750000000000066,
+      "commanded_speed": 0.0
+    },
+    {
+      "time": 4.9,
+      "position": -0.03750000000000066,
+      "velocity": 0.0,
+      "distance": 0.03750000000000066,
+      "observed_remaining": 0.03750000000000066,
+      "commanded_speed": 0.0
+    },
+    {
+      "time": 4.95,
+      "position": -0.03750000000000066,
+      "velocity": 0.0,
+      "distance": 0.03750000000000066,
+      "observed_remaining": 0.03750000000000066,
+      "commanded_speed": 0.0
+    },
+    {
+      "time": 5.0,
+      "position": -0.03750000000000066,
+      "velocity": 0.0,
+      "distance": 0.03750000000000066,
+      "observed_remaining": 0.03750000000000066,
+      "commanded_speed": 0.0
+    },
+    {
+      "time": 5.05,
+      "position": -0.03750000000000066,
+      "velocity": 0.0,
+      "distance": 0.03750000000000066,
+      "observed_remaining": 0.03750000000000066,
+      "commanded_speed": 0.0
+    },
+    {
+      "time": 5.1,
+      "position": -0.03750000000000066,
+      "velocity": 0.0,
+      "distance": 0.03750000000000066,
+      "observed_remaining": 0.03750000000000066,
+      "commanded_speed": 0.0
+    },
+    {
+      "time": 5.15,
+      "position": -0.03750000000000066,
+      "velocity": 0.0,
+      "distance": 0.03750000000000066,
+      "observed_remaining": 0.03750000000000066,
+      "commanded_speed": 0.0
+    },
+    {
+      "time": 5.2,
+      "position": -0.03750000000000066,
+      "velocity": 0.0,
+      "distance": 0.03750000000000066,
+      "observed_remaining": 0.03750000000000066,
+      "commanded_speed": 0.0
+    },
+    {
+      "time": 5.25,
+      "position": -0.03750000000000066,
+      "velocity": 0.0,
+      "distance": 0.03750000000000066,
+      "observed_remaining": 0.03750000000000066,
+      "commanded_speed": 0.0
+    },
+    {
+      "time": 5.3,
+      "position": -0.03750000000000066,
+      "velocity": 0.0,
+      "distance": 0.03750000000000066,
+      "observed_remaining": 0.03750000000000066,
+      "commanded_speed": 0.0
+    },
+    {
+      "time": 5.35,
+      "position": -0.03750000000000066,
+      "velocity": 0.0,
+      "distance": 0.03750000000000066,
+      "observed_remaining": 0.03750000000000066,
+      "commanded_speed": 0.0
+    },
+    {
+      "time": 5.4,
+      "position": -0.03750000000000066,
+      "velocity": 0.0,
+      "distance": 0.03750000000000066,
+      "observed_remaining": 0.03750000000000066,
+      "commanded_speed": 0.0
+    },
+    {
+      "time": 5.45,
+      "position": -0.03750000000000066,
+      "velocity": 0.0,
+      "distance": 0.03750000000000066,
+      "observed_remaining": 0.03750000000000066,
+      "commanded_speed": 0.0
+    },
+    {
+      "time": 5.5,
+      "position": -0.03750000000000066,
+      "velocity": 0.0,
+      "distance": 0.03750000000000066,
+      "observed_remaining": 0.03750000000000066,
+      "commanded_speed": 0.0
+    },
+    {
+      "time": 5.55,
+      "position": -0.03750000000000066,
+      "velocity": 0.0,
+      "distance": 0.03750000000000066,
+      "observed_remaining": 0.03750000000000066,
+      "commanded_speed": 0.0
+    },
+    {
+      "time": 5.6,
+      "position": -0.03750000000000066,
+      "velocity": 0.0,
+      "distance": 0.03750000000000066,
+      "observed_remaining": 0.03750000000000066,
+      "commanded_speed": 0.0
+    },
+    {
+      "time": 5.65,
+      "position": -0.03750000000000066,
+      "velocity": 0.0,
+      "distance": 0.03750000000000066,
+      "observed_remaining": 0.03750000000000066,
+      "commanded_speed": 0.0
+    },
+    {
+      "time": 5.7,
+      "position": -0.03750000000000066,
+      "velocity": 0.0,
+      "distance": 0.03750000000000066,
+      "observed_remaining": 0.03750000000000066,
+      "commanded_speed": 0.0
+    },
+    {
+      "time": 5.75,
+      "position": -0.03750000000000066,
+      "velocity": 0.0,
+      "distance": 0.03750000000000066,
+      "observed_remaining": 0.03750000000000066,
+      "commanded_speed": 0.0
+    },
+    {
+      "time": 5.8,
+      "position": -0.03750000000000066,
+      "velocity": 0.0,
+      "distance": 0.03750000000000066,
+      "observed_remaining": 0.03750000000000066,
+      "commanded_speed": 0.0
+    },
+    {
+      "time": 5.85,
+      "position": -0.03750000000000066,
+      "velocity": 0.0,
+      "distance": 0.03750000000000066,
+      "observed_remaining": 0.03750000000000066,
+      "commanded_speed": 0.0
+    },
+    {
+      "time": 5.9,
+      "position": -0.03750000000000066,
+      "velocity": 0.0,
+      "distance": 0.03750000000000066,
+      "observed_remaining": 0.03750000000000066,
+      "commanded_speed": 0.0
+    },
+    {
+      "time": 5.95,
+      "position": -0.03750000000000066,
+      "velocity": 0.0,
+      "distance": 0.03750000000000066,
+      "observed_remaining": 0.03750000000000066,
+      "commanded_speed": 0.0
+    },
+    {
+      "time": 6.0,
+      "position": -0.03750000000000066,
+      "velocity": 0.0,
+      "distance": 0.03750000000000066,
+      "observed_remaining": 0.03750000000000066,
+      "commanded_speed": 0.0
+    },
+    {
+      "time": 6.05,
+      "position": -0.03750000000000066,
+      "velocity": 0.0,
+      "distance": 0.03750000000000066,
+      "observed_remaining": 0.03750000000000066,
+      "commanded_speed": 0.0
+    },
+    {
+      "time": 6.1,
+      "position": -0.03750000000000066,
+      "velocity": 0.0,
+      "distance": 0.03750000000000066,
+      "observed_remaining": 0.03750000000000066,
+      "commanded_speed": 0.0
+    },
+    {
+      "time": 6.15,
+      "position": -0.03750000000000066,
+      "velocity": 0.0,
+      "distance": 0.03750000000000066,
+      "observed_remaining": 0.03750000000000066,
+      "commanded_speed": 0.0
+    },
+    {
+      "time": 6.2,
+      "position": -0.03750000000000066,
+      "velocity": 0.0,
+      "distance": 0.03750000000000066,
+      "observed_remaining": 0.03750000000000066,
+      "commanded_speed": 0.0
+    },
+    {
+      "time": 6.25,
+      "position": -0.03750000000000066,
+      "velocity": 0.0,
+      "distance": 0.03750000000000066,
+      "observed_remaining": 0.03750000000000066,
+      "commanded_speed": 0.0
+    },
+    {
+      "time": 6.3,
+      "position": -0.03750000000000066,
+      "velocity": 0.0,
+      "distance": 0.03750000000000066,
+      "observed_remaining": 0.03750000000000066,
+      "commanded_speed": 0.0
+    },
+    {
+      "time": 6.35,
+      "position": -0.03750000000000066,
+      "velocity": 0.0,
+      "distance": 0.03750000000000066,
+      "observed_remaining": 0.03750000000000066,
+      "commanded_speed": 0.0
+    },
+    {
+      "time": 6.4,
+      "position": -0.03750000000000066,
+      "velocity": 0.0,
+      "distance": 0.03750000000000066,
+      "observed_remaining": 0.03750000000000066,
+      "commanded_speed": 0.0
+    },
+    {
+      "time": 6.45,
+      "position": -0.03750000000000066,
+      "velocity": 0.0,
+      "distance": 0.03750000000000066,
+      "observed_remaining": 0.03750000000000066,
+      "commanded_speed": 0.0
+    },
+    {
+      "time": 6.5,
+      "position": -0.03750000000000066,
+      "velocity": 0.0,
+      "distance": 0.03750000000000066,
+      "observed_remaining": 0.03750000000000066,
+      "commanded_speed": 0.0
+    },
+    {
+      "time": 6.55,
+      "position": -0.03750000000000066,
+      "velocity": 0.0,
+      "distance": 0.03750000000000066,
+      "observed_remaining": 0.03750000000000066,
+      "commanded_speed": 0.0
+    },
+    {
+      "time": 6.6,
+      "position": -0.03750000000000066,
+      "velocity": 0.0,
+      "distance": 0.03750000000000066,
+      "observed_remaining": 0.03750000000000066,
+      "commanded_speed": 0.0
+    },
+    {
+      "time": 6.65,
+      "position": -0.03750000000000066,
+      "velocity": 0.0,
+      "distance": 0.03750000000000066,
+      "observed_remaining": 0.03750000000000066,
+      "commanded_speed": 0.0
+    },
+    {
+      "time": 6.7,
+      "position": -0.03750000000000066,
+      "velocity": 0.0,
+      "distance": 0.03750000000000066,
+      "observed_remaining": 0.03750000000000066,
+      "commanded_speed": 0.0
+    },
+    {
+      "time": 6.75,
+      "position": -0.03750000000000066,
+      "velocity": 0.0,
+      "distance": 0.03750000000000066,
+      "observed_remaining": 0.03750000000000066,
+      "commanded_speed": 0.0
+    },
+    {
+      "time": 6.8,
+      "position": -0.03750000000000066,
+      "velocity": 0.0,
+      "distance": 0.03750000000000066,
+      "observed_remaining": 0.03750000000000066,
+      "commanded_speed": 0.0
+    },
+    {
+      "time": 6.85,
+      "position": -0.03750000000000066,
+      "velocity": 0.0,
+      "distance": 0.03750000000000066,
+      "observed_remaining": 0.03750000000000066,
+      "commanded_speed": 0.0
+    },
+    {
+      "time": 6.9,
+      "position": -0.03750000000000066,
+      "velocity": 0.0,
+      "distance": 0.03750000000000066,
+      "observed_remaining": 0.03750000000000066,
+      "commanded_speed": 0.0
+    },
+    {
+      "time": 6.95,
+      "position": -0.03750000000000066,
+      "velocity": 0.0,
+      "distance": 0.03750000000000066,
+      "observed_remaining": 0.03750000000000066,
+      "commanded_speed": 0.0
+    },
+    {
+      "time": 7.0,
+      "position": -0.03750000000000066,
+      "velocity": 0.0,
+      "distance": 0.03750000000000066,
+      "observed_remaining": 0.03750000000000066,
+      "commanded_speed": 0.0
+    }
+  ],
+  "samples": [
+    {
+      "time": 0.0,
+      "position": -3.0,
+      "velocity": 0.0,
+      "distance": 3.0,
+      "observed_remaining": 3.0,
+      "commanded_speed": 1.5
+    },
+    {
+      "time": 1.0,
+      "position": -2.3700000000000006,
+      "velocity": 1.2000000000000006,
+      "distance": 2.3700000000000006,
+      "observed_remaining": 2.3700000000000006,
+      "commanded_speed": 1.5
+    },
+    {
+      "time": 2.0,
+      "position": -0.900000000000001,
+      "velocity": 1.5,
+      "distance": 0.900000000000001,
+      "observed_remaining": 0.900000000000001,
+      "commanded_speed": 1.5
+    },
+    {
+      "time": 3.0,
+      "position": -0.04125000000000071,
+      "velocity": 0.15000000000000052,
+      "distance": 0.04125000000000071,
+      "observed_remaining": 0.04125000000000071,
+      "commanded_speed": 0.0
+    },
+    {
+      "time": 4.0,
+      "position": -0.03750000000000066,
+      "velocity": 0.0,
+      "distance": 0.03750000000000066,
+      "observed_remaining": 0.03750000000000066,
+      "commanded_speed": 0.0
+    },
+    {
+      "time": 5.0,
+      "position": -0.03750000000000066,
+      "velocity": 0.0,
+      "distance": 0.03750000000000066,
+      "observed_remaining": 0.03750000000000066,
+      "commanded_speed": 0.0
+    },
+    {
+      "time": 6.0,
+      "position": -0.03750000000000066,
+      "velocity": 0.0,
+      "distance": 0.03750000000000066,
+      "observed_remaining": 0.03750000000000066,
+      "commanded_speed": 0.0
+    },
+    {
+      "time": 7.0,
+      "position": -0.03750000000000066,
+      "velocity": 0.0,
+      "distance": 0.03750000000000066,
+      "observed_remaining": 0.03750000000000066,
+      "commanded_speed": 0.0
+    }
+  ],
+  "trace_sha256": "a90daddd71636d620d3ec13afe06491cc62868f0861d15e01b33493ef03ea217",
+  "run_id": "499a41a0348dee08"
+}

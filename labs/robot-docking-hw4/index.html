@@ -1,0 +1,116 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>HW4 robot docking lab — CS 6494</title>
+  <link rel="stylesheet" href="/style.css">
+  <script src="/app.js" defer></script>
+</head>
+<body>
+  <header>
+    <div class="eyebrow">CS 6494 · HW4 working demo</div>
+    <h1>Test whether the robot reaches the dock safely</h1>
+    <p>Choose a scenario → run the Python model → inspect its trace → check the fixed requirements → save and replay the result.</p>
+  </header>
+  <main>
+    <section class="panel controls" aria-labelledby="choose-heading">
+      <h2 id="choose-heading">1 · Choose a scenario</h2>
+      <p>The robot starts 3 m left of the dock. A controller commands cruise speed until its <strong>observed remaining distance</strong> reaches the brake point. Momentum continues after the stop command. Maximum braking below is a scenario condition; the brake point in <code>policy.json</code> is the controller setting.</p>
+      <div class="presets">
+        <button type="button" id="preset-baseline">Baseline <small>1.2 m/s · braking 0.5 m/s²</small></button>
+        <button type="button" id="preset-a">Case A <small>braking 0.6 m/s²</small></button>
+        <button type="button" id="preset-b">Case B <small>braking 1.6 m/s²</small></button>
+      </div>
+      <label for="speed">Cruise speed (m/s)</label>
+      <input id="speed" type="number" min="0.3" max="1.8" step="0.05" value="1.2">
+      <label for="braking">Maximum braking (m/s²)</label>
+      <input id="braking" type="number" min="0.2" max="2.5" step="0.05" value="0.5">
+      <div class="policy"><strong>Controller policy:</strong> brake when observed remaining distance is <strong id="brake-at">…</strong>. Edit <code>policy.json</code> for the repair exercise, then run again. The fixed evaluator stays unchanged.</div>
+      <button type="button" id="refresh-policy" class="quiet">Refresh policy from file</button>
+      <div class="action-row"><button type="button" id="run" class="primary">Run a fresh model execution</button></div>
+      <p id="status" role="status" aria-live="polite">Connecting to the local Python engine…</p>
+    </section>
+
+    <section class="panel visual" aria-labelledby="trace-heading">
+      <div class="section-line"><div><span class="eyebrow">One recorded model run</span><h2 id="trace-heading">2 · Watch the robot, then inspect the trace</h2></div><span id="run-id" class="run-id">No run yet</span></div>
+      <div class="scene-wrap">
+        <svg id="scene" viewBox="0 0 1000 300" role="img" aria-labelledby="scene-title scene-description">
+          <title id="scene-title">Robot and docking region</title>
+          <desc id="scene-description">A wheeled delivery robot moves along one track. The floor dot at its center is the modeled point position. The dock marker is not a wall or collision model.</desc>
+          <defs><pattern id="track-grid" width="40" height="25" patternUnits="userSpaceOnUse"><path d="M40 0H0V25" fill="none" stroke="#e5ebef"/></pattern></defs>
+          <rect x="38" y="124" width="924" height="121" rx="11" fill="url(#track-grid)"/>
+          <rect id="service-zone" y="128" height="116" rx="6" fill="#e6f0f5"/>
+          <line id="zone-left" y1="129" y2="245" stroke="#6692ac" stroke-dasharray="5 5"/>
+          <line id="zone-right" y1="129" y2="245" stroke="#6692ac" stroke-dasharray="5 5"/>
+          <line x1="38" y1="245" x2="962" y2="245" stroke="#889ca9" stroke-width="2"/>
+          <line id="dock-line" y1="99" y2="246" stroke="#39728e" stroke-width="2" stroke-dasharray="4 5"/>
+          <g id="dock-marker"><rect x="-23" y="28" width="46" height="57" rx="6" fill="#eef2f5" stroke="#91a4b1" stroke-width="2"/><rect x="-13" y="39" width="26" height="20" rx="3" fill="#31516a"/><circle cy="49" r="3" fill="#a5d3dd"/><path d="M-31 85H31L38 96H-38Z" fill="#d7e1e7"/></g>
+          <text id="dock-label" y="19" text-anchor="middle" fill="#31516a" font-size="15" font-weight="700">Dock reference x = 0</text>
+          <text id="zone-label" y="117" text-anchor="end" fill="#31516a" font-size="13">Within ±0.5 m →</text>
+          <g id="scene-ticks" fill="#536774" font-size="12" text-anchor="middle"></g>
+          <text id="scene-time" x="52" y="30" fill="#243746" font-size="17" font-weight="700"></text>
+          <text id="scene-position" x="948" y="292" text-anchor="end" fill="#243746" font-size="14" font-weight="700"></text>
+          <g id="robot-figure" visibility="hidden">
+            <ellipse cy="231" rx="46" ry="7" fill="#243746" opacity=".12"/>
+            <rect x="-38" y="161" width="76" height="52" rx="12" fill="#f7fafb" stroke="#526775" stroke-width="2"/>
+            <path d="M-37 193H37V204Q37 213 28 213H-28Q-37 213-37 204Z" fill="#aa1029"/>
+            <rect x="-24" y="138" width="45" height="23" rx="4" fill="#d7bd93" stroke="#a58e66"/><path d="M-3 139V161" stroke="#f7eacb" stroke-width="6"/>
+            <rect x="25" y="170" width="13" height="11" rx="3" fill="#31516a"/><circle cx="31" cy="175" r="2.5" fill="#a9d9e6"/>
+            <circle cx="-22" cy="212" r="10" fill="#273d4d"/><circle cx="22" cy="212" r="10" fill="#273d4d"/><circle cx="-22" cy="212" r="4" fill="#9db0bc"/><circle cx="22" cy="212" r="4" fill="#9db0bc"/>
+            <line y1="226" y2="242" stroke="#182634" stroke-width="2"/><circle cy="244" r="4.5" fill="#182634"/>
+            <g id="robot-command"><rect x="-68" y="99" width="136" height="28" rx="6" fill="#fff2df" stroke="#d4bb8b"/><text id="robot-command-text" y="118" text-anchor="middle" fill="#735116" font-size="12" font-weight="700"></text></g>
+          </g>
+          <text x="48" y="292" fill="#536774" font-size="12">Center dot = modeled position; robot artwork is illustrative.</text>
+        </svg>
+        <div id="scene-empty" class="scene-empty">Run the model to see the recorded robot motion.</div>
+      </div>
+      <div class="moment" aria-live="polite"><strong id="moment-summary">A command is not an instant change in motion.</strong><span id="moment-detail">Run a scenario, then watch what happens.</span></div>
+      <div class="readout-grid">
+        <div><span>Controller command</span><output id="command-value">—</output><small>Requested speed for the next model step</small></div>
+        <div><span>Robot speed</span><output id="speed-value">—</output><small>Recorded motion now</small></div>
+        <div><span>Reference distance</span><output id="distance-value">—</output><small>Absolute distance, on either side</small></div>
+      </div>
+      <div class="playback-controls">
+        <div class="action-row"><button type="button" id="animate" class="quiet" disabled>Play animation</button><button type="button" id="previous-sample" class="quiet" disabled>← Previous sample</button><button type="button" id="next-sample" class="quiet" disabled>Next sample →</button><button type="button" id="restart-view" class="quiet" disabled>Restart view</button><span id="playback-time" class="playback-time">t = —</span></div>
+        <label for="playhead">Scrub through the recorded run</label>
+        <input id="playhead" type="range" min="0" max="7" step="1" value="0" disabled aria-label="Time in the recorded run">
+        <div class="timeline-ticks" aria-hidden="true"><span>0 s</span><span>1</span><span>2</span><span>3</span><span>4</span><span>5</span><span>6</span><span>7 s</span></div>
+        <p id="playback-note" class="muted">Play animation only changes the view. Run a fresh model execution or Replay selected file to execute Python.</p>
+        <div class="action-row"><button type="button" id="download" class="quiet" disabled>Download this run JSON</button></div>
+      </div>
+      <details class="observation"><summary>What does the controller see?</summary><div class="observation-values"><div>Forward-looking remaining distance <output id="observed-value">—</output></div><div>Reference distance <output id="reference-value">—</output></div><div>Signed position <output id="signed-value">—</output></div></div><p>The controller's remaining-distance observation stops at zero after the robot passes the dock. Reference distance can increase again. This is the supplied observation model, not sensor spoofing.</p></details>
+      <div class="charts">
+        <div><h3>Distance from dock</h3><svg id="distance-chart" viewBox="0 0 760 260" role="group" aria-label="Distance at one-second samples; choose a dot to move the robot"></svg></div>
+        <div><h3>Robot speed</h3><svg id="speed-chart" viewBox="0 0 760 260" role="group" aria-label="Speed at one-second samples; choose a dot to move the robot"></svg></div>
+      </div>
+      <p class="muted">The model integrates at 0.05 s. The monitor evaluates only the eight dots at seconds 0–7; lines between dots are visual guides, not interpolation semantics.</p>
+      <p id="sample-focus" class="muted">The highlighted row will show the nearest one-second monitor sample.</p>
+      <p id="trace-highlights" class="trace-highlights" hidden></p>
+      <div class="table-wrap"><table><caption>One-second samples from this run</caption><thead><tr><th scope="col">Second</th><th scope="col">Reference dock distance (m)</th><th scope="col">Controller-visible remaining (m)</th><th scope="col">Speed (m/s)</th><th scope="col">Commanded speed (m/s)</th><th scope="col">After reveal</th></tr></thead><tbody id="sample-rows"><tr><td colspan="6">Run the model to populate the table.</td></tr></tbody></table></div>
+      <p class="muted">The observed remaining distance is an ideal forward-looking sensor that stops at zero after the robot passes the dock. The evaluator uses the reference distance and speed. This exercise does not model sensor spoofing.</p>
+    </section>
+
+    <section class="panel requirements" aria-labelledby="check-heading">
+      <h2 id="check-heading">3 · Check the requirements</h2>
+      <p><strong>Useful service:</strong> reach within 0.5 m by second 5 and remain there for three consecutive one-second samples.</p>
+      <p><strong>Safe approach:</strong> whenever a sampled position is inside that region during seconds 0–5, speed must be at most 0.2 m/s.</p>
+      <button type="button" id="reveal" class="primary" disabled>Reveal RTAMT results</button>
+      <div id="results" class="results" hidden></div>
+      <p class="muted">For the Monday formula exercise, edit <code>student_spec.py</code> and run <code>.venv/bin/python hw4.py check-spec</code>. That practice formula does not change the fixed results above.</p>
+      <details><summary>Show the exact STL formulas and interpretation</summary><pre id="formulae"></pre><p>RTAMT uses discrete time at one-second spacing. The speed formula uses dimensionless distance and speed terms scaled by 0.5 m and 0.2 m/s; its score is not added to a margin in metres. At zero robustness, inspect strict versus inclusive predicates. If the robot never enters, the conditional speed rule is logically true, while its antecedent is marked NOT EXERCISED; that does not demonstrate safe docking.</p></details>
+    </section>
+
+    <section class="panel replay" aria-labelledby="replay-heading">
+      <h2 id="replay-heading">4 · Save and reproduce</h2>
+      <p>The server saves every fresh run under <code>runs/</code>. Download its JSON to submit or share a case. Replaying executes the Python model again with the saved scenario and policy; loading a curve alone is not a replay.</p>
+      <label for="saved-file">Choose a saved run or single-strategy search JSON</label>
+      <input id="saved-file" type="file" accept="application/json,.json">
+      <button type="button" id="replay-file" class="quiet">Replay selected file</button>
+      <p id="replay-status" role="status" aria-live="polite"></p>
+      <details><summary>View samples without running the model</summary><p>Use this only to inspect a saved JSON record. It does not verify the file, execute Python, or calculate a new verdict. A record with only one-second states will show sample-only playback.</p><label for="view-file">Saved JSON to view</label><input id="view-file" type="file" accept="application/json,.json"><button type="button" id="view-file-button" class="quiet">View saved values only</button><p id="view-status" role="status" aria-live="polite"></p></details>
+    </section>
+  </main>
+  <footer>Course-authored one-dimensional simulation. This page uses the local Python model and RTAMT; it does not run Gazebo, an autopilot, or physical hardware.</footer>
+</body>
+</html>

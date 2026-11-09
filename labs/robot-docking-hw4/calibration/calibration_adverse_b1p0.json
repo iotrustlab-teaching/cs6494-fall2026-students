@@ -1,0 +1,1266 @@
+{
+  "schema": "cs6494-hw4-docking-v1",
+  "kind": "fresh_model_run",
+  "model": "course-authored 1-D robot approach; no Gazebo, SITL, or hardware",
+  "identity": {
+    "model_sha256": "41512a029a90bcdaadf1b7472eca2fade36a0c496e5796f29293854bb16f43a0",
+    "reference_sha256": "832a17a7a0119874f7f364552abe2f5a9de1c16c54c452243dac958f10542c6b"
+  },
+  "runtime": {
+    "psy_taliro": "3.2.0",
+    "rtamt": "0.4.10"
+  },
+  "scenario": {
+    "cruise_speed_m_s": 1.2,
+    "braking_m_s2": 1.0
+  },
+  "policy": {
+    "brake_at_m": 0.8
+  },
+  "reset": {
+    "position_m": -3.0,
+    "velocity_m_s": 0.0
+  },
+  "integration_step_s": 0.05,
+  "sample_times_s": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7
+  ],
+  "formulae": {
+    "service": "eventually[0,5] (always[0,2] (e <= 0.5))",
+    "safety": "always[0,5] ((outside_norm > 0) or (slow_norm >= 0))"
+  },
+  "monitor": {
+    "semantics": "discrete RTAMT at 1 s; no interpolation; integration at 0.05 s",
+    "service": {
+      "formula": "eventually[0,5] (always[0,2] (e <= 0.5))",
+      "pass": true,
+      "margin_m": 0.4400000000000005,
+      "first_window_start_s": 3,
+      "requires_samples_through_s": 7
+    },
+    "safety": {
+      "formula": "always[0,5] ((outside_norm > 0) or (slow_norm >= 0))",
+      "pass": false,
+      "exercised": true,
+      "robustness_normalized": -0.6050000000000015,
+      "normalization": {
+        "outside_distance_m": 0.5,
+        "slow_speed_m_s": 0.2
+      },
+      "inside_samples_s": [
+        3,
+        4,
+        5
+      ],
+      "too_fast_samples_s": [
+        3
+      ],
+      "zero_score_note": "At zero robustness, inspect strict/inclusive predicates; Boolean result is authoritative."
+    }
+  },
+  "trace": [
+    {
+      "time": 0.0,
+      "position": -3.0,
+      "velocity": 0.0,
+      "distance": 3.0,
+      "observed_remaining": 3.0,
+      "commanded_speed": 1.2
+    },
+    {
+      "time": 0.05,
+      "position": -2.997,
+      "velocity": 0.06,
+      "distance": 2.997,
+      "observed_remaining": 2.997,
+      "commanded_speed": 1.2
+    },
+    {
+      "time": 0.1,
+      "position": -2.991,
+      "velocity": 0.12,
+      "distance": 2.991,
+      "observed_remaining": 2.991,
+      "commanded_speed": 1.2
+    },
+    {
+      "time": 0.15,
+      "position": -2.982,
+      "velocity": 0.18,
+      "distance": 2.982,
+      "observed_remaining": 2.982,
+      "commanded_speed": 1.2
+    },
+    {
+      "time": 0.2,
+      "position": -2.97,
+      "velocity": 0.24,
+      "distance": 2.97,
+      "observed_remaining": 2.97,
+      "commanded_speed": 1.2
+    },
+    {
+      "time": 0.25,
+      "position": -2.955,
+      "velocity": 0.3,
+      "distance": 2.955,
+      "observed_remaining": 2.955,
+      "commanded_speed": 1.2
+    },
+    {
+      "time": 0.3,
+      "position": -2.9370000000000003,
+      "velocity": 0.36,
+      "distance": 2.9370000000000003,
+      "observed_remaining": 2.9370000000000003,
+      "commanded_speed": 1.2
+    },
+    {
+      "time": 0.35,
+      "position": -2.9160000000000004,
+      "velocity": 0.42,
+      "distance": 2.9160000000000004,
+      "observed_remaining": 2.9160000000000004,
+      "commanded_speed": 1.2
+    },
+    {
+      "time": 0.4,
+      "position": -2.8920000000000003,
+      "velocity": 0.48,
+      "distance": 2.8920000000000003,
+      "observed_remaining": 2.8920000000000003,
+      "commanded_speed": 1.2
+    },
+    {
+      "time": 0.45,
+      "position": -2.865,
+      "velocity": 0.54,
+      "distance": 2.865,
+      "observed_remaining": 2.865,
+      "commanded_speed": 1.2
+    },
+    {
+      "time": 0.5,
+      "position": -2.8350000000000004,
+      "velocity": 0.6000000000000001,
+      "distance": 2.8350000000000004,
+      "observed_remaining": 2.8350000000000004,
+      "commanded_speed": 1.2
+    },
+    {
+      "time": 0.55,
+      "position": -2.8020000000000005,
+      "velocity": 0.6600000000000001,
+      "distance": 2.8020000000000005,
+      "observed_remaining": 2.8020000000000005,
+      "commanded_speed": 1.2
+    },
+    {
+      "time": 0.6,
+      "position": -2.7660000000000005,
+      "velocity": 0.7200000000000002,
+      "distance": 2.7660000000000005,
+      "observed_remaining": 2.7660000000000005,
+      "commanded_speed": 1.2
+    },
+    {
+      "time": 0.65,
+      "position": -2.7270000000000003,
+      "velocity": 0.7800000000000002,
+      "distance": 2.7270000000000003,
+      "observed_remaining": 2.7270000000000003,
+      "commanded_speed": 1.2
+    },
+    {
+      "time": 0.7,
+      "position": -2.6850000000000005,
+      "velocity": 0.8400000000000003,
+      "distance": 2.6850000000000005,
+      "observed_remaining": 2.6850000000000005,
+      "commanded_speed": 1.2
+    },
+    {
+      "time": 0.75,
+      "position": -2.6400000000000006,
+      "velocity": 0.9000000000000004,
+      "distance": 2.6400000000000006,
+      "observed_remaining": 2.6400000000000006,
+      "commanded_speed": 1.2
+    },
+    {
+      "time": 0.8,
+      "position": -2.5920000000000005,
+      "velocity": 0.9600000000000004,
+      "distance": 2.5920000000000005,
+      "observed_remaining": 2.5920000000000005,
+      "commanded_speed": 1.2
+    },
+    {
+      "time": 0.85,
+      "position": -2.5410000000000004,
+      "velocity": 1.0200000000000005,
+      "distance": 2.5410000000000004,
+      "observed_remaining": 2.5410000000000004,
+      "commanded_speed": 1.2
+    },
+    {
+      "time": 0.9,
+      "position": -2.4870000000000005,
+      "velocity": 1.0800000000000005,
+      "distance": 2.4870000000000005,
+      "observed_remaining": 2.4870000000000005,
+      "commanded_speed": 1.2
+    },
+    {
+      "time": 0.95,
+      "position": -2.4300000000000006,
+      "velocity": 1.1400000000000006,
+      "distance": 2.4300000000000006,
+      "observed_remaining": 2.4300000000000006,
+      "commanded_speed": 1.2
+    },
+    {
+      "time": 1.0,
+      "position": -2.3700000000000006,
+      "velocity": 1.2,
+      "distance": 2.3700000000000006,
+      "observed_remaining": 2.3700000000000006,
+      "commanded_speed": 1.2
+    },
+    {
+      "time": 1.05,
+      "position": -2.3100000000000005,
+      "velocity": 1.2,
+      "distance": 2.3100000000000005,
+      "observed_remaining": 2.3100000000000005,
+      "commanded_speed": 1.2
+    },
+    {
+      "time": 1.1,
+      "position": -2.2500000000000004,
+      "velocity": 1.2,
+      "distance": 2.2500000000000004,
+      "observed_remaining": 2.2500000000000004,
+      "commanded_speed": 1.2
+    },
+    {
+      "time": 1.15,
+      "position": -2.1900000000000004,
+      "velocity": 1.2,
+      "distance": 2.1900000000000004,
+      "observed_remaining": 2.1900000000000004,
+      "commanded_speed": 1.2
+    },
+    {
+      "time": 1.2,
+      "position": -2.1300000000000003,
+      "velocity": 1.2,
+      "distance": 2.1300000000000003,
+      "observed_remaining": 2.1300000000000003,
+      "commanded_speed": 1.2
+    },
+    {
+      "time": 1.25,
+      "position": -2.0700000000000003,
+      "velocity": 1.2,
+      "distance": 2.0700000000000003,
+      "observed_remaining": 2.0700000000000003,
+      "commanded_speed": 1.2
+    },
+    {
+      "time": 1.3,
+      "position": -2.0100000000000002,
+      "velocity": 1.2,
+      "distance": 2.0100000000000002,
+      "observed_remaining": 2.0100000000000002,
+      "commanded_speed": 1.2
+    },
+    {
+      "time": 1.35,
+      "position": -1.9500000000000002,
+      "velocity": 1.2,
+      "distance": 1.9500000000000002,
+      "observed_remaining": 1.9500000000000002,
+      "commanded_speed": 1.2
+    },
+    {
+      "time": 1.4,
+      "position": -1.8900000000000001,
+      "velocity": 1.2,
+      "distance": 1.8900000000000001,
+      "observed_remaining": 1.8900000000000001,
+      "commanded_speed": 1.2
+    },
+    {
+      "time": 1.45,
+      "position": -1.83,
+      "velocity": 1.2,
+      "distance": 1.83,
+      "observed_remaining": 1.83,
+      "commanded_speed": 1.2
+    },
+    {
+      "time": 1.5,
+      "position": -1.77,
+      "velocity": 1.2,
+      "distance": 1.77,
+      "observed_remaining": 1.77,
+      "commanded_speed": 1.2
+    },
+    {
+      "time": 1.55,
+      "position": -1.71,
+      "velocity": 1.2,
+      "distance": 1.71,
+      "observed_remaining": 1.71,
+      "commanded_speed": 1.2
+    },
+    {
+      "time": 1.6,
+      "position": -1.65,
+      "velocity": 1.2,
+      "distance": 1.65,
+      "observed_remaining": 1.65,
+      "commanded_speed": 1.2
+    },
+    {
+      "time": 1.65,
+      "position": -1.5899999999999999,
+      "velocity": 1.2,
+      "distance": 1.5899999999999999,
+      "observed_remaining": 1.5899999999999999,
+      "commanded_speed": 1.2
+    },
+    {
+      "time": 1.7,
+      "position": -1.5299999999999998,
+      "velocity": 1.2,
+      "distance": 1.5299999999999998,
+      "observed_remaining": 1.5299999999999998,
+      "commanded_speed": 1.2
+    },
+    {
+      "time": 1.75,
+      "position": -1.4699999999999998,
+      "velocity": 1.2,
+      "distance": 1.4699999999999998,
+      "observed_remaining": 1.4699999999999998,
+      "commanded_speed": 1.2
+    },
+    {
+      "time": 1.8,
+      "position": -1.4099999999999997,
+      "velocity": 1.2,
+      "distance": 1.4099999999999997,
+      "observed_remaining": 1.4099999999999997,
+      "commanded_speed": 1.2
+    },
+    {
+      "time": 1.85,
+      "position": -1.3499999999999996,
+      "velocity": 1.2,
+      "distance": 1.3499999999999996,
+      "observed_remaining": 1.3499999999999996,
+      "commanded_speed": 1.2
+    },
+    {
+      "time": 1.9,
+      "position": -1.2899999999999996,
+      "velocity": 1.2,
+      "distance": 1.2899999999999996,
+      "observed_remaining": 1.2899999999999996,
+      "commanded_speed": 1.2
+    },
+    {
+      "time": 1.95,
+      "position": -1.2299999999999995,
+      "velocity": 1.2,
+      "distance": 1.2299999999999995,
+      "observed_remaining": 1.2299999999999995,
+      "commanded_speed": 1.2
+    },
+    {
+      "time": 2.0,
+      "position": -1.1699999999999995,
+      "velocity": 1.2,
+      "distance": 1.1699999999999995,
+      "observed_remaining": 1.1699999999999995,
+      "commanded_speed": 1.2
+    },
+    {
+      "time": 2.05,
+      "position": -1.1099999999999994,
+      "velocity": 1.2,
+      "distance": 1.1099999999999994,
+      "observed_remaining": 1.1099999999999994,
+      "commanded_speed": 1.2
+    },
+    {
+      "time": 2.1,
+      "position": -1.0499999999999994,
+      "velocity": 1.2,
+      "distance": 1.0499999999999994,
+      "observed_remaining": 1.0499999999999994,
+      "commanded_speed": 1.2
+    },
+    {
+      "time": 2.15,
+      "position": -0.9899999999999993,
+      "velocity": 1.2,
+      "distance": 0.9899999999999993,
+      "observed_remaining": 0.9899999999999993,
+      "commanded_speed": 1.2
+    },
+    {
+      "time": 2.2,
+      "position": -0.9299999999999993,
+      "velocity": 1.2,
+      "distance": 0.9299999999999993,
+      "observed_remaining": 0.9299999999999993,
+      "commanded_speed": 1.2
+    },
+    {
+      "time": 2.25,
+      "position": -0.8699999999999992,
+      "velocity": 1.2,
+      "distance": 0.8699999999999992,
+      "observed_remaining": 0.8699999999999992,
+      "commanded_speed": 1.2
+    },
+    {
+      "time": 2.3,
+      "position": -0.8099999999999992,
+      "velocity": 1.2,
+      "distance": 0.8099999999999992,
+      "observed_remaining": 0.8099999999999992,
+      "commanded_speed": 1.2
+    },
+    {
+      "time": 2.35,
+      "position": -0.7499999999999991,
+      "velocity": 1.2,
+      "distance": 0.7499999999999991,
+      "observed_remaining": 0.7499999999999991,
+      "commanded_speed": 0.0
+    },
+    {
+      "time": 2.4,
+      "position": -0.6924999999999991,
+      "velocity": 1.15,
+      "distance": 0.6924999999999991,
+      "observed_remaining": 0.6924999999999991,
+      "commanded_speed": 0.0
+    },
+    {
+      "time": 2.45,
+      "position": -0.6374999999999991,
+      "velocity": 1.0999999999999999,
+      "distance": 0.6374999999999991,
+      "observed_remaining": 0.6374999999999991,
+      "commanded_speed": 0.0
+    },
+    {
+      "time": 2.5,
+      "position": -0.5849999999999991,
+      "velocity": 1.0499999999999998,
+      "distance": 0.5849999999999991,
+      "observed_remaining": 0.5849999999999991,
+      "commanded_speed": 0.0
+    },
+    {
+      "time": 2.55,
+      "position": -0.534999999999999,
+      "velocity": 0.9999999999999998,
+      "distance": 0.534999999999999,
+      "observed_remaining": 0.534999999999999,
+      "commanded_speed": 0.0
+    },
+    {
+      "time": 2.6,
+      "position": -0.48749999999999905,
+      "velocity": 0.9499999999999997,
+      "distance": 0.48749999999999905,
+      "observed_remaining": 0.48749999999999905,
+      "commanded_speed": 0.0
+    },
+    {
+      "time": 2.65,
+      "position": -0.44249999999999906,
+      "velocity": 0.8999999999999997,
+      "distance": 0.44249999999999906,
+      "observed_remaining": 0.44249999999999906,
+      "commanded_speed": 0.0
+    },
+    {
+      "time": 2.7,
+      "position": -0.3999999999999991,
+      "velocity": 0.8499999999999996,
+      "distance": 0.3999999999999991,
+      "observed_remaining": 0.3999999999999991,
+      "commanded_speed": 0.0
+    },
+    {
+      "time": 2.75,
+      "position": -0.3599999999999991,
+      "velocity": 0.7999999999999996,
+      "distance": 0.3599999999999991,
+      "observed_remaining": 0.3599999999999991,
+      "commanded_speed": 0.0
+    },
+    {
+      "time": 2.8,
+      "position": -0.3224999999999991,
+      "velocity": 0.7499999999999996,
+      "distance": 0.3224999999999991,
+      "observed_remaining": 0.3224999999999991,
+      "commanded_speed": 0.0
+    },
+    {
+      "time": 2.85,
+      "position": -0.28749999999999915,
+      "velocity": 0.6999999999999995,
+      "distance": 0.28749999999999915,
+      "observed_remaining": 0.28749999999999915,
+      "commanded_speed": 0.0
+    },
+    {
+      "time": 2.9,
+      "position": -0.25499999999999917,
+      "velocity": 0.6499999999999995,
+      "distance": 0.25499999999999917,
+      "observed_remaining": 0.25499999999999917,
+      "commanded_speed": 0.0
+    },
+    {
+      "time": 2.95,
+      "position": -0.2249999999999992,
+      "velocity": 0.5999999999999994,
+      "distance": 0.2249999999999992,
+      "observed_remaining": 0.2249999999999992,
+      "commanded_speed": 0.0
+    },
+    {
+      "time": 3.0,
+      "position": -0.19749999999999923,
+      "velocity": 0.5499999999999994,
+      "distance": 0.19749999999999923,
+      "observed_remaining": 0.19749999999999923,
+      "commanded_speed": 0.0
+    },
+    {
+      "time": 3.05,
+      "position": -0.17249999999999927,
+      "velocity": 0.4999999999999994,
+      "distance": 0.17249999999999927,
+      "observed_remaining": 0.17249999999999927,
+      "commanded_speed": 0.0
+    },
+    {
+      "time": 3.1,
+      "position": -0.1499999999999993,
+      "velocity": 0.4499999999999994,
+      "distance": 0.1499999999999993,
+      "observed_remaining": 0.1499999999999993,
+      "commanded_speed": 0.0
+    },
+    {
+      "time": 3.15,
+      "position": -0.12999999999999934,
+      "velocity": 0.3999999999999994,
+      "distance": 0.12999999999999934,
+      "observed_remaining": 0.12999999999999934,
+      "commanded_speed": 0.0
+    },
+    {
+      "time": 3.2,
+      "position": -0.11249999999999936,
+      "velocity": 0.3499999999999994,
+      "distance": 0.11249999999999936,
+      "observed_remaining": 0.11249999999999936,
+      "commanded_speed": 0.0
+    },
+    {
+      "time": 3.25,
+      "position": -0.09749999999999939,
+      "velocity": 0.29999999999999943,
+      "distance": 0.09749999999999939,
+      "observed_remaining": 0.09749999999999939,
+      "commanded_speed": 0.0
+    },
+    {
+      "time": 3.3,
+      "position": -0.08499999999999942,
+      "velocity": 0.24999999999999944,
+      "distance": 0.08499999999999942,
+      "observed_remaining": 0.08499999999999942,
+      "commanded_speed": 0.0
+    },
+    {
+      "time": 3.35,
+      "position": -0.07499999999999946,
+      "velocity": 0.19999999999999946,
+      "distance": 0.07499999999999946,
+      "observed_remaining": 0.07499999999999946,
+      "commanded_speed": 0.0
+    },
+    {
+      "time": 3.4,
+      "position": -0.06749999999999948,
+      "velocity": 0.14999999999999947,
+      "distance": 0.06749999999999948,
+      "observed_remaining": 0.06749999999999948,
+      "commanded_speed": 0.0
+    },
+    {
+      "time": 3.45,
+      "position": -0.0624999999999995,
+      "velocity": 0.09999999999999946,
+      "distance": 0.0624999999999995,
+      "observed_remaining": 0.0624999999999995,
+      "commanded_speed": 0.0
+    },
+    {
+      "time": 3.5,
+      "position": -0.059999999999999526,
+      "velocity": 0.04999999999999946,
+      "distance": 0.059999999999999526,
+      "observed_remaining": 0.059999999999999526,
+      "commanded_speed": 0.0
+    },
+    {
+      "time": 3.55,
+      "position": -0.059999999999999526,
+      "velocity": 0.0,
+      "distance": 0.059999999999999526,
+      "observed_remaining": 0.059999999999999526,
+      "commanded_speed": 0.0
+    },
+    {
+      "time": 3.6,
+      "position": -0.059999999999999526,
+      "velocity": 0.0,
+      "distance": 0.059999999999999526,
+      "observed_remaining": 0.059999999999999526,
+      "commanded_speed": 0.0
+    },
+    {
+      "time": 3.65,
+      "position": -0.059999999999999526,
+      "velocity": 0.0,
+      "distance": 0.059999999999999526,
+      "observed_remaining": 0.059999999999999526,
+      "commanded_speed": 0.0
+    },
+    {
+      "time": 3.7,
+      "position": -0.059999999999999526,
+      "velocity": 0.0,
+      "distance": 0.059999999999999526,
+      "observed_remaining": 0.059999999999999526,
+      "commanded_speed": 0.0
+    },
+    {
+      "time": 3.75,
+      "position": -0.059999999999999526,
+      "velocity": 0.0,
+      "distance": 0.059999999999999526,
+      "observed_remaining": 0.059999999999999526,
+      "commanded_speed": 0.0
+    },
+    {
+      "time": 3.8,
+      "position": -0.059999999999999526,
+      "velocity": 0.0,
+      "distance": 0.059999999999999526,
+      "observed_remaining": 0.059999999999999526,
+      "commanded_speed": 0.0
+    },
+    {
+      "time": 3.85,
+      "position": -0.059999999999999526,
+      "velocity": 0.0,
+      "distance": 0.059999999999999526,
+      "observed_remaining": 0.059999999999999526,
+      "commanded_speed": 0.0
+    },
+    {
+      "time": 3.9,
+      "position": -0.059999999999999526,
+      "velocity": 0.0,
+      "distance": 0.059999999999999526,
+      "observed_remaining": 0.059999999999999526,
+      "commanded_speed": 0.0
+    },
+    {
+      "time": 3.95,
+      "position": -0.059999999999999526,
+      "velocity": 0.0,
+      "distance": 0.059999999999999526,
+      "observed_remaining": 0.059999999999999526,
+      "commanded_speed": 0.0
+    },
+    {
+      "time": 4.0,
+      "position": -0.059999999999999526,
+      "velocity": 0.0,
+      "distance": 0.059999999999999526,
+      "observed_remaining": 0.059999999999999526,
+      "commanded_speed": 0.0
+    },
+    {
+      "time": 4.05,
+      "position": -0.059999999999999526,
+      "velocity": 0.0,
+      "distance": 0.059999999999999526,
+      "observed_remaining": 0.059999999999999526,
+      "commanded_speed": 0.0
+    },
+    {
+      "time": 4.1,
+      "position": -0.059999999999999526,
+      "velocity": 0.0,
+      "distance": 0.059999999999999526,
+      "observed_remaining": 0.059999999999999526,
+      "commanded_speed": 0.0
+    },
+    {
+      "time": 4.15,
+      "position": -0.059999999999999526,
+      "velocity": 0.0,
+      "distance": 0.059999999999999526,
+      "observed_remaining": 0.059999999999999526,
+      "commanded_speed": 0.0
+    },
+    {
+      "time": 4.2,
+      "position": -0.059999999999999526,
+      "velocity": 0.0,
+      "distance": 0.059999999999999526,
+      "observed_remaining": 0.059999999999999526,
+      "commanded_speed": 0.0
+    },
+    {
+      "time": 4.25,
+      "position": -0.059999999999999526,
+      "velocity": 0.0,
+      "distance": 0.059999999999999526,
+      "observed_remaining": 0.059999999999999526,
+      "commanded_speed": 0.0
+    },
+    {
+      "time": 4.3,
+      "position": -0.059999999999999526,
+      "velocity": 0.0,
+      "distance": 0.059999999999999526,
+      "observed_remaining": 0.059999999999999526,
+      "commanded_speed": 0.0
+    },
+    {
+      "time": 4.35,
+      "position": -0.059999999999999526,
+      "velocity": 0.0,
+      "distance": 0.059999999999999526,
+      "observed_remaining": 0.059999999999999526,
+      "commanded_speed": 0.0
+    },
+    {
+      "time": 4.4,
+      "position": -0.059999999999999526,
+      "velocity": 0.0,
+      "distance": 0.059999999999999526,
+      "observed_remaining": 0.059999999999999526,
+      "commanded_speed": 0.0
+    },
+    {
+      "time": 4.45,
+      "position": -0.059999999999999526,
+      "velocity": 0.0,
+      "distance": 0.059999999999999526,
+      "observed_remaining": 0.059999999999999526,
+      "commanded_speed": 0.0
+    },
+    {
+      "time": 4.5,
+      "position": -0.059999999999999526,
+      "velocity": 0.0,
+      "distance": 0.059999999999999526,
+      "observed_remaining": 0.059999999999999526,
+      "commanded_speed": 0.0
+    },
+    {
+      "time": 4.55,
+      "position": -0.059999999999999526,
+      "velocity": 0.0,
+      "distance": 0.059999999999999526,
+      "observed_remaining": 0.059999999999999526,
+      "commanded_speed": 0.0
+    },
+    {
+      "time": 4.6,
+      "position": -0.059999999999999526,
+      "velocity": 0.0,
+      "distance": 0.059999999999999526,
+      "observed_remaining": 0.059999999999999526,
+      "commanded_speed": 0.0
+    },
+    {
+      "time": 4.65,
+      "position": -0.059999999999999526,
+      "velocity": 0.0,
+      "distance": 0.059999999999999526,
+      "observed_remaining": 0.059999999999999526,
+      "commanded_speed": 0.0
+    },
+    {
+      "time": 4.7,
+      "position": -0.059999999999999526,
+      "velocity": 0.0,
+      "distance": 0.059999999999999526,
+      "observed_remaining": 0.059999999999999526,
+      "commanded_speed": 0.0
+    },
+    {
+      "time": 4.75,
+      "position": -0.059999999999999526,
+      "velocity": 0.0,
+      "distance": 0.059999999999999526,
+      "observed_remaining": 0.059999999999999526,
+      "commanded_speed": 0.0
+    },
+    {
+      "time": 4.8,
+      "position": -0.059999999999999526,
+      "velocity": 0.0,
+      "distance": 0.059999999999999526,
+      "observed_remaining": 0.059999999999999526,
+      "commanded_speed": 0.0
+    },
+    {
+      "time": 4.85,
+      "position": -0.059999999999999526,
+      "velocity": 0.0,
+      "distance": 0.059999999999999526,
+      "observed_remaining": 0.059999999999999526,
+      "commanded_speed": 0.0
+    },
+    {
+      "time": 4.9,
+      "position": -0.059999999999999526,
+      "velocity": 0.0,
+      "distance": 0.059999999999999526,
+      "observed_remaining": 0.059999999999999526,
+      "commanded_speed": 0.0
+    },
+    {
+      "time": 4.95,
+      "position": -0.059999999999999526,
+      "velocity": 0.0,
+      "distance": 0.059999999999999526,
+      "observed_remaining": 0.059999999999999526,
+      "commanded_speed": 0.0
+    },
+    {
+      "time": 5.0,
+      "position": -0.059999999999999526,
+      "velocity": 0.0,
+      "distance": 0.059999999999999526,
+      "observed_remaining": 0.059999999999999526,
+      "commanded_speed": 0.0
+    },
+    {
+      "time": 5.05,
+      "position": -0.059999999999999526,
+      "velocity": 0.0,
+      "distance": 0.059999999999999526,
+      "observed_remaining": 0.059999999999999526,
+      "commanded_speed": 0.0
+    },
+    {
+      "time": 5.1,
+      "position": -0.059999999999999526,
+      "velocity": 0.0,
+      "distance": 0.059999999999999526,
+      "observed_remaining": 0.059999999999999526,
+      "commanded_speed": 0.0
+    },
+    {
+      "time": 5.15,
+      "position": -0.059999999999999526,
+      "velocity": 0.0,
+      "distance": 0.059999999999999526,
+      "observed_remaining": 0.059999999999999526,
+      "commanded_speed": 0.0
+    },
+    {
+      "time": 5.2,
+      "position": -0.059999999999999526,
+      "velocity": 0.0,
+      "distance": 0.059999999999999526,
+      "observed_remaining": 0.059999999999999526,
+      "commanded_speed": 0.0
+    },
+    {
+      "time": 5.25,
+      "position": -0.059999999999999526,
+      "velocity": 0.0,
+      "distance": 0.059999999999999526,
+      "observed_remaining": 0.059999999999999526,
+      "commanded_speed": 0.0
+    },
+    {
+      "time": 5.3,
+      "position": -0.059999999999999526,
+      "velocity": 0.0,
+      "distance": 0.059999999999999526,
+      "observed_remaining": 0.059999999999999526,
+      "commanded_speed": 0.0
+    },
+    {
+      "time": 5.35,
+      "position": -0.059999999999999526,
+      "velocity": 0.0,
+      "distance": 0.059999999999999526,
+      "observed_remaining": 0.059999999999999526,
+      "commanded_speed": 0.0
+    },
+    {
+      "time": 5.4,
+      "position": -0.059999999999999526,
+      "velocity": 0.0,
+      "distance": 0.059999999999999526,
+      "observed_remaining": 0.059999999999999526,
+      "commanded_speed": 0.0
+    },
+    {
+      "time": 5.45,
+      "position": -0.059999999999999526,
+      "velocity": 0.0,
+      "distance": 0.059999999999999526,
+      "observed_remaining": 0.059999999999999526,
+      "commanded_speed": 0.0
+    },
+    {
+      "time": 5.5,
+      "position": -0.059999999999999526,
+      "velocity": 0.0,
+      "distance": 0.059999999999999526,
+      "observed_remaining": 0.059999999999999526,
+      "commanded_speed": 0.0
+    },
+    {
+      "time": 5.55,
+      "position": -0.059999999999999526,
+      "velocity": 0.0,
+      "distance": 0.059999999999999526,
+      "observed_remaining": 0.059999999999999526,
+      "commanded_speed": 0.0
+    },
+    {
+      "time": 5.6,
+      "position": -0.059999999999999526,
+      "velocity": 0.0,
+      "distance": 0.059999999999999526,
+      "observed_remaining": 0.059999999999999526,
+      "commanded_speed": 0.0
+    },
+    {
+      "time": 5.65,
+      "position": -0.059999999999999526,
+      "velocity": 0.0,
+      "distance": 0.059999999999999526,
+      "observed_remaining": 0.059999999999999526,
+      "commanded_speed": 0.0
+    },
+    {
+      "time": 5.7,
+      "position": -0.059999999999999526,
+      "velocity": 0.0,
+      "distance": 0.059999999999999526,
+      "observed_remaining": 0.059999999999999526,
+      "commanded_speed": 0.0
+    },
+    {
+      "time": 5.75,
+      "position": -0.059999999999999526,
+      "velocity": 0.0,
+      "distance": 0.059999999999999526,
+      "observed_remaining": 0.059999999999999526,
+      "commanded_speed": 0.0
+    },
+    {
+      "time": 5.8,
+      "position": -0.059999999999999526,
+      "velocity": 0.0,
+      "distance": 0.059999999999999526,
+      "observed_remaining": 0.059999999999999526,
+      "commanded_speed": 0.0
+    },
+    {
+      "time": 5.85,
+      "position": -0.059999999999999526,
+      "velocity": 0.0,
+      "distance": 0.059999999999999526,
+      "observed_remaining": 0.059999999999999526,
+      "commanded_speed": 0.0
+    },
+    {
+      "time": 5.9,
+      "position": -0.059999999999999526,
+      "velocity": 0.0,
+      "distance": 0.059999999999999526,
+      "observed_remaining": 0.059999999999999526,
+      "commanded_speed": 0.0
+    },
+    {
+      "time": 5.95,
+      "position": -0.059999999999999526,
+      "velocity": 0.0,
+      "distance": 0.059999999999999526,
+      "observed_remaining": 0.059999999999999526,
+      "commanded_speed": 0.0
+    },
+    {
+      "time": 6.0,
+      "position": -0.059999999999999526,
+      "velocity": 0.0,
+      "distance": 0.059999999999999526,
+      "observed_remaining": 0.059999999999999526,
+      "commanded_speed": 0.0
+    },
+    {
+      "time": 6.05,
+      "position": -0.059999999999999526,
+      "velocity": 0.0,
+      "distance": 0.059999999999999526,
+      "observed_remaining": 0.059999999999999526,
+      "commanded_speed": 0.0
+    },
+    {
+      "time": 6.1,
+      "position": -0.059999999999999526,
+      "velocity": 0.0,
+      "distance": 0.059999999999999526,
+      "observed_remaining": 0.059999999999999526,
+      "commanded_speed": 0.0
+    },
+    {
+      "time": 6.15,
+      "position": -0.059999999999999526,
+      "velocity": 0.0,
+      "distance": 0.059999999999999526,
+      "observed_remaining": 0.059999999999999526,
+      "commanded_speed": 0.0
+    },
+    {
+      "time": 6.2,
+      "position": -0.059999999999999526,
+      "velocity": 0.0,
+      "distance": 0.059999999999999526,
+      "observed_remaining": 0.059999999999999526,
+      "commanded_speed": 0.0
+    },
+    {
+      "time": 6.25,
+      "position": -0.059999999999999526,
+      "velocity": 0.0,
+      "distance": 0.059999999999999526,
+      "observed_remaining": 0.059999999999999526,
+      "commanded_speed": 0.0
+    },
+    {
+      "time": 6.3,
+      "position": -0.059999999999999526,
+      "velocity": 0.0,
+      "distance": 0.059999999999999526,
+      "observed_remaining": 0.059999999999999526,
+      "commanded_speed": 0.0
+    },
+    {
+      "time": 6.35,
+      "position": -0.059999999999999526,
+      "velocity": 0.0,
+      "distance": 0.059999999999999526,
+      "observed_remaining": 0.059999999999999526,
+      "commanded_speed": 0.0
+    },
+    {
+      "time": 6.4,
+      "position": -0.059999999999999526,
+      "velocity": 0.0,
+      "distance": 0.059999999999999526,
+      "observed_remaining": 0.059999999999999526,
+      "commanded_speed": 0.0
+    },
+    {
+      "time": 6.45,
+      "position": -0.059999999999999526,
+      "velocity": 0.0,
+      "distance": 0.059999999999999526,
+      "observed_remaining": 0.059999999999999526,
+      "commanded_speed": 0.0
+    },
+    {
+      "time": 6.5,
+      "position": -0.059999999999999526,
+      "velocity": 0.0,
+      "distance": 0.059999999999999526,
+      "observed_remaining": 0.059999999999999526,
+      "commanded_speed": 0.0
+    },
+    {
+      "time": 6.55,
+      "position": -0.059999999999999526,
+      "velocity": 0.0,
+      "distance": 0.059999999999999526,
+      "observed_remaining": 0.059999999999999526,
+      "commanded_speed": 0.0
+    },
+    {
+      "time": 6.6,
+      "position": -0.059999999999999526,
+      "velocity": 0.0,
+      "distance": 0.059999999999999526,
+      "observed_remaining": 0.059999999999999526,
+      "commanded_speed": 0.0
+    },
+    {
+      "time": 6.65,
+      "position": -0.059999999999999526,
+      "velocity": 0.0,
+      "distance": 0.059999999999999526,
+      "observed_remaining": 0.059999999999999526,
+      "commanded_speed": 0.0
+    },
+    {
+      "time": 6.7,
+      "position": -0.059999999999999526,
+      "velocity": 0.0,
+      "distance": 0.059999999999999526,
+      "observed_remaining": 0.059999999999999526,
+      "commanded_speed": 0.0
+    },
+    {
+      "time": 6.75,
+      "position": -0.059999999999999526,
+      "velocity": 0.0,
+      "distance": 0.059999999999999526,
+      "observed_remaining": 0.059999999999999526,
+      "commanded_speed": 0.0
+    },
+    {
+      "time": 6.8,
+      "position": -0.059999999999999526,
+      "velocity": 0.0,
+      "distance": 0.059999999999999526,
+      "observed_remaining": 0.059999999999999526,
+      "commanded_speed": 0.0
+    },
+    {
+      "time": 6.85,
+      "position": -0.059999999999999526,
+      "velocity": 0.0,
+      "distance": 0.059999999999999526,
+      "observed_remaining": 0.059999999999999526,
+      "commanded_speed": 0.0
+    },
+    {
+      "time": 6.9,
+      "position": -0.059999999999999526,
+      "velocity": 0.0,
+      "distance": 0.059999999999999526,
+      "observed_remaining": 0.059999999999999526,
+      "commanded_speed": 0.0
+    },
+    {
+      "time": 6.95,
+      "position": -0.059999999999999526,
+      "velocity": 0.0,
+      "distance": 0.059999999999999526,
+      "observed_remaining": 0.059999999999999526,
+      "commanded_speed": 0.0
+    },
+    {
+      "time": 7.0,
+      "position": -0.059999999999999526,
+      "velocity": 0.0,
+      "distance": 0.059999999999999526,
+      "observed_remaining": 0.059999999999999526,
+      "commanded_speed": 0.0
+    }
+  ],
+  "samples": [
+    {
+      "time": 0.0,
+      "position": -3.0,
+      "velocity": 0.0,
+      "distance": 3.0,
+      "observed_remaining": 3.0,
+      "commanded_speed": 1.2
+    },
+    {
+      "time": 1.0,
+      "position": -2.3700000000000006,
+      "velocity": 1.2,
+      "distance": 2.3700000000000006,
+      "observed_remaining": 2.3700000000000006,
+      "commanded_speed": 1.2
+    },
+    {
+      "time": 2.0,
+      "position": -1.1699999999999995,
+      "velocity": 1.2,
+      "distance": 1.1699999999999995,
+      "observed_remaining": 1.1699999999999995,
+      "commanded_speed": 1.2
+    },
+    {
+      "time": 3.0,
+      "position": -0.19749999999999923,
+      "velocity": 0.5499999999999994,
+      "distance": 0.19749999999999923,
+      "observed_remaining": 0.19749999999999923,
+      "commanded_speed": 0.0
+    },
+    {
+      "time": 4.0,
+      "position": -0.059999999999999526,
+      "velocity": 0.0,
+      "distance": 0.059999999999999526,
+      "observed_remaining": 0.059999999999999526,
+      "commanded_speed": 0.0
+    },
+    {
+      "time": 5.0,
+      "position": -0.059999999999999526,
+      "velocity": 0.0,
+      "distance": 0.059999999999999526,
+      "observed_remaining": 0.059999999999999526,
+      "commanded_speed": 0.0
+    },
+    {
+      "time": 6.0,
+      "position": -0.059999999999999526,
+      "velocity": 0.0,
+      "distance": 0.059999999999999526,
+      "observed_remaining": 0.059999999999999526,
+      "commanded_speed": 0.0
+    },
+    {
+      "time": 7.0,
+      "position": -0.059999999999999526,
+      "velocity": 0.0,
+      "distance": 0.059999999999999526,
+      "observed_remaining": 0.059999999999999526,
+      "commanded_speed": 0.0
+    }
+  ],
+  "trace_sha256": "459645cc940440405c02b43eb1cdc8b6418e86bff7306d31fb3434d22858c5ba",
+  "run_id": "85e2180606c53c18"
+}
