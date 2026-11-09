@@ -11,29 +11,48 @@
   <header>
     <div class="eyebrow">CS 6494 · HW4 working demo</div>
     <h1>Test whether the robot reaches the dock safely</h1>
-    <p>Choose a scenario → run the Python model → inspect its trace → check the fixed requirements → save and replay the result.</p>
+    <p>Run the two Part 1 inputs here and compare them. Use the Python commands for your STL formula, input search, and three policy retests. Return here to watch or replay a saved run.</p>
   </header>
+  <nav class="homework-map" aria-label="How this page fits HW4">
+    <h2>How this page fits the four HW4 questions</h2>
+    <ol>
+      <li><a href="#part1"><strong>1. What changed when braking got stronger?</strong></a><span>Run baseline 0.5 and changed input 0.6 m/s² here. Compare and download both runs.</span></li>
+      <li><a href="#part2"><strong>2. Does your STL formula require staying?</strong></a><span>Edit <code>student_spec.py</code>; run <code>hw4.py check-spec</code> in the terminal. The fixed results below do not test your formula.</span></li>
+      <li><a href="#part3"><strong>3. Can search find a speed-rule failure?</strong></a><span>Run <code>hw4.py compare-search</code> and <code>select-case</code> in the terminal. Replay the exported case here.</span></li>
+      <li><a href="#part4"><strong>4. Does a policy change help without losing docking?</strong></a><span>Edit <code>policy.json</code>; run three <code>hw4.py retest</code> commands in the terminal. A normal Run is not a retest report.</span></li>
+    </ol>
+    <p>For the exact commands and submission checklist, use <a href="https://github.com/iotrustlab-teaching/cs6494-fall2026-students/blob/main/labs/robot-docking-hw4/HW4_WORKFLOW.md">HW4_WORKFLOW.md</a>.</p>
+  </nav>
   <main>
-    <section class="panel controls" aria-labelledby="choose-heading">
-      <h2 id="choose-heading">1 · Choose a scenario</h2>
-      <p>The robot starts 3 m left of the dock. A controller commands cruise speed until its <strong>observed remaining distance</strong> reaches the brake point. Momentum continues after the stop command. Maximum braking below is a scenario condition; the brake point in <code>policy.json</code> is the controller setting.</p>
+    <section class="panel controls" id="part1" aria-labelledby="choose-heading">
+      <h2 id="choose-heading">Part 1 · Run the two required inputs</h2>
+      <p>Keep <code>policy.json</code> at its original 0.8 m brake point and cruise speed at 1.2 m/s. First run braking strength 0.5 m/s², then 0.6 m/s². This changes a <strong>scenario input</strong>, not the controller policy.</p>
       <div class="presets">
-        <button type="button" id="preset-baseline">Baseline <small>1.2 m/s · braking 0.5 m/s²</small></button>
-        <button type="button" id="preset-a">Case A <small>braking 0.6 m/s²</small></button>
-        <button type="button" id="preset-b">Case B <small>braking 1.6 m/s²</small></button>
+        <button type="button" id="preset-baseline" aria-pressed="true">Baseline <small>1.2 m/s · braking 0.5 m/s²</small></button>
+        <button type="button" id="preset-a" aria-pressed="false">Changed input <small>1.2 m/s · braking 0.6 m/s²</small></button>
       </div>
+      <p id="next-run-role" class="muted">Next run: Part 1 baseline. The fields below set the next run only.</p>
       <label for="speed">Cruise speed (m/s)</label>
       <input id="speed" type="number" min="0.3" max="1.8" step="0.05" value="1.2">
       <label for="braking">Maximum braking (m/s²)</label>
       <input id="braking" type="number" min="0.2" max="2.5" step="0.05" value="0.5">
-      <div class="policy"><strong>Controller policy:</strong> brake when observed remaining distance is <strong id="brake-at">…</strong>. Edit <code>policy.json</code> for the repair exercise, then run again. The fixed evaluator stays unchanged.</div>
+      <div class="policy"><strong>Current policy file:</strong> brake when observed remaining distance is <strong id="brake-at">…</strong>. Part 1 and Part 3 need 0.8 m. Edit <code>policy.json</code> only for Part 4.</div>
       <button type="button" id="refresh-policy" class="quiet">Refresh policy from file</button>
       <div class="action-row"><button type="button" id="run" class="primary">Run a fresh model execution</button></div>
       <p id="status" role="status" aria-live="polite">Connecting to the local Python engine…</p>
+      <div class="part1-compare">
+        <h3>Compare your two Part 1 runs</h3>
+        <p id="part1-status" role="status">Run the baseline and changed input above with the original 0.8 m policy. The page keeps both until you reload it.</p>
+        <button type="button" id="compare-part1" class="quiet" disabled>Compare these two verified runs</button>
+        <div id="compare-results" class="results" hidden></div>
+        <div class="action-row"><button type="button" id="download-baseline" class="quiet" disabled>Download baseline JSON</button><button type="button" id="download-changed" class="quiet" disabled>Download changed-input JSON</button><button type="button" id="download-comparison" class="quiet" hidden>Download comparison JSON</button></div>
+        <p class="muted">You can also compare two downloaded files with <code>hw4.py compare-runs</code>. Reloading this page clears only its in-memory pair, not your downloaded JSON files.</p>
+      </div>
     </section>
 
     <section class="panel visual" aria-labelledby="trace-heading">
-      <div class="section-line"><div><span class="eyebrow">One recorded model run</span><h2 id="trace-heading">2 · Watch the robot, then inspect the trace</h2></div><span id="run-id" class="run-id">No run yet</span></div>
+      <div class="section-line"><div><span class="eyebrow">One recorded model run</span><h2 id="trace-heading">Watch one run before interpreting its plots</h2></div><span id="run-id" class="run-id">No run yet</span></div>
+      <p id="shown-run" class="shown-run">No run is displayed. Changing the inputs above does not change an existing trace.</p>
       <div class="scene-wrap">
         <svg id="scene" viewBox="0 0 1000 300" role="img" aria-labelledby="scene-title scene-description">
           <title id="scene-title">Robot and docking region</title>
@@ -91,26 +110,30 @@
       <p class="muted">The observed remaining distance is an ideal forward-looking sensor that stops at zero after the robot passes the dock. The evaluator uses the reference distance and speed. This exercise does not model sensor spoofing.</p>
     </section>
 
-    <section class="panel requirements" aria-labelledby="check-heading">
-      <h2 id="check-heading">3 · Check the requirements</h2>
+    <section class="panel requirements" id="part2" aria-labelledby="check-heading">
+      <h2 id="check-heading">Check this run; then test your Part 2 formula</h2>
       <p><strong>Useful service:</strong> reach within 0.5 m by second 5 and remain there for three consecutive one-second samples.</p>
       <p><strong>Safe approach:</strong> whenever a sampled position is inside that region during seconds 0–5, speed must be at most 0.2 m/s.</p>
-      <button type="button" id="reveal" class="primary" disabled>Reveal RTAMT results</button>
+      <button type="button" id="reveal" class="primary" disabled>Reveal this run's fixed checker results</button>
       <div id="results" class="results" hidden></div>
-      <p class="muted">For the Monday formula exercise, edit <code>student_spec.py</code> and run <code>.venv/bin/python hw4.py check-spec</code>. That practice formula does not change the fixed results above.</p>
-      <details><summary>Show the exact STL formulas and interpretation</summary><pre id="formulae"></pre><p>RTAMT uses discrete time at one-second spacing. The speed formula uses dimensionless distance and speed terms scaled by 0.5 m and 0.2 m/s; its score is not added to a margin in metres. At zero robustness, inspect strict versus inclusive predicates. If the robot never enters, the conditional speed rule is logically true, while its antecedent is marked NOT EXERCISED; that does not demonstrate safe docking.</p></details>
+      <p><strong>Part 2 is a separate check:</strong> edit <code>STUDENT_FORMULA</code> in <code>student_spec.py</code>, then run <code>.venv/bin/python hw4.py check-spec --out runs/my_formula_check.json</code>. That command uses RTAMT on supplied and authored eight-sample examples. It does not change the fixed checker on this page.</p>
+      <details><summary>What does RTAMT actually do here?</summary><p>The Python model produces motion states every 0.05 s. We extract eight whole-second samples. RTAMT evaluates the fixed STL formulas on those samples and returns service and speed robustness scores. A direct check of the same samples decides PASS/FAIL at exact inclusive boundaries, where a zero score alone can be ambiguous. The Part 3 PSY-TaLiRo search minimizes RTAMT's fixed speed score; it does not search your editable student formula.</p><pre id="formulae"></pre><p>The speed formula uses dimensionless distance and speed terms scaled by 0.5 m and 0.2 m/s; its score is not added to a margin in metres. If the robot never enters, the conditional speed rule is logically true but marked NOT EXERCISED; that does not demonstrate docking.</p></details>
     </section>
 
-    <section class="panel replay" aria-labelledby="replay-heading">
-      <h2 id="replay-heading">4 · Save and reproduce</h2>
-      <p>The server saves every fresh run under <code>runs/</code>. Download its JSON to submit or share a case. Replaying executes the Python model again with the saved scenario and policy; loading a curve alone is not a replay.</p>
-      <label for="saved-file">Choose a saved run or single-strategy search JSON</label>
+    <section class="panel replay" id="part3" aria-labelledby="replay-heading">
+      <h2 id="replay-heading">Part 3 · Reproduce the case you found by search</h2>
+      <p>Run <code>hw4.py compare-search</code> and <code>hw4.py select-case</code> in the terminal first. Then choose that exported selected-case JSON below. This page re-executes its saved scenario and policy; it does not run the search or merely redraw stored points. The server also saves each fresh browser run under <code>runs/</code>.</p>
+      <label for="saved-file">Choose an exported selected case or other saved run JSON</label>
       <input id="saved-file" type="file" accept="application/json,.json">
       <button type="button" id="replay-file" class="quiet">Replay selected file</button>
       <p id="replay-status" role="status" aria-live="polite"></p>
       <details><summary>View samples without running the model</summary><p>Use this only to inspect a saved JSON record. It does not verify the file, execute Python, or calculate a new verdict. A record with only one-second states will show sample-only playback.</p><label for="view-file">Saved JSON to view</label><input id="view-file" type="file" accept="application/json,.json"><button type="button" id="view-file-button" class="quiet">View saved values only</button><p id="view-status" role="status" aria-live="polite"></p></details>
     </section>
+    <section class="panel followup" id="part4" aria-labelledby="part4-heading">
+      <h2 id="part4-heading">Part 4 · Change the policy and retest three saved scenarios</h2>
+      <p>Edit only <code>brake_at_m</code> in <code>policy.json</code>. Use <code>hw4.py retest</code> for your selected adverse case (or the supplied adverse calibration), the normal case, and the additional case. Each retest verifies the old record and runs the <strong>same scenario</strong> under the new policy. Compare both the speed rule and docking. A fresh Run on this page can illustrate the edited policy, but it does <strong>not</strong> create the required before/after retest report.</p>
+    </section>
   </main>
-  <footer>Course-authored one-dimensional simulation. This page uses the local Python model and RTAMT; it does not run Gazebo, an autopilot, or physical hardware.</footer>
+  <footer>Course-authored one-dimensional simulation. The local Python backend calls RTAMT for STL robustness; exact-boundary Boolean checks are separate. No Gazebo, autopilot, or physical hardware is used.</footer>
 </body>
 </html>

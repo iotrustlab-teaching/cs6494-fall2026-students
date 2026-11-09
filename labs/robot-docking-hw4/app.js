@@ -8,6 +8,7 @@
     window.matchMedia('(prefers-reduced-motion: reduce)');
   let current = null, playback = null, trusted = false, revealed = false;
   let stateIndex = 0, frameRequest = null, playing = false, animationOrigin = 0;
+  let part1Runs = {baseline: null, changed: null}, part1Comparison = null;
 
   function svg(tag, attributes = {}, label) {
     const node = document.createElementNS(NS, tag);
@@ -75,14 +76,8 @@
       $('brake-at').textContent = `${data.policy.brake_at_m.toFixed(2)} m`;
       $('formulae').textContent = `Service: ${data.formulae.service}\nSafety: ${data.formulae.safety}`;
       if (trusted && current && current.policy.brake_at_m !== data.policy.brake_at_m) {
-        $('reveal').disabled = true;
-        $('results').hidden = true;
-        $('trace-highlights').hidden = true;
-        revealed = false;
-        renderFrame(stateIndex);
-        $('run-id').textContent = `Run ${current.run_id} · previous policy`;
-        status('Policy changed. The visible trace used the previous policy; click Run for a new execution.');
-      } else status('Python model and RTAMT ready. Changing policy.json affects the next fresh run.');
+        status('Policy file changed. The visible trace and its results still belong to the saved run; click Run for a new execution.');
+      } else status('Python model and RTAMT ready. The policy file affects the next fresh run.');
     } catch (error) { status(`Engine unavailable: ${error.message}`, true); }
   }
 
@@ -266,6 +261,7 @@
   function setUnavailable(message) {
     stopMotion(); current = null; playback = null; trusted = false; revealed = false;
     $('run-id').textContent = 'No usable run';
+    $('shown-run').textContent = 'No usable run is displayed.';
     $('scene-empty').hidden = false;
     $('scene-empty').textContent = `Playback unavailable: ${message}`;
     $('robot-figure').setAttribute('visibility', 'hidden');
@@ -292,9 +288,10 @@
     current = record; playback = prepared; trusted = isTrusted; revealed = false;
     $('run-id').textContent = isTrusted ? `Run ${record.run_id}` :
       `View only${record.run_id ? ` · ${record.run_id}` : ''}`;
-    if (isTrusted && record.policy && typeof record.policy.brake_at_m === 'number') {
-      $('brake-at').textContent = `${record.policy.brake_at_m.toFixed(2)} m`;
-    }
+    const scenario = record.scenario, policy = record.policy;
+    $('shown-run').textContent = scenario && policy ?
+      `${isTrusted ? 'Recorded run' : 'View-only file'}: cruise ${scenario.cruise_speed_m_s} m/s, braking ${scenario.braking_m_s2} m/s², saved brake point ${policy.brake_at_m} m. The inputs above set the next run.` :
+      'This saved view does not identify a complete scenario and policy.';
     $('results').hidden = true; $('trace-highlights').hidden = true;
     $('reveal').disabled = !isTrusted || !record.monitor;
     $('download').disabled = !isTrusted;
@@ -349,6 +346,9 @@
       bold.textContent = `${label}: `; badge.className = verdict === 'PASS' ? 'pass' : 'fail'; badge.textContent = verdict;
       row.append(bold, badge, document.createTextNode(` · ${detail}`)); results.append(row);
     }
+    const provenance = document.createElement('p');
+    provenance.textContent = 'RTAMT computed the margins and score; the exact sampled Boolean check decides PASS/FAIL at an inclusive boundary.';
+    results.append(provenance);
     revealed = true; results.hidden = false;
     const witness = service.pass ?
       `Stay window: ${service.first_window_start_s}, ${service.first_window_start_s + 1}, ${service.first_window_start_s + 2} s.` :
@@ -366,8 +366,81 @@
     try {
       const data = await api('/api/run', {cruise_speed_m_s: Number($('speed').value), braking_m_s2: Number($('braking').value)});
       showRun(data, 'Fresh model run complete. Watch the motion, inspect the trace, then reveal the fixed checks.');
+      capturePart1Run(data);
     } catch (error) { status(`Run failed: ${error.message}`, true); }
     finally { $('run').disabled = false; }
+  }
+
+  function refreshPart1Status() {
+    const names = [part1Runs.baseline ? 'baseline' : null, part1Runs.changed ? 'changed input' : null].filter(Boolean);
+    $('part1-status').textContent = names.length === 2 ?
+      'Both required inputs have fresh runs under the original 0.8 m policy. Compare them, then download each run and the comparison JSON.' :
+      names.length ? `${names[0]} run saved in this page. Run the other required input next.` :
+      'Run the baseline and changed input above with the original 0.8 m policy. The page keeps both until you reload it.';
+    $('compare-part1').disabled = names.length !== 2;
+    $('download-baseline').disabled = !part1Runs.baseline;
+    $('download-changed').disabled = !part1Runs.changed;
+  }
+
+  function capturePart1Run(record) {
+    const scenario = record.scenario, policy = record.policy;
+    if (scenario.cruise_speed_m_s === 1.2 && policy.brake_at_m === 0.8 &&
+        (scenario.braking_m_s2 === 0.5 || scenario.braking_m_s2 === 0.6)) {
+      const slot = scenario.braking_m_s2 === 0.5 ? 'baseline' : 'changed';
+      part1Runs[slot] = record.run_id;
+      part1Comparison = null;
+      $('compare-results').hidden = true;
+      $('download-comparison').hidden = true;
+      refreshPart1Status();
+    } else {
+      status('Fresh run complete. Its inputs or policy differ from the required Part 1 pair; the saved pair above is unchanged.');
+    }
+  }
+
+  async function comparePart1() {
+    if (!part1Runs.baseline || !part1Runs.changed) return;
+    const button = $('compare-part1');
+    button.disabled = true;
+    $('part1-status').textContent = 'Verifying and comparing the two saved Python runs…';
+    try {
+      const report = await api('/api/compare-runs', {
+        first_run_id: part1Runs.baseline, second_run_id: part1Runs.changed,
+      });
+      part1Comparison = report;
+      const box = $('compare-results'); box.replaceChildren();
+      for (const [label, run] of [['Baseline', report.first], ['Changed input', report.second]]) {
+        const line = document.createElement('p');
+        line.textContent = `${label} (${run.run_id}): docking ${run.service_pass ? 'PASS' : 'FAIL'}; speed rule ${run.safety_pass ? 'PASS' : 'FAIL'}; docking margin ${run.service_margin_m.toFixed(3)} m.`;
+        box.append(line);
+      }
+      const change = document.createElement('p');
+      change.textContent = `Changed field: ${report.changed_fields.join(', ')}. Docking margin changed by ${report.delta_second_minus_first.service_margin_m.toFixed(3)} m. Both saved runs were re-executed and verified by Python.`;
+      box.append(change);
+      box.hidden = false;
+      $('download-comparison').hidden = false;
+      $('part1-status').textContent = 'Verified comparison ready. Download its JSON and both run JSON files for Part 1.';
+    } catch (error) {
+      $('part1-status').textContent = `Comparison failed: ${error.message}. Use hw4.py compare-runs with your downloaded files.`;
+    } finally { button.disabled = false; }
+  }
+
+  function downloadComparison() {
+    if (!part1Comparison) return;
+    const blob = new Blob([JSON.stringify(part1Comparison, null, 2) + '\n'], {type: 'application/json'});
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = 'my_input_comparison.json';
+    link.click();
+    setTimeout(() => URL.revokeObjectURL(link.href), 1000);
+  }
+
+  function downloadPart1(role) {
+    const runId = part1Runs[role];
+    if (!runId) return;
+    const link = document.createElement('a');
+    link.href = `/api/download/${runId}`;
+    link.download = role === 'baseline' ? 'my_baseline.json' : 'my_changed_input.json';
+    link.click();
   }
 
   function download() {
@@ -410,11 +483,12 @@
     } catch (error) { setUnavailable(error.message); $('view-status').textContent = `Cannot view file: ${error.message}`; }
   }
 
-  function preset(speed, braking) {
+  function preset(speed, braking, label) {
     $('speed').value = speed; $('braking').value = braking;
-    $('reveal').disabled = true; $('results').hidden = true; $('trace-highlights').hidden = true;
-    revealed = false; if (playback) renderFrame(stateIndex);
-    status('Scenario selected. Click Run for a fresh trace.');
+    $('preset-baseline').setAttribute('aria-pressed', String(label === 'baseline'));
+    $('preset-a').setAttribute('aria-pressed', String(label === 'changed input'));
+    $('next-run-role').textContent = `Next run: Part 1 ${label}. The displayed trace still belongs to its saved inputs.`;
+    status('Part 1 input selected. Click Run for a fresh trace; the displayed run has not changed.');
   }
 
   // Keep the data contract testable without a browser or a second simulator.
@@ -423,16 +497,20 @@
     return;
   }
 
-  $('preset-baseline').addEventListener('click', () => preset(1.2, 0.5));
-  $('preset-a').addEventListener('click', () => preset(1.2, 0.6));
-  $('preset-b').addEventListener('click', () => preset(1.2, 1.6));
+  $('preset-baseline').addEventListener('click', () => preset(1.2, 0.5, 'baseline'));
+  $('preset-a').addEventListener('click', () => preset(1.2, 0.6, 'changed input'));
   for (const id of ['speed', 'braking']) $(id).addEventListener('input', () => {
-    $('reveal').disabled = true; $('results').hidden = true; $('trace-highlights').hidden = true;
-    revealed = false; if (playback) renderFrame(stateIndex);
-    status('Inputs changed. Click Run for a fresh trace.');
+    $('preset-baseline').setAttribute('aria-pressed', 'false');
+    $('preset-a').setAttribute('aria-pressed', 'false');
+    $('next-run-role').textContent = 'Next run: custom exploration. The required Part 1 pair uses 1.2 m/s cruise and braking strengths 0.5 and 0.6 m/s².';
+    status('Inputs changed for the next run. The displayed trace and checker results still belong to the previous saved run.');
   });
   $('refresh-policy').addEventListener('click', refreshPolicy);
   $('run').addEventListener('click', run);
+  $('compare-part1').addEventListener('click', comparePart1);
+  $('download-baseline').addEventListener('click', () => downloadPart1('baseline'));
+  $('download-changed').addEventListener('click', () => downloadPart1('changed'));
+  $('download-comparison').addEventListener('click', downloadComparison);
   $('animate').addEventListener('click', play);
   $('previous-sample').addEventListener('click', () => stepSample(-1));
   $('next-sample').addEventListener('click', () => stepSample(1));

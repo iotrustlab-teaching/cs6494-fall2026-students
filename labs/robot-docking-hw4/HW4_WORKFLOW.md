@@ -29,6 +29,8 @@ The dock is at position 0 m. Every fresh run starts the robot at position −3 m
 
 The requirement checker uses the model's reference position and speed. Its `e` signal is **absolute distance from the dock**, `abs(position)`; it is not the controller's observation. The checker looks at eight samples at whole seconds 0–7. Lines between displayed dots help you see motion but are not checked as continuous-time behavior.
 
+RTAMT is part of the Python execution path: `reference_spec.evaluate()` calls its discrete STL monitor for both fixed robustness values, `check-spec` calls it for your formula and supplied/own traces, and the PSY-TaLiRo search minimizes RTAMT's fixed speed-rule score. A separate exact check of the same samples supplies the Boolean PASS/FAIL at inclusive boundaries. The browser does not run `check-spec`, `compare-search`, or `retest`; it shows where those commands fit and can replay a case they produced.
+
 | Requirement | What the samples must show | Where to look |
 | --- | --- | --- |
 | Get there and stay there | Start at or inside 0.5 m at some second 0–5, then stay inside for the next two one-second samples. The check needs samples through second 7. | `service.pass`, `service.margin_m`, `service.first_window_start_s` |
@@ -49,7 +51,7 @@ The supplied starting policy is `{"brake_at_m": 0.8}`. Keep or restore that valu
 
 ## Monday: baseline, requirement, changed input
 
-First, predict what the robot will do. In the browser, select **Baseline** and click **Run a fresh model execution**. Watch the robot with **Play animation**, step between the eight monitored samples, or click a plot dot. The command and actual speed shown at the same time can differ. Playback and scrubbing only move through this recorded run; they do not execute the model again. Inspect the eight sampled rows, then reveal the RTAMT checks and download the JSON. The terminal equivalent is:
+First, predict what the robot will do. In the browser, select **Baseline** and click **Run a fresh model execution**. Watch the robot with **Play animation**, step between the eight monitored samples, or click a plot dot. The command and actual speed shown at the same time can differ. Playback and scrubbing only move through this recorded run; they do not execute the model again. Inspect the eight sampled rows, then reveal the fixed checker results and download the JSON. The terminal equivalent is:
 
 ```sh
 .venv/bin/python hw4.py run --out runs/my_baseline.json
@@ -74,7 +76,7 @@ Create one extra test. Copy `student_fixture_template.json` to `runs/my_authored
 
 This replaces the earlier formula-check report with one containing the supplied cases **and** your authored case. An authored fixture tests the monitor; it does not run the robot. Alternatively, write a precise boundary argument in your explanation: give eight distances for seconds 0–7, predict the verdict, and calculate the margin as the largest of the six three-sample window minima of `0.5 − e`. No fixture file is needed for that option.
 
-Next, hold the 0.8 m policy fixed and change only scenario **braking strength** from 0.5 to 0.6 m/s². In the browser choose **Case A**, run and download, or use:
+Next, hold the 0.8 m policy fixed and change only scenario **braking strength** from 0.5 to 0.6 m/s². In the browser choose **Changed input** and run it. If both runs are still in the page, click **Compare these two verified runs**, then use the three named download buttons for the baseline, changed input, and comparison JSON. The page sends the two saved run IDs to Python, which re-executes both records before comparing. You can instead run and compare from the terminal with these commands; if you already downloaded both runs, use their paths in the second command:
 
 ```sh
 .venv/bin/python hw4.py run --braking 0.6 --out runs/my_changed_input.json
@@ -82,7 +84,7 @@ Next, hold the 0.8 m policy fixed and change only scenario **braking strength** 
   runs/my_changed_input.json --out runs/my_input_comparison.json
 ```
 
-Point to a sampled time that helps explain what changed. `compare-runs` checks both saved model runs and names the changed input. Keep both run JSON files and the comparison.
+Point to a sampled time that helps explain what changed. Both the browser comparison and `compare-runs` check the saved model runs and name the changed input. Keep both run JSON files and the comparison.
 
 ## Wednesday: search, replay, change the policy
 

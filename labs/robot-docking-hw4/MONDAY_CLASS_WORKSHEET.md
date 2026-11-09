@@ -38,9 +38,9 @@ Optional: after your own draft, ask an AI tool to critique the formula or sugges
 
 Keep `policy.json` at **0.8 m**. Predict what changing the scenario's **braking strength** from 0.5 to 0.6 m/s² might do. This is a model parameter, not the controller's brake-trigger distance.
 
-1. In the browser, choose **Case A** → **Run a fresh model execution**, then download. Terminal alternative: `.venv/bin/python hw4.py run --braking 0.6 --out runs/my_changed_input.json`.
+1. In the browser, choose **Changed input** → **Run a fresh model execution**, then download. Terminal alternative: `.venv/bin/python hw4.py run --braking 0.6 --out runs/my_changed_input.json`.
 2. Compare the two sets of sampled distances and speeds. What changed, and what stayed fixed?
-3. Save the comparison: `.venv/bin/python hw4.py compare-runs runs/my_baseline.json runs/my_changed_input.json --out runs/my_input_comparison.json`. Use your browser-download paths if you ran there.
+3. If both runs remain in the browser page, click **Compare these two verified runs** and use its three named download buttons for both runs and the comparison. Otherwise save the comparison with `.venv/bin/python hw4.py compare-runs runs/my_baseline.json runs/my_changed_input.json --out runs/my_input_comparison.json`, using your downloaded paths. Both methods verify the saved runs in Python.
 
 ## Leave with
 

@@ -11,11 +11,33 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from urllib.parse import urlsplit
 
-from hw4_core import load_policy, replay_record, run_case, write_record
+from hw4_core import compare_records, load_policy, replay_record, run_case, write_record
 from reference_spec import SAFETY_FORMULA, SERVICE_FORMULA
 
 HERE = Path(__file__).parent
 MAX_BODY = 1_000_000
+
+
+def compare_saved_runs(request: dict, folder: Path) -> dict:
+    """Compare two server-saved runs by ID without reserializing their float traces in JS."""
+    if set(request) != {"first_run_id", "second_run_id"}:
+        raise ValueError("comparison needs first_run_id and second_run_id")
+    first_id, second_id = request["first_run_id"], request["second_run_id"]
+    if not all(isinstance(run_id, str) and re.fullmatch(r"[0-9a-f]{16}", run_id)
+               for run_id in (first_id, second_id)):
+        raise ValueError("comparison needs two valid run IDs")
+    if first_id == second_id:
+        raise ValueError("choose two different runs")
+    records = []
+    for run_id in (first_id, second_id):
+        path = folder / f"run_{run_id}.json"
+        if not path.is_file():
+            raise ValueError(f"saved run {run_id} was not found; run it again or use hw4.py compare-runs")
+        record = json.loads(path.read_text())
+        if record.get("run_id") != run_id:
+            raise ValueError("saved run ID does not match its filename")
+        records.append(record)
+    return compare_records(*records)
 
 
 class Handler(BaseHTTPRequestHandler):
@@ -67,7 +89,7 @@ class Handler(BaseHTTPRequestHandler):
 
     def do_POST(self) -> None:
         path = urlsplit(self.path).path
-        if path not in {"/api/run", "/api/replay"}:
+        if path not in {"/api/run", "/api/replay", "/api/compare-runs"}:
             self.send_json(404, {"error": "not found"})
             return
         try:
@@ -86,11 +108,13 @@ class Handler(BaseHTTPRequestHandler):
                 record = run_case(**data, policy=load_policy(HERE / "policy.json"))
                 write_record(HERE / "runs" / f"run_{record['run_id']}.json", record)
                 self.send_json(200, record)
-            else:
+            elif path == "/api/replay":
                 proof = replay_record(data)
                 write_record(HERE / "runs" / f"run_{proof['replayed_run_id']}.json",
                              proof["replayed_run"])
                 self.send_json(200, proof)
+            else:
+                self.send_json(200, compare_saved_runs(data, HERE / "runs"))
         except (ValueError, OSError, KeyError, TypeError, json.JSONDecodeError) as error:
             self.send_json(400, {"error": str(error)})
 
