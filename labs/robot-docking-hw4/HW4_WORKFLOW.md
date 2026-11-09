@@ -97,7 +97,7 @@ Keep `policy.json` at 0.8 m. Use the released matched comparison (one experiment
 
 Inspect `random.evaluations` and `guided.evaluations`. Each entry records a model-generated case, its speed score, direct speed-rule Boolean, and docking result. Check `actual_evaluations` for each strategy; the code also reruns evaluated cases to verify their saved records, so this count means **search-objective evaluations**, not every internal verification run. The selected case is the lowest-score case, with a direct Boolean failure preferred at a zero-score tie. Do not infer that one optimizer is generally better from one seed.
 
-Choose **one of the comparison's selected cases**. This command exports that exact embedded run; it does not start a second search:
+Inspect `random.selected_run.monitor.safety.pass` and `guided.selected_run.monitor.safety.pass`. If either is `false`, choose a **failing selected run**; if both fail, either is fine. The command below uses the guided result **only if it failed**. Use `--strategy random` when only the random result failed. `select-case` exports that exact embedded run; it does not start a second search:
 
 ```sh
 .venv/bin/python hw4.py select-case runs/my_search_comparison.json \
@@ -106,9 +106,9 @@ Choose **one of the comparison's selected cases**. This command exports that exa
   --out runs/my_replay.json
 ```
 
-You may use `--strategy random` instead. The exported run ID must match the chosen strategy's `selected_run.run_id` in the comparison. `replay` reruns the saved scenario with its **original saved policy** and checks that the result matches; it is not a redraw of stored points. If **neither** strategy has a case with `safety.pass = false` (check the direct Boolean, not merely whether a score is negative), use `calibration/calibration_adverse_b1p0.json` instead. It is staff supplied, not your discovery. Replay it with the same `replay` command and name it as your adverse case. A failed small search does not prove the policy safe.
+The exported run ID must match the chosen strategy's `selected_run.run_id` in the comparison. `replay` reruns the saved scenario with its **original saved policy** and checks that the result matches; it is not a redraw of stored points. If **neither selected run** has `safety.pass = false` (check the direct Boolean, not merely whether a score is negative), use `calibration/calibration_adverse_b1p0.json` instead of `runs/my_selected_case.json`. It is staff supplied, not your discovery. Replay it with the same `replay` command and name it as your adverse case. A small search that misses a violation does not prove the policy safe.
 
-Before editing the policy, predict how moving the brake-trigger distance might affect both speed and docking. Change only `brake_at_m` in `policy.json`, within 0.3–1.5 m. Retest **three scenarios** with the new policy: your selected adverse case **or** the staff calibration case, plus the supplied normal and additional cases. The last two originals are `calibration/normal_s1p5_b1p5.json` and `calibration/additional_b1p6.json`.
+Before editing the policy, predict how moving the brake-trigger distance might affect both speed and docking. Change only `brake_at_m` in `policy.json`, within 0.3–1.5 m. Retest **three scenarios** with the new policy: your selected adverse case **or** the staff calibration case, plus the supplied normal and additional cases. All supplied calibration files were generated under the original 0.8 m policy. The normal case uses cruise speed 1.5 m/s and braking strength 1.5 m/s²; the additional case uses 1.2 m/s and 1.6 m/s². These are distinct scenarios, not three tests of one input. Their files are `calibration/normal_s1p5_b1p5.json` and `calibration/additional_b1p6.json`.
 
 ```sh
 .venv/bin/python hw4.py retest runs/my_selected_case.json \
@@ -119,11 +119,11 @@ Before editing the policy, predict how moving the brake-trigger distance might a
   --out runs/my_retest_additional.json
 ```
 
-If you used the supplied adverse calibration case, replace the first input path with `calibration/calibration_adverse_b1p0.json`. Do **not** add a fourth required adverse retest. `retest` holds each saved scenario fixed and runs the newly edited policy; its JSON names the original run ID. Compare the old and new Boolean results, speed scores, and docking margins. A change that helps one case but hurts another is useful to discuss. No setting is assumed to fix every possible scenario.
+If you used the supplied adverse calibration case, replace the first input path with `calibration/calibration_adverse_b1p0.json`. Do **not** add a fourth required adverse retest. `retest` first verifies each saved run against the current model and fixed evaluator, then holds its scenario fixed and runs the newly edited policy; its JSON names the original run ID. Compare the old and new Boolean results, speed scores, and docking margins. A change that helps one case but hurts another is useful to discuss. No setting is assumed to fix every possible scenario.
 
 ## Output checklist for one ZIP
 
-Keep the following in your submission ZIP. The commands above create files under `runs/`; a browser download is equivalent if it contains the same fresh run. You may choose different filenames if their purposes remain clear. Run IDs are already in the JSON; you need not copy every ID by hand.
+Keep the following in your submission ZIP. The commands above create files under `runs/`; a browser download is equivalent if it contains the same fresh run. A run ID identifies the model/source, scenario, policy, and trace content; rerunning identical inputs can produce the **same ID**, so it is not a timestamp or proof of when you ran the case. You may choose different filenames if their purposes remain clear. Run IDs are already in the JSON; you need not copy every ID by hand.
 
 | Purpose | File to keep | Produced by |
 | --- | --- | --- |
@@ -138,4 +138,4 @@ Keep the following in your submission ZIP. The commands above create files under
 | Policy tests | `runs/my_retest_adverse.json`, `runs/my_retest_normal.json`, `runs/my_retest_additional.json` | Three `retest` commands |
 | Explanation, at most two pages | PDF or Markdown file | Your map, three short prediction/check notes, before/after table, what you learned, and what remains untested |
 
-Do not include `.venv`, installed packages, or regenerated staff calibration files. The class worksheets are guides to this same homework, not separate submissions. Canvas is the source for the assignment's due date and submission settings when it is published. Until then, this repository is practice material, not a new deadline.
+Do not include `.venv`, installed packages, or regenerated staff calibration files. Keep your edited formula, policy, and runs in your own checkout; submit them to Canvas, not to the shared class repository. The class worksheets are guides to this same homework, not separate submissions. Canvas is the source for the assignment's due date and submission settings when it is published. Until then, this repository is practice material, not a new deadline.

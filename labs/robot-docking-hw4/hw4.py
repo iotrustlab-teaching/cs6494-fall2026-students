@@ -45,13 +45,16 @@ def student_formula_check(trace_file: Path | None = None) -> dict[str, object]:
         actual = float(student.evaluate(trace).value)
         if not (math.isfinite(expected) and math.isfinite(actual)):
             raise ValueError("formula returned a non-finite robustness value")
+        reference_pass = expected >= 0
+        student_pass = actual >= 0
         cases.append({"fixture": name, "expected_margin_m": expected,
                       "student_margin_m": actual,
-                      "reference_pass": expected >= -1e-9,
-                      "student_pass": actual >= -1e-9,
+                      "reference_pass": reference_pass,
+                      "student_pass": student_pass,
                       "source": ("student_authored_monitor_fixture" if name == "student-authored monitor fixture"
                                  else "provided_monitor_fixture"),
-                      "matches": math.isclose(expected, actual, abs_tol=1e-9)})
+                      "matches": (reference_pass == student_pass and
+                                  math.isclose(expected, actual, abs_tol=1e-9))})
     return {"schema": SCHEMA, "kind": "student_formula_check",
             "student_formula": STUDENT_FORMULA, "reference_formula": SERVICE_FORMULA,
             "cases": cases, "all_match": all(c["matches"] for c in cases),

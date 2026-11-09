@@ -99,17 +99,17 @@ def monitor(samples: list[State]) -> dict[str, object]:
     window_margins = [min(margins[start : start + 3]) for start in range(6)]
     reach_margin = max(margins[:6])
     dwell_margin = max(window_margins)
-    reach_witness = next((k for k, v in enumerate(margins[:6]) if v >= -1e-9), None)
-    dwell_witness = next((k for k, v in enumerate(window_margins) if v >= -1e-9), None)
+    reach_witness = next((k for k, v in enumerate(margins[:6]) if v >= 0), None)
+    dwell_witness = next((k for k, v in enumerate(window_margins) if v >= 0), None)
     fast_entry_samples = [k for k, point in enumerate(samples[:6])
-                          if point.distance <= TARGET_RADIUS + 1e-9 and abs(point.velocity) > 0.2 + 1e-9]
+                          if point.distance <= TARGET_RADIUS and abs(point.velocity) > 0.2]
     inside_samples = [k for k, point in enumerate(samples[:6])
-                      if point.distance <= TARGET_RADIUS + 1e-9]
+                      if point.distance <= TARGET_RADIUS]
     return {
-        "reach": reach_margin >= -1e-9,
+        "reach": reach_margin >= 0,
         "reach_margin": round(reach_margin, 6),
         "reach_witness": reach_witness,
-        "dwell": dwell_margin >= -1e-9,
+        "dwell": dwell_margin >= 0,
         "dwell_margin": round(dwell_margin, 6),
         "dwell_witness_start": dwell_witness,
         "window_margins": [round(v, 6) for v in window_margins],

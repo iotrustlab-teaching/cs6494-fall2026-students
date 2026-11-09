@@ -23,7 +23,7 @@ The varied **braking strength** is in m/s². It is a scenario-model parameter, n
 
 ## 2. Reproduce the case you chose
 
-Choose one of the comparison's two **selected runs**. Export that exact embedded case, then replay it:
+Look at both **selected runs**. If one or both have `safety.pass = false`, choose a failing one. The command below chooses guided **only if guided failed**; use `--strategy random` if only random failed. Export that exact embedded case, then replay it:
 
 ```sh
 .venv/bin/python hw4.py select-case runs/my_search_comparison.json \
@@ -32,9 +32,9 @@ Choose one of the comparison's two **selected runs**. Export that exact embedded
   --out runs/my_replay.json
 ```
 
-Use `--strategy random` if you chose its selected run. Confirm the exported run ID matches that strategy's `selected_run.run_id` in the comparison. The replay runs the model again with the **saved original policy** and checks the result. Point to the sampled second that explains the speed-rule result, and check whether docking worked too.
+Confirm the exported run ID matches that strategy's `selected_run.run_id` in the comparison. The replay runs the model again with the **saved original policy** and checks the result. Point to the sampled second that explains the speed-rule result, and check whether docking worked too.
 
-If **neither** strategy finds `safety.pass = false`, use `calibration/calibration_adverse_b1p0.json` as the adverse case instead. It is a staff-supplied model run, not your search discovery. Replay that file and name it clearly. Do not decide fallback from “no negative score” alone: a zero score can accompany a direct Boolean failure. A small search with no violation does not prove safety.
+If **neither selected run** has `safety.pass = false`, use `calibration/calibration_adverse_b1p0.json` as the adverse case instead. It is a staff-supplied model run, not your search discovery. Replay that file and name it clearly. Do not decide fallback from “no negative score” alone: a zero score can accompany a direct Boolean failure. A small search with no violation does not prove safety.
 
 ## 3. Predict a policy change, then test exactly three cases
 
@@ -43,8 +43,10 @@ Before editing, write what you expect a changed brake-trigger distance to do to 
 Run one fresh retest for each of these three saved scenarios:
 
 1. **Adverse:** `runs/my_selected_case.json` if your search found a failure, **or** `calibration/calibration_adverse_b1p0.json` if you used the fallback.
-2. **Normal:** `calibration/normal_s1p5_b1p5.json`.
-3. **Additional:** `calibration/additional_b1p6.json`.
+2. **Normal:** `calibration/normal_s1p5_b1p5.json` (cruise 1.5 m/s; braking 1.5 m/s²).
+3. **Additional:** `calibration/additional_b1p6.json` (cruise 1.2 m/s; braking 1.6 m/s²).
+
+The supplied calibration runs all used the original 0.8 m brake point. Each retest changes the policy while holding that file's own scenario fixed.
 
 ```sh
 .venv/bin/python hw4.py retest runs/my_selected_case.json \

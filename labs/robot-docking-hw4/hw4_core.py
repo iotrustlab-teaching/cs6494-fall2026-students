@@ -112,6 +112,17 @@ def selected_case_from_comparison(record: dict[str, Any], strategy: str) -> dict
             result.get("bounds") != record.get("bounds") or
             result.get("requested_budget") != record.get("requested_budget")):
         raise ValueError("selected run does not match the comparison history")
+    checks = selected["monitor"]
+    if (not math.isclose(float(item["safety_score_normalized"]),
+                         float(checks["safety"]["robustness_normalized"]), abs_tol=1e-7) or
+            item["safety_pass"] != checks["safety"]["pass"] or
+            item["service_pass"] != checks["service"]["pass"] or
+            item["service_margin_m"] != checks["service"]["margin_m"] or
+            result.get("selected_trial") != min(
+                evaluations, key=lambda entry: (entry["safety_score_normalized"],
+                                                entry["safety_pass"]))["trial"] or
+            result.get("violation_found") != any(not entry["safety_pass"] for entry in evaluations)):
+        raise ValueError("comparison selected case or history is inconsistent")
     replay_record(selected)  # verify the embedded run against the current source
     return selected
 
@@ -145,6 +156,7 @@ def replay_record(record: dict[str, Any], *, tolerance: float = 1e-9) -> dict[st
 
 def retest_record(record: dict[str, Any], policy: dict[str, float]) -> dict[str, Any]:
     original = select_run(record)
+    replay_record(original)  # reject edited source, scenario, trace, or verdict before comparing
     fresh = run_case(**original["scenario"], policy=policy)
     fresh["comparison_to_run_id"] = original["run_id"]
     return fresh
