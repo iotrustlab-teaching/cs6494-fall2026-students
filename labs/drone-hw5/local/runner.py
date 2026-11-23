@@ -25,6 +25,7 @@ HOME_LON = 149.165237
 ALT_M = 12.0
 RUNS = Path("/runs")
 GPS_PARAM_NAMES = ("SIM_GPS1_GLTCH_X", "SIM_GPS1_GLTCH_Y")
+AUTOPILOT_COMPONENT = mavutil.mavlink.MAV_COMP_ID_AUTOPILOT1
 
 
 def point(north_m: float, east_m: float) -> tuple[int, int]:
@@ -35,7 +36,10 @@ def point(north_m: float, east_m: float) -> tuple[int, int]:
 def mission_items() -> list[tuple[int, int, int, float]]:
     # The same compact AUTO route is used for all four cases.  Its 30 m
     # square is a generic practice world, not the CTF's campus mission.
+    # ArduPilot reserves mission seq 0 for home.  The first executable
+    # command is therefore TAKEOFF at seq 1.
     items = [
+        (mavutil.mavlink.MAV_CMD_NAV_WAYPOINT, *point(0, 0), 0.0),
         (mavutil.mavlink.MAV_CMD_NAV_TAKEOFF, *point(0, 0), ALT_M),
         (mavutil.mavlink.MAV_CMD_NAV_WAYPOINT, *point(0, 30), ALT_M),
         (mavutil.mavlink.MAV_CMD_NAV_WAYPOINT, *point(30, 30), ALT_M),
@@ -50,6 +54,14 @@ def offset_from_home(latitude: float, longitude: float) -> tuple[float, float]:
     return ((latitude - HOME_LAT) * metres_per_degree,
             (longitude - HOME_LON) * metres_per_degree
             * math.cos(math.radians(HOME_LAT)))
+
+
+def near_practice_world(latitude: float, longitude: float) -> bool:
+    """Reject uninitialized telemetry such as simulator latitude 0/longitude 0."""
+    if not (math.isfinite(latitude) and math.isfinite(longitude)):
+        return False
+    north, east = offset_from_home(latitude, longitude)
+    return math.hypot(north, east) < 1000
 
 
 def distance_to_segment(point_xy, start_xy, end_xy) -> float:
@@ -122,7 +134,7 @@ class Flight:
                     self.t0 = time.monotonic()
                     self.latest_mode = mavutil.mode_string_v10(heartbeat)
                     self.emit("connected", system=self.connection.target_system,
-                              component=self.connection.target_component,
+                              component=AUTOPILOT_COMPONENT,
                               mode=self.latest_mode)
                     return
             except (ConnectionError, OSError, EOFError) as exc:
@@ -133,7 +145,7 @@ class Flight:
     def command(self, command: int, *params: float) -> None:
         conn = self.connection
         seven = tuple(params) + (0.0,) * (7 - len(params))
-        conn.mav.command_long_send(conn.target_system, conn.target_component,
+        conn.mav.command_long_send(conn.target_system, AUTOPILOT_COMPONENT,
                                    command, 0, *seven)
 
     def request_streams(self) -> None:
@@ -170,6 +182,10 @@ class Flight:
                 self.latest_seq = msg.seq
                 self.emit("mission", sequence=msg.seq)
         elif typ == "GPS_RAW_INT":
+            if msg.fix_type < 3 or not near_practice_world(msg.lat / 1e7,
+                                                           msg.lon / 1e7):
+                self.emit("gps_unusable", fix_type=msg.fix_type)
+                return
             self.latest_gps = msg
             if self.latest_truth is not None:
                 north, east = offset_from_home(msg.lat / 1e7, msg.lon / 1e7)
@@ -183,6 +199,9 @@ class Flight:
             if watch and self.armed:
                 self.check_watchdog(msg)
         elif typ == "SIMSTATE":
+            if not near_practice_world(msg.lat / 1e7, msg.lng / 1e7):
+                self.emit("truth_unusable")
+                return
             # Diagnostic truth is recorded for comparison, never provided to
             # student_watchdog.Watchdog.update().
             self.latest_truth = (msg.lat / 1e7, msg.lng / 1e7)
@@ -194,6 +213,9 @@ class Flight:
                       longitude_deg=self.latest_truth[1])
         elif typ == "GLOBAL_POSITION_INT":
             self.current_boot_s = msg.time_boot_ms / 1000.0
+            if not near_practice_world(msg.lat / 1e7, msg.lon / 1e7):
+                self.emit("estimate_unusable")
+                return
             self.latest_estimate = (msg.lat / 1e7, msg.lon / 1e7)
             if self.armed and msg.relative_alt > 2000:
                 self.airborne = True
@@ -227,24 +249,41 @@ class Flight:
 
     def set_parameter(self, name: str, value: float, tolerance: float = 1e-6) -> None:
         conn = self.connection
-        self.param_pending.add(name)
-        conn.mav.param_set_send(conn.target_system, conn.target_component,
-                                name.encode("ascii"), float(value),
-                                mavutil.mavlink.MAV_PARAM_TYPE_REAL32)
-        deadline = time.monotonic() + 4
-        while time.monotonic() < deadline and name in self.param_pending:
-            self.read(timeout=0.3, watch=self.armed)
-        actual = self.parameter_values.get(name)
-        if name in self.param_pending or actual is None or abs(actual - value) > tolerance:
-            raise RuntimeError(f"Parameter {name} requested {value}, got {actual}")
+        actual = None
+        for attempt in range(1, 4):
+            self.param_pending.add(name)
+            conn.mav.param_set_send(conn.target_system, AUTOPILOT_COMPONENT,
+                                    name.encode("ascii"), float(value),
+                                    mavutil.mavlink.MAV_PARAM_TYPE_REAL32)
+            deadline = time.monotonic() + 5
+            while time.monotonic() < deadline and name in self.param_pending:
+                self.read(timeout=0.3, watch=self.armed)
+            actual = self.parameter_values.get(name)
+            if (name not in self.param_pending and actual is not None
+                    and abs(actual - value) <= tolerance):
+                return
+            self.emit("parameter_retry", parameter=name, attempt=attempt,
+                      requested=value, observed=actual)
+            self.param_pending.add(name)
+            conn.mav.param_request_read_send(conn.target_system,
+                                             AUTOPILOT_COMPONENT,
+                                             name.encode("ascii"), -1)
+            deadline = time.monotonic() + 3
+            while time.monotonic() < deadline and name in self.param_pending:
+                self.read(timeout=0.3, watch=self.armed)
+            actual = self.parameter_values.get(name)
+            if (name not in self.param_pending and actual is not None
+                    and abs(actual - value) <= tolerance):
+                return
+        raise RuntimeError(f"Parameter {name} requested {value}, got {actual}")
 
     def upload_mission(self) -> None:
         conn = self.connection
         items = mission_items()
-        conn.mav.mission_clear_all_send(conn.target_system, conn.target_component)
+        conn.mav.mission_clear_all_send(conn.target_system, AUTOPILOT_COMPONENT)
         # The clear operation has its own ACK. Never count it as upload success.
         conn.recv_match(type="MISSION_ACK", blocking=True, timeout=3)
-        conn.mav.mission_count_send(conn.target_system, conn.target_component,
+        conn.mav.mission_count_send(conn.target_system, AUTOPILOT_COMPONENT,
                                     len(items))
         pending = set(range(len(items)))
         deadline = time.monotonic() + 25
@@ -261,12 +300,12 @@ class Flight:
                 command, lat, lon, alt = items[seq]
                 if typ == "MISSION_REQUEST_INT":
                     conn.mav.mission_item_int_send(
-                        conn.target_system, conn.target_component, seq,
+                        conn.target_system, AUTOPILOT_COMPONENT, seq,
                         mavutil.mavlink.MAV_FRAME_GLOBAL_RELATIVE_ALT_INT,
                         command, 0, 1, 0, 0, 0, 0, lat, lon, alt)
                 else:
                     conn.mav.mission_item_send(
-                        conn.target_system, conn.target_component, seq,
+                        conn.target_system, AUTOPILOT_COMPONENT, seq,
                         mavutil.mavlink.MAV_FRAME_GLOBAL_RELATIVE_ALT,
                         command, 0, 1, 0, 0, 0, 0, lat / 1e7, lon / 1e7, alt)
                 pending.discard(seq)

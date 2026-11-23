@@ -11,7 +11,7 @@ for i in $(seq 1 60); do
     cat /runs/gazebo.log >&2
     exit 1
   fi
-  if gz topic -l 2>/dev/null | grep -q '/world/iris_runway/clock'; then
+  if timeout 3 gz topic -l 2>/dev/null | grep -q '/world/iris_runway/clock'; then
     ready=1
     break
   fi

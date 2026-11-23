@@ -5,7 +5,7 @@ import unittest
 from types import SimpleNamespace
 
 from attack import AttackPlan, degrees_from_meters
-from runner import mission_items, offset_from_home, route_deviation
+from runner import mission_items, near_practice_world, offset_from_home, route_deviation
 from starter_watchdog import Watchdog
 
 
@@ -24,9 +24,11 @@ class PracticeLogicTest(unittest.TestCase):
                                20, places=5)
 
     def test_mission_and_route_geometry(self):
-        self.assertEqual(len(mission_items()), 5)
+        self.assertEqual(len(mission_items()), 6)
         self.assertAlmostEqual(route_deviation(-35.363262, 149.165237), 0)
         self.assertEqual(offset_from_home(-35.363262, 149.165237), (0, 0))
+        self.assertTrue(near_practice_world(-35.363262, 149.165237))
+        self.assertFalse(near_practice_world(0, 0))
 
     def test_starter_brakes_on_twenty_metres(self):
         watchdog = Watchdog()

@@ -23,7 +23,9 @@ assert clean["truth_samples"] > 20, clean
 assert attack["airborne_observed"], attack
 assert attack["truth_samples"] > 20, attack
 assert attack["max_gps_truth_separation_m"] is not None, attack
-assert attack["max_gps_truth_separation_m"] > 5, attack
+assert clean["max_gps_truth_separation_m"] is not None, clean
+assert attack["max_gps_truth_separation_m"] > max(
+    5, clean["max_gps_truth_separation_m"] + 5), (clean, attack)
 assert any(row["kind"] == "attack_request" for row in attack_events)
 assert any(row["kind"] == "parameter_confirmed" and
            row["parameter"] == "SIM_GPS1_GLTCH_X" and

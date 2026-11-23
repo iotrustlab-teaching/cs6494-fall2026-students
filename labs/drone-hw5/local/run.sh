@@ -17,6 +17,7 @@ command -v docker >/dev/null 2>&1 || {
 docker compose version >/dev/null
 mkdir -p runs
 docker compose config --quiet
+trap 'docker compose down --remove-orphans >/dev/null 2>&1 || true' EXIT
 
 run_one() {
   label=$1
