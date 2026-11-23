@@ -399,6 +399,10 @@ class Flight:
                           150, "3D GPS fix and simulator clock")
             # Copter 4.7 renamed WPNAV_SPEED (cm/s) to WP_SPD (m/s).
             self.set_parameter("WP_SPD", 2.0, tolerance=0.01)
+            # AUTO_OPTIONS bits 0 and 1 permit arming in AUTO and mission
+            # takeoff without a physical RC throttle input. Other ArduPilot
+            # prearm sensor checks remain active.
+            self.set_parameter("AUTO_OPTIONS", 3.0, tolerance=0.01)
             self.set_parameter(GPS_PARAM_NAMES[0], 0.0)
             self.set_parameter(GPS_PARAM_NAMES[1], 0.0)
             self.upload_mission()
