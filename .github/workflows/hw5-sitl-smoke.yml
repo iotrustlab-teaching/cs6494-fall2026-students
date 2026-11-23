@@ -7,6 +7,12 @@ on:
     paths:
       - labs/drone-hw5/local/**
       - .github/workflows/hw5-sitl-smoke.yml
+  pull_request:
+    branches:
+      - main
+    paths:
+      - labs/drone-hw5/local/**
+      - .github/workflows/hw5-sitl-smoke.yml
   workflow_dispatch:
 
 jobs:
