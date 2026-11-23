@@ -1,0 +1,46 @@
+name: HW5 local simulator smoke
+
+on:
+  push:
+    branches:
+      - codex/hw5-public-sitl
+    paths:
+      - labs/drone-hw5/local/**
+      - .github/workflows/hw5-sitl-smoke.yml
+  workflow_dispatch:
+
+jobs:
+  clean-flight:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 45
+    defaults:
+      run:
+        working-directory: labs/drone-hw5/local
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check package
+        run: |
+          docker compose config --quiet
+          python3 -m compileall -q attack.py starter_watchdog.py student_watchdog.py runner.py
+      - name: Build Gazebo and SITL image
+        run: docker compose build
+      - name: Check exercise logic in image
+        run: docker compose run --rm --no-deps sim python3 -m unittest -v test_logic.py
+      - name: Fly clean mission
+        run: ./run.sh clean-starter
+      - name: Fly attacked mission
+        run: ./run.sh attack-starter
+      - name: Check flight receipts
+        run: python3 verify_smoke.py
+      - name: Upload run receipts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: hw5-sitl-smoke-receipts
+          path: |
+            labs/drone-hw5/local/runs/*.summary.json
+            labs/drone-hw5/local/runs/*.jsonl
+            labs/drone-hw5/local/runs/*.route.svg
+      - name: Stop simulator
+        if: always()
+        run: docker compose down --remove-orphans

@@ -1,0 +1,10 @@
+plugin-src
+arducopter
+runs
+__pycache__
+*.pyc
+*.log
+*.jsonl
+firmware-git-version.txt
+README.md
+*.md
