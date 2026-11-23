@@ -98,7 +98,7 @@
   <rect x="1008" y="258" width="12" height="126" rx="6" fill="#516b9c"/>
   <text x="1039" y="297" class="cardTitle">AP_GPS protocol backend + fix state</text>
   <text x="1039" y="329" class="body">Parses GPS messages; stores the reported fix.</text>
-  <text x="1039" y="355" class="small">Backend depends on GPS1_TYPE (for example, u-blox).</text>
+  <text x="1039" y="355" class="small">Configured or protocol-detected (for example, u-blox).</text>
 
   <path d="M1267 386 V406" stroke="#243d58" stroke-width="4" fill="none" marker-end="url(#navyArrow)"/>
   <rect x="1008" y="413" width="518" height="81" rx="13" fill="#fff" stroke="#a8b3c9" stroke-width="2"/>

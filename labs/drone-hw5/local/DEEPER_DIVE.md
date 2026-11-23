@@ -65,6 +65,13 @@ position estimate. ArduPilot's [library guide](https://ardupilot.org/dev/docs/ap
 separates `AP_HAL` from `AP_GPS`, and its [Copter EKF guide](https://ardupilot.org/copter/docs/common-apm-navigation-extended-kalman-filter-overview.html)
 explains how GPS is combined with other measurements.
 
+For a physical flight-controller build, a board implementation such as
+`AP_HAL_ChibiOS` supplies the serial port. SITL uses `AP_HAL_SITL` instead.
+Separately, the **physical receiver replaces the simulated receiver**. Those
+are two changes below the GPS-consuming flight logic, not one HAL feature.
+ArduPilot's [developer introduction](https://ardupilot.org/dev/docs/learning-ardupilot-introduction.html)
+describes the board-specific HAL implementations.
+
 This is the useful boundary to remember:
 
 ```text
