@@ -1,0 +1,46 @@
+name: HW5 ARM emulation diagnostic
+on:
+  push:
+    branches: [codex/hw5-arm-qa]
+  workflow_dispatch:
+jobs:
+  clean-flight-on-arm:
+    runs-on: ubuntu-24.04-arm
+    timeout-minutes: 60
+    defaults:
+      run:
+        working-directory: labs/drone-hw5/local
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-qemu-action@v3
+        with:
+          platforms: amd64
+      - name: Confirm ARM host and x86 emulation
+        run: |
+          uname -m
+          docker compose version
+          docker run --rm --platform linux/amd64 alpine uname -m
+      - name: Build source-pinned simulator image under emulation
+        run: docker compose build sim
+      - name: Fly clean 30 m AUTO route under emulation
+        run: ./run.sh clean-starter
+      - name: Check landing and mission receipt
+        run: |
+          python3 - <<'PY'
+          import glob,json
+          files=sorted(glob.glob('runs/*-clean-starter.summary.json'))
+          assert files, 'no clean flight summary'
+          s=json.load(open(files[-1]))
+          assert s['mission_completed'] and s['final_mission_item_reached'], s
+          print('ARM emulation clean flight completed:', files[-1])
+          PY
+      - name: Save diagnostic receipts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: hw5-arm-qa-receipts
+          path: labs/drone-hw5/local/runs/
+          if-no-files-found: warn
+      - name: Stop simulator
+        if: always()
+        run: docker compose down --remove-orphans
