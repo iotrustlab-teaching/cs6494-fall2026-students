@@ -1,6 +1,8 @@
 # HW5 / CTF2 team workshop: plan one drone test
 
-Work with your **CTF2 planning team of 5–6**. Today you will choose a test and decide what evidence would answer it. **The local Docker simulator runner is not released yet; do not install or fly anything for this activity.** We will walk through the starter code in class when it is ready. Canvas will give the final HW5 submission and team rules.
+Work with your **CTF2 planning team of 5–6**. Choose a test and decide what evidence would answer it. The [local Docker simulator starter](local/README.md) is the code your team can run on its own laptop; the [optional code walkthrough](local/DEEPER_DIVE.md) explains where the GPS edit and watchdog sit. Canvas has the final HW5 submission instructions.
+
+The local starter flies a 30 m square in a generic Gazebo world using ArduPilot SITL. It is a separate practice mission from the CTF2 stadium demo. One teammate can set up Docker while the others inspect `attack.py`, `student_watchdog.py`, and the evidence questions below. The first image build may take many minutes.
 
 The supplied software mission asks a drone to follow a route. A GPS edit can make the position reported to its flight controller differ from its actual position. A watchdog may notice and request a response. Your test must examine both protection and whether the drone can still complete an ordinary mission.
 
@@ -10,7 +12,7 @@ The supplied software mission asks a drone to follow a route. A GPS edit can mak
 2. **One watchdog change:** What reading should it check, and what should it request when suspicious? Choose one change to the supplied watchdog. Name an ordinary-flight condition that could cause a false alarm.
 3. **Evidence:** Decide how you will compare *reported GPS position* with *simulator actual position*. Record a requested BRAKE or other action separately from the flight controller's **actual mode**.
 
-## Four flights to run after the starter is released
+## Four flights to run with the starter
 
 Use the same mission and simulator version; reset before each flight. Runs 2 and 3 must use **identical attack settings**.
 
@@ -25,7 +27,7 @@ Keep each run ID, actual route/mission result, watchdog event, and actual contro
 
 ## Assign owners before leaving
 
-- **Setup owner and backup:** Check a team laptop and Docker access when instructions arrive; no physical drone or public system is in scope.
+- **Setup owner and backup:** Check a team laptop and Docker access; no physical drone or SPHERE allocation is needed.
 - **Code owner:** Bring the proposed GPS settings and watchdog change to the walkthrough.
 - **Evidence owner:** Keep four receipts and the comparison table. Everyone should be able to explain the result.
 

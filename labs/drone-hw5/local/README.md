@@ -1,9 +1,11 @@
-# HW5 public-source local flight candidate
+# HW5 local drone practice: ArduPilot + Gazebo
 
-**Release status: HOLD until an end-to-end Docker flight has run and its trace
-has been reviewed.** This folder is a complete candidate for a team-local
-practice exercise. It uses a real ArduPilot Copter SITL flight controller and
-the Gazebo Harmonic Iris world. It does **not** contain the private CTF2
+**Class preview:** the remote x86 Docker clean and attacked flights have run
+and their traces were reviewed. The full four-case check and Apple Silicon
+student setup are still being tested. You can start the Docker build now; if
+a flight fails, keep its `runs/` receipts and report the problem. This folder uses a real
+ArduPilot Copter SITL flight controller and the Gazebo Harmonic Iris world.
+It does **not** contain the private CTF2
 server, its campus stadium mission, its GPS edit arbiter, or staff credentials.
 
 ## What the four cases do
@@ -25,21 +27,34 @@ truth is recorded separately for later assessment.
 
 ## Run one case, then the four-case comparison
 
-Install and start Docker Desktop (or Docker Engine with Compose). From **this
-folder** run:
+Install and start Docker Desktop (or Docker Engine with Compose). Get a fresh
+copy of the student repository and enter this folder:
+
+```sh
+git clone https://github.com/iotrustlab-teaching/cs6494-fall2026-students.git
+cd cs6494-fall2026-students/labs/drone-hw5/local
+```
+
+If you already have the repository, pull the current `main` branch instead of
+cloning again. From **this folder** run:
 
 ```sh
 ./run.sh clean-starter
 ./run.sh all
 ```
 
-The first build downloads and compiles Gazebo/ArduPilot components and may take
-many minutes. On an Apple Silicon Mac, the currently pinned public SITL
+The first build installs Gazebo, builds its ArduPilot plugin, and downloads the
+pinned ArduPilot SITL executable. It may take many minutes. On an Apple Silicon
+Mac, the currently pinned public SITL
 binary requires `linux/amd64` emulation, which may be substantially slower;
 the route is timed by simulator time, with a separate wall-time guard. The
 container needs about 6 GB RAM and 4 CPUs. Each case starts with a fresh
 simulator and flight-controller state. The Compose service exposes **no**
 network port to the host.
+
+The runner enables ArduPilot's documented `AUTO_OPTIONS` bits for arming in
+AUTO and starting takeoff without a physical RC throttle input. It leaves
+the controller's ordinary prearm sensor checks enabled.
 
 Edit `attack.py` to change the attack time, direction, or strength within its
 limits. Edit `student_watchdog.py` to change what the Blue monitor requests.
@@ -99,11 +114,24 @@ as evidence that the CTF mission was run or defended.
 - The student attack plan, watchdog, runner, tests, route plot, and scripts in
   this folder are newly authored teaching code; no private CTF source was copied.
 
-## Known test gate
+## What the first real smoke established
 
-The code and Compose file can pass static checks before class without touching
-the live Docker VM. The **first actual flight** must still demonstrate: a
-Gazebo-backed takeoff, AUTO waypoint progression, GPS parameter confirmation,
-red/green track separation for the attacked run, actual BRAKE/AUTO heartbeat
-transitions if requested, and a clean, useful baseline. If any of those fail,
-do not give this package to students as a runnable release.
+The [November 23 remote x86 CI run](https://github.com/iotrustlab-teaching/cs6494-fall2026-students/actions/runs/45283520251)
+built the image, flew clean and attacked AUTO missions in Gazebo, reached the
+final RTL item, returned home, and disarmed. With the default abrupt edit, the
+reported GPS shifted about **20 m** from Gazebo's reference position. The
+starter watchdog requested BRAKE and then AUTO; ArduPilot confirmed those
+mode transitions. The clean run's maximum GPS/reference separation was about
+**0.10 m**.
+
+The attack did **not** visibly deflect the route in that run. Maximum
+simulator-truth route deviation was **0.36 m** with the edit and **0.41 m** in
+the clean run. The controller's position estimate also stayed close to
+simulator truth. The trace is consistent with ArduPilot filtering the abrupt
+GPS jump, but it does not by itself prove the precise estimator mechanism.
+The first result to investigate is therefore a sensor disagreement and a
+watchdog response, not a successful navigation hijack.
+
+The full `./run.sh all` comparison and an Apple Silicon Docker Desktop run
+are still being checked. The remote x86 result does not establish Mac timing or
+that a different, gradual attack would be detected or have the same effect.
