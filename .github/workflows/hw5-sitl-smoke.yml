@@ -32,11 +32,9 @@ jobs:
         run: docker compose build
       - name: Check exercise logic in image
         run: docker compose run --rm --no-deps sim python3 -m unittest -v test_logic.py
-      - name: Fly clean mission
-        run: ./run.sh clean-starter
-      - name: Fly attacked mission
-        run: ./run.sh attack-starter
-      - name: Check flight receipts
+      - name: Fly all four practice cases
+        run: ./run.sh all
+      - name: Check four flight receipts
         run: python3 verify_smoke.py
       - name: Upload run receipts
         if: always()

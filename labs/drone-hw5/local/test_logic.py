@@ -54,6 +54,20 @@ class PracticeLogicTest(unittest.TestCase):
         flight.timeout_recovery = True
         self.assertFalse(flight.summary()["mission_completed"])
 
+    def test_each_case_imports_the_requested_watchdog(self):
+        self.assertEqual(Flight("clean-starter", 180).watchdog.__class__.__module__,
+                         "starter_watchdog")
+        self.assertEqual(Flight("attack-starter", 180).watchdog.__class__.__module__,
+                         "starter_watchdog")
+        self.assertEqual(Flight("clean-student", 180).watchdog.__class__.__module__,
+                         "student_watchdog")
+        self.assertEqual(Flight("attack-student", 180).watchdog.__class__.__module__,
+                         "student_watchdog")
+
+    def test_both_attacked_cases_load_the_same_attack_plan(self):
+        self.assertEqual(Flight("attack-starter", 180).attack, AttackPlan())
+        self.assertEqual(Flight("attack-student", 180).attack, AttackPlan())
+
 
 if __name__ == "__main__":
     unittest.main()
