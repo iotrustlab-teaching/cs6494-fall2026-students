@@ -370,7 +370,8 @@ class Flight:
                           self.latest_gps.fix_type >= 3 and
                           self.current_boot_s is not None,
                           150, "3D GPS fix and simulator clock")
-            self.set_parameter("WPNAV_SPEED", 200, tolerance=0.1)
+            # Copter 4.7 renamed WPNAV_SPEED (cm/s) to WP_SPD (m/s).
+            self.set_parameter("WP_SPD", 2.0, tolerance=0.01)
             self.set_parameter(GPS_PARAM_NAMES[0], 0.0)
             self.set_parameter(GPS_PARAM_NAMES[1], 0.0)
             self.upload_mission()

@@ -51,11 +51,15 @@ stops. `starter_watchdog.py` is the original comparison and should stay as-is.
 
 Each case writes three files into `runs/`: a JSON summary, timestamped JSONL
 events, and an offline SVG route plot. The plot distinguishes the **assigned
-route** (gray), **Gazebo simulator truth** (blue), and **GPS reported to the
-controller** (red). It is generated from telemetry and is not a live camera
-view. Check `mission_completed`, `airborne_observed`, controller mode events,
+route** (gray), **Gazebo simulator truth** (green), **GPS reported to the
+controller** (red), and **controller position estimate** (blue). It is
+generated from telemetry and is not a live camera view. Check
+`mission_completed`, `airborne_observed`, controller mode events,
 GPS parameter confirmations, and route deviation. An accepted parameter by
 itself does not prove a changed physical trajectory or a successful defense.
+
+For an optional code-level explanation of the sensor and control path, see
+[DEEPER_DIVE.md](DEEPER_DIVE.md).
 
 To test basic code without starting a flight (after the image has built):
 
@@ -100,6 +104,6 @@ as evidence that the CTF mission was run or defended.
 The code and Compose file can pass static checks before class without touching
 the live Docker VM. The **first actual flight** must still demonstrate: a
 Gazebo-backed takeoff, AUTO waypoint progression, GPS parameter confirmation,
-red/blue track separation for the attacked run, actual BRAKE/AUTO heartbeat
+red/green track separation for the attacked run, actual BRAKE/AUTO heartbeat
 transitions if requested, and a clean, useful baseline. If any of those fail,
 do not give this package to students as a runnable release.

@@ -16,6 +16,8 @@ from pathlib import Path
 
 
 EARTH_RADIUS_M = 6_371_000.0
+HOME_LAT = -35.363262
+HOME_LON = 149.165237
 COLORS = {"truth": "#176b55", "gps": "#c53438", "estimate": "#2459a7"}
 LABELS = {
     "truth": "Simulator reference position",
@@ -93,8 +95,15 @@ def render(events: list[dict], title: str, source_name: str) -> str:
         kind: [(t, *meters(lat, lon)) for t, lat, lon in series]
         for kind, series in traces.items()
     }
+    # This fixed practice route is a reference, not an observed trajectory.
+    route_ne = ((0, 0), (0, 30), (30, 30), (30, 0), (0, 0))
+    route = [meters(HOME_LAT + north / 111_194.9,
+                    HOME_LON + east / (111_194.9 * math.cos(math.radians(HOME_LAT))))
+             for north, east in route_ne]
     xs = [east for series in projected.values() for _, east, _ in series]
     ys = [north for series in projected.values() for _, _, north in series]
+    xs.extend(east for east, _ in route)
+    ys.extend(north for _, north in route)
     min_x, max_x = min(xs), max(xs)
     min_y, max_y = min(ys), max(ys)
     span = max(max_x - min_x, max_y - min_y, 10.0)
@@ -112,9 +121,9 @@ def render(events: list[dict], title: str, source_name: str) -> str:
         '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1120 850" '
         'role="img" aria-labelledby="title desc">',
         f'<title id="title">{html.escape(title)}</title>',
-        '<desc id="desc">Three separate simulated flight traces: simulator reference '
-        'position, reported GPS, and controller estimate. Right panel lists event '
-        'timing and evidence limits.</desc>',
+        '<desc id="desc">Assigned route and three separate simulated flight traces: '
+        'simulator reference position, reported GPS, and controller estimate. '
+        'Right panel lists event timing and evidence limits.</desc>',
         '<rect width="1120" height="850" fill="#f8fafc"/>',
         '<rect x="0" y="0" width="1120" height="10" fill="#aa0820"/>',
         f'<text x="52" y="65" font-family="Arial,sans-serif" font-size="31" '
@@ -137,6 +146,12 @@ def render(events: list[dict], title: str, source_name: str) -> str:
         f'<text x="88" y="765" font-family="Arial,sans-serif" font-size="13" '
         f'fill="#536274">Width ≈ {2*half:.0f} m</text>',
     ]
+
+    route_coords = " ".join(f"{xy(e, n)[0]:.1f},{xy(e, n)[1]:.1f}"
+                            for e, n in route)
+    parts.append(f'<polyline points="{route_coords}" fill="none" '
+                 'stroke="#64748b" stroke-width="5" stroke-dasharray="8 7" '
+                 'stroke-linejoin="round"/>')
 
     for kind in ("truth", "estimate", "gps"):
         series = projected[kind]
@@ -199,13 +214,17 @@ def render(events: list[dict], title: str, source_name: str) -> str:
         parts.append(f'<text x="770" y="{y+5}" font-family="Arial,sans-serif" '
                      f'font-size="15" fill="#25334b">{LABELS[kind]} '
                      f'({len(traces[kind])} samples)</text>')
-    parts.append('<text x="720" y="310" font-family="Arial,sans-serif" '
+    parts.append('<line x1="720" y1="291" x2="758" y2="291" '
+                 'stroke="#64748b" stroke-width="4" stroke-dasharray="8 5"/>')
+    parts.append('<text x="770" y="296" font-family="Arial,sans-serif" '
+                 'font-size="15" fill="#25334b">Assigned 30 m square route</text>')
+    parts.append('<text x="720" y="340" font-family="Arial,sans-serif" '
                  'font-size="20" font-weight="700" fill="#16243a">Selected events</text>')
     for index, item in enumerate(timeline):
         safe = html.escape(item)
         if len(safe) > 52:
             safe = safe[:49] + "…"
-        parts.append(f'<text x="720" y="{345+index*24}" font-family="Arial,sans-serif" '
+        parts.append(f'<text x="720" y="{375+index*24}" font-family="Arial,sans-serif" '
                      f'font-size="12" fill="#344157">{safe}</text>')
     parts += [
         '<rect x="52" y="782" width="1016" height="48" rx="8" fill="#e8eef5"/>',
