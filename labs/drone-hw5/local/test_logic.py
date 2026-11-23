@@ -5,7 +5,7 @@ import unittest
 from types import SimpleNamespace
 
 from attack import AttackPlan, degrees_from_meters
-from runner import mission_items, near_practice_world, offset_from_home, route_deviation
+from runner import Flight, mission_items, near_practice_world, offset_from_home, route_deviation
 from starter_watchdog import Watchdog
 
 
@@ -41,6 +41,18 @@ class PracticeLogicTest(unittest.TestCase):
         self.assertIsNone(watchdog.update(gps(1, 0), 1))
         self.assertIsNone(watchdog.update(gps(2, 0), 2))
         self.assertEqual(watchdog.update(gps(3, 20), 3), "BRAKE")
+
+    def test_mission_receipt_requires_home_and_no_timeout(self):
+        flight = Flight("clean-starter", 180)
+        flight.airborne = True
+        flight.latest_seq = len(mission_items()) - 1
+        flight.latest_truth = (-35.363262, 149.165237)
+        self.assertTrue(flight.summary()["mission_completed"])
+        flight.latest_truth = (-35.362262, 149.165237)
+        self.assertFalse(flight.summary()["mission_completed"])
+        flight.latest_truth = (-35.363262, 149.165237)
+        flight.timeout_recovery = True
+        self.assertFalse(flight.summary()["mission_completed"])
 
 
 if __name__ == "__main__":

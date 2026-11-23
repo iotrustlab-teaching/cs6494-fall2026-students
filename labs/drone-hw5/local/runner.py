@@ -111,6 +111,10 @@ class Flight:
         self.max_truth_route_deviation_m = None
         self.max_gps_truth_separation_m = None
         self.truth_samples = 0
+        self.timeout_recovery = False
+        self.reached_items: set[int] = set()
+        self.ekf_gps_ready = False
+        self.arm_attempts = 0
 
     def emit(self, kind: str, **fields: object) -> None:
         event = {"t_s": round(max(0.0, time.monotonic() - self.t0), 3)
@@ -181,6 +185,9 @@ class Flight:
             if msg.seq != self.latest_seq:
                 self.latest_seq = msg.seq
                 self.emit("mission", sequence=msg.seq)
+        elif typ == "MISSION_ITEM_REACHED":
+            self.reached_items.add(int(msg.seq))
+            self.emit("mission_item_reached", sequence=int(msg.seq))
         elif typ == "GPS_RAW_INT":
             if msg.fix_type < 3 or not near_practice_world(msg.lat / 1e7,
                                                            msg.lon / 1e7):
@@ -234,6 +241,8 @@ class Flight:
                           value=float(msg.param_value))
         elif typ == "STATUSTEXT":
             text = msg.text.decode("utf-8", "replace") if isinstance(msg.text, bytes) else str(msg.text)
+            if "EKF3 IMU0 is using GPS" in text or "EKF3 IMU1 is using GPS" in text:
+                self.ekf_gps_ready = True
             self.emit("status", text=text)
         elif typ == "COMMAND_ACK":
             self.emit("command_ack", command=int(msg.command), result=int(msg.result))
@@ -331,6 +340,24 @@ class Flight:
         self.mode_requests += 1
         self.emit("mode_request", mode=mode)
 
+    def arm_when_ready(self) -> None:
+        # Gazebo's sensors and the Copter EKF need time to agree. The first CI
+        # run requested arm at 9 s and Copter correctly rejected it as
+        # "Accels inconsistent"; its EKF was using GPS only at about 41 s.
+        self.wait_for(lambda: self.ekf_gps_ready, 120, "EKF using GPS")
+        deadline = time.monotonic() + 120
+        next_request = 0.0
+        while time.monotonic() < deadline:
+            if self.armed:
+                return
+            if time.monotonic() >= next_request:
+                self.command(mavutil.mavlink.MAV_CMD_COMPONENT_ARM_DISARM, 1)
+                self.arm_attempts += 1
+                self.emit("arm_request", attempt=self.arm_attempts)
+                next_request = time.monotonic() + 8
+            self.read(timeout=0.5)
+        raise RuntimeError(f"ArduPilot did not arm after {self.arm_attempts} requests")
+
     def check_watchdog(self, gps_msg) -> None:
         # GPS time advances with the simulated flight, including when an
         # emulated x86 container runs slower than wall time on Apple Silicon.
@@ -377,9 +404,7 @@ class Flight:
             self.upload_mission()
             self.set_mode("AUTO")
             self.wait_for(lambda: self.latest_mode == "AUTO", 10, "AUTO mode")
-            self.command(mavutil.mavlink.MAV_CMD_COMPONENT_ARM_DISARM, 1)
-            self.emit("arm_request")
-            self.wait_for(lambda: self.armed, 90, "arming")
+            self.arm_when_ready()
             flight_start_wall = time.monotonic()
             flight_start_sim = self.current_boot_s
             while (self.current_boot_s - flight_start_sim < self.max_seconds
@@ -392,6 +417,7 @@ class Flight:
                     break
             else:
                 self.emit("error", message="Flight timed out; RTL requested")
+                self.timeout_recovery = True
                 self.set_mode("RTL")
                 self.wait_for(lambda: not self.armed, 45, "RTL landing", watch=True)
             return self.summary()
@@ -410,6 +436,12 @@ class Flight:
 
     def summary(self) -> dict:
         gps = self.latest_gps
+        home_distance = (math.hypot(*offset_from_home(*self.latest_truth))
+                         if self.latest_truth is not None else None)
+        route_returned_home = (self.airborne and not self.armed and
+                               self.latest_seq >= len(mission_items()) - 1 and
+                               not self.timeout_recovery and
+                               home_distance is not None and home_distance <= 8)
         return {
             "case": self.case,
             "real_simulator": "ArduPilot Copter SITL + Gazebo Harmonic",
@@ -420,8 +452,11 @@ class Flight:
             "last_mission_seq": self.latest_seq,
             "finished_disarmed": self.airborne and not self.armed,
             "airborne_observed": self.airborne,
-            "mission_completed": self.airborne and not self.armed and
-                                 self.latest_seq >= len(mission_items()) - 1,
+            "mission_completed": route_returned_home,
+            "final_truth_distance_home_m": home_distance,
+            "final_mission_item_reached":
+                len(mission_items()) - 1 in self.reached_items,
+            "timeout_recovery": self.timeout_recovery,
             "truth_samples": self.truth_samples,
             "max_truth_route_deviation_m": self.max_truth_route_deviation_m,
             "max_gps_truth_separation_m": self.max_gps_truth_separation_m,
@@ -430,6 +465,8 @@ class Flight:
             "simulator_truth_final": self.latest_truth,
             "mode_requests": self.mode_requests,
             "mode_confirmations": self.mode_confirmations,
+            "ekf_gps_ready": self.ekf_gps_ready,
+            "arm_attempts": self.arm_attempts,
             "event_count": len(self.events),
             "warning": "An accepted simulator parameter is not proof of route deviation or defense success; inspect the trace.",
         }
