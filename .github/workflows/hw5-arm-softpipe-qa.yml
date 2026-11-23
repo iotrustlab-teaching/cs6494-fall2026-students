@@ -1,0 +1,50 @@
+name: HW5 ARM software renderer diagnostic
+
+on:
+  push:
+    branches:
+      - codex/hw5-arm-softpipe-qa
+  workflow_dispatch:
+
+jobs:
+  clean-flight-on-arm:
+    runs-on: ubuntu-24.04-arm
+    timeout-minutes: 45
+    defaults:
+      run:
+        working-directory: labs/drone-hw5/local
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-qemu-action@v3
+      - name: Confirm ARM host and software renderer
+        run: |
+          test "$(uname -m)" = aarch64
+          docker compose config --quiet
+          docker compose config | grep -q 'GALLIUM_DRIVER: softpipe'
+      - name: Build pinned simulator under x86 emulation
+        run: docker compose build
+      - name: Fly one clean mission
+        run: ./run.sh clean-starter
+      - name: Check real flight receipt
+        run: |
+          python3 - <<'PY'
+          import glob, json
+          paths = glob.glob('runs/*-clean-starter.summary.json')
+          assert len(paths) == 1, paths
+          receipt = json.load(open(paths[0]))
+          assert receipt['real_simulator'] == 'ArduPilot Copter SITL + Gazebo Harmonic', receipt
+          assert receipt['mission_completed'] and receipt['airborne_observed'], receipt
+          print('ARM/QEMU clean flight completed:', paths[0])
+          PY
+      - name: Save diagnostic receipts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: hw5-arm-softpipe-qa
+          path: |
+            labs/drone-hw5/local/runs/*.summary.json
+            labs/drone-hw5/local/runs/*.jsonl
+            labs/drone-hw5/local/runs/*.route.svg
+      - name: Stop simulator
+        if: always()
+        run: docker compose down --remove-orphans
