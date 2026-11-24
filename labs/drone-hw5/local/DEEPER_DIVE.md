@@ -39,6 +39,75 @@ These tracks need not agree during an attack. None is a measurement from a real
 drone. The watchdog receives only the reported GPS message; it does not get the
 simulator reference track.
 
+## What changes on a physical drone?
+
+The flight code still needs a position measurement, but a physical drone has a
+**GPS receiver and antenna** instead of a simulated one. Here is one common
+ArduPilot arrangement: a serial GPS receiver that speaks the u-blox protocol.
+Other receivers and transports, including DroneCAN, use different backends.
+
+![Physical GPS and SITL GPS paths into ArduPilot](gps-hardware-vs-sitl.svg)
+
+| Stage | Physical flight, serial GPS example | This SITL exercise |
+| --- | --- | --- |
+| Where position starts | Satellite signals reach an antenna; a receiver computes and reports a fix. | Gazebo models the vehicle's motion. ArduPilot's simulated GPS uses that simulated state to make a sensor reading. |
+| What carries the reading | Receiver messages arrive over a flight-controller serial port. | A simulated GPS device supplies messages through a **virtual** serial port. |
+| Hardware abstraction layer | A board-specific `AP_HAL` serial driver provides the bytes to the rest of ArduPilot. | `AP_HAL_SITL` provides the same kind of serial interface without a physical UART. |
+| GPS interpretation | An `AP_GPS` backend parses the receiver protocol and provides a GPS fix. | An `AP_GPS` backend consumes the simulated receiver data. |
+| Position used for flight | The estimator combines GPS with other sensor data; navigation uses its **estimate**, not a direct copy of each GPS fix. | The estimator and navigation still run. The `GPS_RAW_INT` and position-estimate tracks can diverge. |
+
+**HAL means hardware abstraction layer.** It gives higher-level code an
+interface to board resources such as serial ports. HAL does **not** replace the
+GPS antenna or receiver, parse the receiver's GPS protocol, or decide that a
+fix is trustworthy. The separate `AP_GPS` library handles GPS protocols and
+state; the estimator decides how GPS measurements contribute to the vehicle's
+position estimate. ArduPilot's [library guide](https://ardupilot.org/dev/docs/apmcopter-programming-libraries.html)
+separates `AP_HAL` from `AP_GPS`, and its [Copter EKF guide](https://ardupilot.org/copter/docs/common-apm-navigation-extended-kalman-filter-overview.html)
+explains how GPS is combined with other measurements.
+
+For a physical flight-controller build, a board implementation such as
+`AP_HAL_ChibiOS` supplies the serial port. SITL uses `AP_HAL_SITL` instead.
+Separately, the **physical receiver replaces the simulated receiver**. Those
+are two changes below the GPS-consuming flight logic, not one HAL feature.
+ArduPilot's [developer introduction](https://ardupilot.org/dev/docs/learning-ardupilot-introduction.html)
+describes the board-specific HAL implementations.
+
+This is the useful boundary to remember:
+
+```text
+physical receiver + board serial driver  ─┐
+                                         ├─► AP_GPS fix ─► estimator ─► navigation
+simulated receiver + SITL serial driver ──┘
+```
+
+The hardware-specific I/O and the sensor source change; much of the code that
+**uses** a GPS fix is shared. The pinned ArduPilot source makes this concrete:
+[`AP_HAL::HAL` lists a first-GPS serial driver](https://github.com/ArduPilot/ardupilot/blob/d9c5097c3d8333435712ffed86bca8ce00c4bb46/libraries/AP_HAL/HAL.h#L20-L30),
+[`AP_HAL_SITL` connects its GPS port to a simulated serial device](https://github.com/ArduPilot/ardupilot/blob/d9c5097c3d8333435712ffed86bca8ce00c4bb46/libraries/AP_HAL_SITL/UARTDriver.cpp#L70-L87),
+and [`AP_GPS` selects a protocol backend](https://github.com/ArduPilot/ardupilot/blob/d9c5097c3d8333435712ffed86bca8ce00c4bb46/libraries/AP_GPS/AP_GPS.cpp#L744-L780).
+ArduPilot also supports a direct `AP_GPS_SITL` backend in some configurations;
+the serial receiver path is the useful analogy for this exercise.
+
+### Where would an incorrect reading enter?
+
+Our `attack.py` changes a **SITL GPS simulation parameter**. The pinned
+[`SIM_GPS.cpp`](https://github.com/ArduPilot/ardupilot/blob/d9c5097c3d8333435712ffed86bca8ce00c4bb46/libraries/SITL/SIM_GPS.cpp#L550-L566)
+adds the configured offset to the generated latitude and longitude before the
+simulated receiver publishes the reading. A physical flight has no Gazebo
+reference position and no such exercise parameter. An incorrect physical GPS
+fix could originate earlier, from the signals received by the antenna, from a
+faulty receiver, or from the receiver-to-controller link. Which parts of the
+system an adversary can influence is a separate access question; the local
+parameter edit does not demonstrate access to any of those physical paths.
+
+The supplied `student_watchdog.py` is **outside the flight controller**. It
+reads `GPS_RAW_INT` over MAVLink and can request a flight-mode change. On a
+physical vehicle, a similar monitor would need a defined, trusted place to
+run, a dependable telemetry/control link, and a safe response if that link
+fails. It would still need evidence beyond one GPS stream to tell a bad fix
+from real movement. We have Gazebo's reference track for evaluation here;
+there is no equivalent perfect truth track on an ordinary physical flight.
+
 ## The two files your team edits
 
 In `attack.py`, `AttackPlan` specifies when the GPS offset starts, how long it

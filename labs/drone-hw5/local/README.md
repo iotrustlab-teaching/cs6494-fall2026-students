@@ -1,10 +1,12 @@
 # HW5 local drone practice: ArduPilot + Gazebo
 
-**Class preview:** the remote x86 Docker clean and attacked flights have run
-and their traces were reviewed. The full four-case check and Apple Silicon
-student setup are still being tested. You can start the Docker build now; if
-a flight fails, keep its `runs/` receipts and report the problem. This folder uses a real
-ArduPilot Copter SITL flight controller and the Gazebo Harmonic Iris world.
+**Release status:** the [remote Linux x86 four-case check](https://github.com/iotrustlab-teaching/cs6494-fall2026-students/actions/runs/45287536256)
+passed with a real ArduPilot/Gazebo flight in each case. A clean flight also
+completed under Docker Desktop on an Apple Silicon Mac; the complete Mac
+comparison is still being checked. You can start the Docker build now; if a
+flight fails, keep its `runs/` receipts and report the problem. This folder
+uses a real ArduPilot Copter SITL flight controller and the Gazebo Harmonic
+Iris world.
 It does **not** contain the private CTF2
 server, its campus stadium mission, its GPS edit arbiter, or staff credentials.
 
@@ -132,6 +134,11 @@ GPS jump, but it does not by itself prove the precise estimator mechanism.
 The first result to investigate is therefore a sensor disagreement and a
 watchdog response, not a successful navigation hijack.
 
-The full `./run.sh all` comparison and an Apple Silicon Docker Desktop run
-are still being checked. The remote x86 result does not establish Mac timing or
-that a different, gradual attack would be detected or have the same effect.
+The later [four-case x86 check](https://github.com/iotrustlab-teaching/cs6494-fall2026-students/actions/runs/45287536256)
+completed all flights and saved a receipt and route plot for each. The
+attacked cases again showed about 20 m between reported GPS and simulator
+reference, with BRAKE/AUTO mode changes, but no large deviation in the actual
+route. A separate Apple Silicon Docker Desktop clean flight completed the
+mission and returned home; the full four-case Mac comparison is not yet
+established. None of these results shows that a different, gradual
+attack would be detected or have the same effect.

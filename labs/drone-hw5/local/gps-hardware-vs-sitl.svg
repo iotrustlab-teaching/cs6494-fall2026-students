@@ -1,0 +1,143 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="1600" height="1050" viewBox="0 0 1600 1050" role="img" aria-labelledby="title desc">
+  <title id="title">Where a GPS reading enters ArduPilot: hardware and SITL compared</title>
+  <desc id="desc">Two paths to the same ArduPilot GPS library. A real receiver sends serial data through a board UART and AP_HAL. In HW5, Gazebo vehicle state feeds a SITL GPS model, which emits simulated receiver messages through a virtual serial port and AP_HAL SITL. AP_GPS parses GPS data, EKF3 estimates position, and Copter navigation controls motors. A Python watchdog separately reads GPS RAW INT telemetry.</desc>
+  <defs>
+    <style><![CDATA[
+      text{font-family:Arial,Helvetica,sans-serif}
+      .title{font-size:43px;font-weight:700;fill:#fff}
+      .subtitle{font-size:21px;fill:#dbe7f4}
+      .laneTitle{font-size:30px;font-weight:700}
+      .laneSub{font-size:19px}
+      .cardTitle{font-size:24px;font-weight:700;fill:#162538}
+      .body{font-size:19px;fill:#38485a}
+      .sharedTitle{font-size:29px;font-weight:700;fill:#162538}
+      .small{font-size:17px;fill:#465568}
+      .bottomTitle{font-size:22px;font-weight:700;fill:#162538}
+      .bottomBody{font-size:18px;fill:#38485a}
+      .mono{font-family:Menlo,Consolas,monospace;font-size:17px}
+    ]]></style>
+    <marker id="blueArrow" markerWidth="12" markerHeight="12" refX="10" refY="6" orient="auto"><path d="M1 1 L11 6 L1 11 Z" fill="#1974ae"/></marker>
+    <marker id="orangeArrow" markerWidth="12" markerHeight="12" refX="10" refY="6" orient="auto"><path d="M1 1 L11 6 L1 11 Z" fill="#d36e21"/></marker>
+    <marker id="navyArrow" markerWidth="12" markerHeight="12" refX="10" refY="6" orient="auto"><path d="M1 1 L11 6 L1 11 Z" fill="#243d58"/></marker>
+    <marker id="purpleArrow" markerWidth="12" markerHeight="12" refX="10" refY="6" orient="auto"><path d="M1 1 L11 6 L1 11 Z" fill="#7555a4"/></marker>
+  </defs>
+
+  <rect width="1600" height="1050" fill="#f7f9fc"/>
+  <rect x="0" y="0" width="1600" height="127" fill="#10263e"/>
+  <path d="M48 103 H1552" stroke="#d23d40" stroke-width="5"/>
+  <text x="50" y="60" class="title">Where does a GPS reading enter ArduPilot?</text>
+  <text x="51" y="93" class="subtitle">A real receiver and the HW5 simulator provide different inputs to much of the same flight software.</text>
+
+  <!-- Real hardware lane -->
+  <rect x="48" y="157" width="900" height="276" rx="18" fill="#eaf5fb" stroke="#6fb1d7" stroke-width="2"/>
+  <rect x="48" y="157" width="900" height="63" rx="18" fill="#d5ebf8"/>
+  <rect x="48" y="197" width="900" height="23" fill="#d5ebf8"/>
+  <circle cx="82" cy="188" r="22" fill="#1974ae"/>
+  <text x="82" y="196" text-anchor="middle" font-size="23" font-weight="700" fill="#fff">A</text>
+  <text x="120" y="194" class="laneTitle" fill="#145c8b">Real vehicle</text>
+  <text x="332" y="194" class="laneSub" fill="#315f78">one representative serial GPS receiver</text>
+
+  <rect x="68" y="245" width="255" height="121" rx="12" fill="#fff" stroke="#92bfda" stroke-width="2"/>
+  <text x="88" y="279" class="cardTitle">GNSS receiver</text>
+  <text x="88" y="309" class="body">Uses satellite signals</text>
+  <text x="88" y="335" class="body">to calculate a fix</text>
+
+  <rect x="349" y="245" width="253" height="121" rx="12" fill="#fff" stroke="#92bfda" stroke-width="2"/>
+  <text x="369" y="279" class="cardTitle">Board UART</text>
+  <text x="369" y="309" class="body">Receiver messages</text>
+  <text x="369" y="335" class="body">arrive as serial data</text>
+
+  <rect x="628" y="245" width="294" height="121" rx="12" fill="#fff" stroke="#92bfda" stroke-width="2"/>
+  <text x="648" y="279" class="cardTitle">AP_HAL UART driver</text>
+  <text x="648" y="309" class="body">Exposes the board's</text>
+  <text x="648" y="335" class="body">serial port to software</text>
+
+  <path d="M325 305 H341" stroke="#1974ae" stroke-width="4" fill="none" marker-end="url(#blueArrow)"/>
+  <path d="M604 305 H620" stroke="#1974ae" stroke-width="4" fill="none" marker-end="url(#blueArrow)"/>
+  <rect x="68" y="382" width="854" height="37" rx="8" fill="#fff3f0" stroke="#e9aaa5"/>
+  <circle cx="87" cy="400" r="9" fill="#bf4242"/>
+  <text x="105" y="406" font-size="17" fill="#80363a">Physical-world input integrity can change before ArduPilot receives the fix.</text>
+
+  <!-- SITL lane -->
+  <rect x="48" y="457" width="900" height="276" rx="18" fill="#fff3e8" stroke="#e8ad76" stroke-width="2"/>
+  <rect x="48" y="457" width="900" height="63" rx="18" fill="#ffdfbf"/>
+  <rect x="48" y="497" width="900" height="23" fill="#ffdfbf"/>
+  <circle cx="82" cy="488" r="22" fill="#cc6d21"/>
+  <text x="82" y="496" text-anchor="middle" font-size="23" font-weight="700" fill="#fff">B</text>
+  <text x="120" y="494" class="laneTitle" fill="#a45213">HW5: Gazebo + ArduPilot SITL</text>
+
+  <rect x="68" y="545" width="255" height="122" rx="12" fill="#fff" stroke="#e9b989" stroke-width="2"/>
+  <text x="88" y="579" class="cardTitle">Gazebo physics</text>
+  <text x="88" y="609" class="body">Vehicle position,</text>
+  <text x="88" y="635" class="body">velocity, and motion</text>
+
+  <rect x="349" y="545" width="253" height="122" rx="12" fill="#fff" stroke="#e9b989" stroke-width="2"/>
+  <text x="369" y="579" class="cardTitle">SITL GPS model</text>
+  <text x="369" y="609" class="body">Creates simulated</text>
+  <text x="369" y="635" class="body">receiver messages</text>
+
+  <rect x="628" y="545" width="294" height="122" rx="12" fill="#fff" stroke="#e9b989" stroke-width="2"/>
+  <text x="648" y="579" class="cardTitle">Virtual UART + HAL</text>
+  <text x="648" y="609" class="body">SITL presents serial</text>
+  <text x="648" y="635" class="body">bytes to ArduPilot</text>
+
+  <path d="M325 605 H341" stroke="#d36e21" stroke-width="4" fill="none" marker-end="url(#orangeArrow)"/>
+  <path d="M604 605 H620" stroke="#d36e21" stroke-width="4" fill="none" marker-end="url(#orangeArrow)"/>
+  <rect x="68" y="682" width="854" height="37" rx="8" fill="#fff" stroke="#e9b989"/>
+  <text x="88" y="707" font-size="17" fill="#95501d">In HW5, <tspan font-family="Menlo,Consolas,monospace">SIM_GPS1_GLTCH_X/Y</tspan> shifts the simulated fix before these messages are emitted.</text>
+
+  <!-- Shared flight software -->
+  <rect x="983" y="157" width="569" height="576" rx="18" fill="#eef0f8" stroke="#a8b3c9" stroke-width="2"/>
+  <text x="1010" y="199" class="sharedTitle">Shared ArduPilot path</text>
+  <text x="1010" y="225" class="small">The source changes; the consumer logic can stay the same.</text>
+
+  <path d="M925 305 H973 V318 H998" stroke="#1974ae" stroke-width="4" fill="none" marker-end="url(#blueArrow)"/>
+  <path d="M925 605 H971 V372 H998" stroke="#d36e21" stroke-width="4" fill="none" marker-end="url(#orangeArrow)"/>
+
+  <rect x="1008" y="258" width="518" height="126" rx="13" fill="#fff" stroke="#7d8caa" stroke-width="2"/>
+  <rect x="1008" y="258" width="12" height="126" rx="6" fill="#516b9c"/>
+  <text x="1039" y="297" class="cardTitle">AP_GPS protocol backend + fix state</text>
+  <text x="1039" y="329" class="body">Parses GPS messages; stores the reported fix.</text>
+  <text x="1039" y="355" class="small">Configured or protocol-detected (for example, u-blox).</text>
+
+  <path d="M1267 386 V406" stroke="#243d58" stroke-width="4" fill="none" marker-end="url(#navyArrow)"/>
+  <rect x="1008" y="413" width="518" height="81" rx="13" fill="#fff" stroke="#a8b3c9" stroke-width="2"/>
+  <text x="1039" y="446" class="cardTitle">EKF3 / AHRS estimate</text>
+  <text x="1039" y="475" class="body">Fuses GPS with other sensor data.</text>
+
+  <path d="M1267 497 V517" stroke="#243d58" stroke-width="4" fill="none" marker-end="url(#navyArrow)"/>
+  <rect x="1008" y="524" width="518" height="82" rx="13" fill="#fff" stroke="#a8b3c9" stroke-width="2"/>
+  <text x="1039" y="557" class="cardTitle">Copter navigation + control</text>
+  <text x="1039" y="586" class="body">Uses estimated state to follow the mission.</text>
+
+  <path d="M1267 610 V630" stroke="#243d58" stroke-width="4" fill="none" marker-end="url(#navyArrow)"/>
+  <rect x="1008" y="637" width="518" height="75" rx="13" fill="#fff" stroke="#a8b3c9" stroke-width="2"/>
+  <text x="1039" y="668" class="cardTitle">Motor outputs</text>
+  <text x="1039" y="695" class="body">Move the physical vehicle or Gazebo model.</text>
+
+  <!-- HW5 observability and comparison -->
+  <rect x="48" y="761" width="1504" height="246" rx="17" fill="#fff" stroke="#c9d2df" stroke-width="2"/>
+  <text x="74" y="801" font-size="29" font-weight="700" fill="#162538">What the HW5 code can change and observe</text>
+  <path d="M73 817 H1527" stroke="#d8dfe9" stroke-width="2"/>
+
+  <rect x="73" y="841" width="452" height="139" rx="12" fill="#fff5e9" stroke="#e6b078"/>
+  <text x="94" y="874" class="bottomTitle">Edit: simulated GPS input</text>
+  <text x="94" y="904" class="bottomBody">The exercise changes a SITL GPS offset.</text>
+  <text x="94" y="930" class="bottomBody">It does not edit flight code or a real</text>
+  <text x="94" y="956" class="bottomBody">receiver's signal.</text>
+
+  <rect x="549" y="841" width="452" height="139" rx="12" fill="#f2eef9" stroke="#b9a8d0"/>
+  <text x="570" y="874" class="bottomTitle">Observe: GPS telemetry</text>
+  <text x="570" y="904" class="bottomBody">The Python watchdog reads</text>
+  <text x="570" y="930" class="bottomBody mono">GPS_RAW_INT</text>
+  <text x="705" y="930" class="bottomBody"> and may request BRAKE</text>
+  <text x="570" y="956" class="bottomBody">or AUTO; the request needs confirmation.</text>
+
+  <rect x="1025" y="841" width="502" height="139" rx="12" fill="#eef5fa" stroke="#9ab8d0"/>
+  <text x="1046" y="874" class="bottomTitle">Transfer to a real vehicle</text>
+  <text x="1046" y="904" class="bottomBody">The GPS consumer is similar, but the</text>
+  <text x="1046" y="930" class="bottomBody">input source and access are different.</text>
+  <text x="1046" y="956" class="bottomBody">HAL abstracts ports; it is not the GPS.</text>
+
+  <text x="50" y="1034" font-size="16" fill="#64748b">Representative serial receiver path. DroneCAN and other GNSS types use different transports and backends. Diagram reflects HW5's default SITL GPS model.</text>
+</svg>
